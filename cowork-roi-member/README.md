@@ -22,16 +22,21 @@ That's it — nothing else to install, and no nested folders to flatten.
 ## Use it
 Ask Cowork: **"post my Cowork ROI stats to the team channel."** The skill will:
 1. Ask whether to run **once** or **automate every 15 days**.
-2. Harvest your last-15-days Cowork sessions.
-3. Show the **privacy opt-out** picker — every session is individually selectable; pick any to exclude.
-4. Compute + render the table post and post it (with the platform's approval dialog as the final gate).
+2. On your **first run**, ask you to paste the **Teams channel link** your admin/manager/lead shared
+   (it parses the `team_id`/`channel_id` from the link and remembers them for next time).
+3. Harvest your last-15-days Cowork sessions.
+4. Show the **privacy opt-out** picker — every session is individually selectable; pick any to exclude.
+5. Compute + render the table post and post it (with the platform's approval dialog as the final gate).
 
 On a **scheduled** run there's no one to answer the picker, so it **emails you** that the post is
 ready and asks you to open the task chat to exclude sessions and post — it never auto-posts.
 
 ## Before you share / first run
-- **Team channel:** `SKILL.md` targets the *"Cowork report - ROI Advisors"* channel by `team_id` /
-  `channel_id`. Edit those two IDs if your team uses a different channel.
+- **Team channel (asked on first run):** the skill is **not** tied to any one channel. On a member's
+  first run it asks them to paste the **Teams channel link** their admin/manager/lead shared, parses
+  the `team_id`/`channel_id` from it, and remembers them in a per-user memory file
+  (`/mnt/user-config/.claude/cowork-roi-member-channel.<userkey>.json`) for later runs. Your team's
+  admin/manager/lead must create that channel first — see the repo README's *First-time setup* section.
 - **Per-user memory.** The taxonomy registry is scoped to whoever runs the skill:
   `/mnt/user-config/.claude/cowork-process-registry.<userkey>.json`, owner-stamped, on that user's own
   mount. A **first run has no memory** and builds the user's processes from their own sessions;

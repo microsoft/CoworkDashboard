@@ -1,7 +1,7 @@
 ---
 name: cowork-roi-member
 description: |
-  Member step of the team Cowork ROI rollup. Harvests the signed-in user's own Copilot Cowork session history from OneDrive, lets the user exclude any chat/task, computes impact metrics, and posts a de-identified, TABLE-FORMATTED stats message to the team's "Cowork report - ROI Advisors" Teams channel. Tables cover KPIs, time-by-category, value pillars, jobs-to-be-done, business processes, roles, skills, and deliverable types. Person names, file names and prompts are excluded; process/JTBD and customer/account names are kept. Bundles its own pipeline. Runs once or on a 15-day schedule (scheduled runs email the user to review/exclude sessions before posting).
+  Member step of the team Cowork ROI rollup. Harvests the signed-in user's own Copilot Cowork session history from OneDrive, lets the user exclude any chat/task, computes impact metrics, and posts a de-identified, TABLE-FORMATTED stats message to your team's dedicated "Cowork report" Teams channel (the channel link is requested on first run and remembered). Tables cover KPIs, time-by-category, value pillars, jobs-to-be-done, business processes, roles, skills, and deliverable types. Person names, file names and prompts are excluded; process/JTBD and customer/account names are kept. Bundles its own pipeline. Runs once or on a 15-day schedule (scheduled runs email the user to review/exclude sessions before posting).
   Use when the user asks to "post my Cowork ROI stats", "send my Cowork stats to the team channel", "run the Cowork ROI member step", or "share my Cowork impact with the team".
   Do NOT use for: the full personal HTML report (use cowork-roi-report), the manager-side team dashboard, GitHub Copilot reports, or single-meeting summaries.
 cowork:
@@ -37,12 +37,26 @@ starts with no memory and mints the user's processes from their OWN sessions.
 - Full personal HTML report with project detail → `cowork-roi-report`.
 - Gathering everyone's posts into the team dashboard → the manager skill.
 
-## Target channel (fixed)
-- **Team:** ROI Advisors — `team_id = 71415fcb-e742-47e7-b5bc-9038eb02135e`
-- **Channel:** "Cowork report - ROI Advisors" — `channel_id = 19:4GywFJZlqAFv_2v52oBX3dAmVKTZSzS82UZNvE9-rrM1@thread.tacv2`
+## Target channel — asked on first run, then remembered
+This skill posts to **one Teams channel that your team's admin / manager / lead created** for Cowork
+reports (named e.g. `Cowork report - <team>`). It is **not hardcoded** — each member points the skill
+at their team's channel once:
 
-Post with `PostChannelMessage(team_id=..., channel_id=..., body=<html>)`. (Fall back to
-`team_name`/`channel_name` only if an ID call fails.)
+1. **Reuse a saved channel.** Look for the per-user memory file
+   `/mnt/user-config/.claude/cowork-roi-member-channel.<userkey>.json` (`<userkey>` = the runner's
+   `mail`). If present, reuse the stored `team_id` + `channel_id`.
+2. **Otherwise, ask for the link.** With `AskUserQuestion`, ask the user to paste the **Teams channel
+   link** their admin/manager/lead shared (in Teams: channel **⋯** → **Copy link**). Parse it:
+   - `channel_id` = the path segment right after `/channel/`, URL-decoded (`%3A`→`:`, `%40`→`@`) →
+     looks like `19:…@thread.tacv2`.
+   - `team_id` = the `groupId` query parameter.
+   Save both (owner-stamped) to the memory file above so later runs don't re-ask.
+3. **Post** with `PostChannelMessage(team_id=…, channel_id=…, body=<html>)`. If an ID call fails, fall
+   back to the `team_name`/`channel_name` parsed from the link.
+
+**Never invent a channel.** If nothing is saved and the user can't provide a link, stop and tell them
+to get the channel link from their team's admin/manager/lead (see the repo README's *First-time
+setup*).
 
 All script paths below are under this skill's own folder:
 `/mnt/user-config/.claude/skills/cowork-roi-member/scripts/`.
@@ -164,8 +178,9 @@ skill** (`cowork-roi-report/scripts/build_report.py`). The post is a sequence of
 Every value comes from `cowork_roi_data.json`; no hand math.
 
 ### 8. Show + post
-Show the user the rendered tables inline, then post:
-`PostChannelMessage(team_id="71415fcb-e742-47e7-b5bc-9038eb02135e", channel_id="19:4GywFJZlqAFv_2v52oBX3dAmVKTZSzS82UZNvE9-rrM1@thread.tacv2", subject="Cowork ROI — <window label>", body=<the HTML body>)`.
+Show the user the rendered tables inline, then post to the channel resolved in **Target channel**
+(reused from memory, or asked-for and parsed from the pasted link on first run):
+`PostChannelMessage(team_id=<resolved team_id>, channel_id=<resolved channel_id>, subject="Cowork ROI — <window label>", body=<the HTML body>)`.
 The platform shows its own approval dialog before anything sends.
 
 ### 9. Automate (only if the user chose it in step 1)
@@ -173,8 +188,8 @@ The platform shows its own approval dialog before anything sends.
 (every 15 days)") with a **self-contained** description:
 > "Generate my Cowork ROI stats for the last 15 days: harvest my Cowork sessions, compute the
 >  table-formatted de-identified post, then EMAIL me that it's ready and ask me to open this task's
->  chat to exclude any sessions I don't want shared before it posts to the Cowork report - ROI
->  Advisors channel. Do not post until I've reviewed."
+>  chat to exclude any sessions I don't want shared before it posts to my team's Cowork report
+>  channel. Do not post until I've reviewed."
 
 **On each scheduled execution (no user present):** harvest → map-my-work → compute a draft, then
 `SendEmailWithAttachments(to=[<user's own email>], subject="Your Cowork ROI post is ready to review",
@@ -193,7 +208,9 @@ final opt-out + post interactively in the task chat. Confirm setup in plain lang
   granular. This grouping + the skills vocabulary + the Role attribute are a **shared data contract** —
   they must match `cowork-roi-report`'s copies (the aggregated "Cowork report – ROI Advisors" reader
   reuses those). Change them in both bundles together.
-- **Fixed channel.** Always post to the ROI Advisors channel above unless the user names another.
+- **Configured channel.** Post only to the team channel resolved in **Target channel** (asked once
+  from the pasted Teams link, then remembered). Never post to any channel the user didn't point the
+  skill at, and never invent one.
 - **Conservative numbers.** All metrics come from the bundled pipeline — no hand math, no fabricated
   figures. If a section is empty, omit it rather than inventing.
 - **Privacy opt-out is mandatory.** Always run step 4 before computing/posting. On interactive runs
