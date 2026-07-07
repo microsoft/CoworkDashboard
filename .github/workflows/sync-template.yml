@@ -1,0 +1,87 @@
+name: Sync skill template to docs
+
+# Keeps docs/skill-template/ (the files the GitHub Pages generator zips up) in lockstep with the
+# canonical skill folder. Runs on pushes to main that touch the skill or this workflow.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "cowork-roi-member/**"
+      - ".github/workflows/sync-template.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-template
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rebuild docs/skill-template from the skill folder
+        run: |
+          set -euo pipefail
+          SRC="cowork-roi-member"
+          DEST_ROOT="docs/skill-template"
+          DEST_SKILL="$DEST_ROOT/cowork-roi-member"
+
+          rm -rf "$DEST_SKILL"
+          mkdir -p "$DEST_SKILL"
+
+          # Mirror the skill, excluding CHANGELOGs, caches, transient run output, and per-user files.
+          # Never ship a populated per-user registry or channel memory.
+          rsync -a \
+            --exclude 'CHANGELOG-*.md' \
+            --exclude '__pycache__/' \
+            --exclude '*.pyc' \
+            --exclude 'working/' \
+            --exclude 'cowork-process-registry*.json' \
+            --exclude 'cowork-roi-member-channel.*.json' \
+            "$SRC"/ "$DEST_SKILL"/
+
+          # The bundled config template must always ship EMPTY (never a populated per-team copy).
+          cat > "$DEST_SKILL/config/team_channel.json" <<'JSON'
+          {
+            "_note": "Per-team channel config. Filled by the installer generator at download time. If channel_link (or team_id+channel_id) is populated, the skill uses it instead of asking on first run. Never commit a populated copy.",
+            "channel_link": "",
+            "team_id": "",
+            "channel_id": "",
+            "channel_name": ""
+          }
+          JSON
+
+          # Regenerate manifest.json: every file path under skill-template, relative to skill-template.
+          python3 - <<'PY'
+          import json, os
+          root = "docs/skill-template"
+          paths = []
+          for dirpath, _dirs, files in os.walk(os.path.join(root, "cowork-roi-member")):
+              for f in files:
+                  full = os.path.join(dirpath, f)
+                  rel = os.path.relpath(full, root).replace(os.sep, "/")
+                  paths.append(rel)
+          paths.sort()
+          with open(os.path.join(root, "manifest.json"), "w", encoding="utf-8") as fh:
+              json.dump(paths, fh, indent=2)
+              fh.write("\n")
+          print("manifest entries:", len(paths))
+          PY
+
+      - name: Commit if changed
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain docs/skill-template)" ]; then
+            git add docs/skill-template
+            git commit -m "chore: sync docs/skill-template from skill folder"
+            git push
+          else
+            echo "docs/skill-template already up to date."
+          fi

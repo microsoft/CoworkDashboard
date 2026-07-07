@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Cowork ROI — Team installer generator</title>
+<style>
+  :root {
+    --bg: #f3f2f1; --card: #ffffff; --ink: #242424; --muted: #605e5c;
+    --brand: #4f52b2; --brand-ink: #ffffff; --line: #e1dfdd; --ok: #107c10;
+    --err: #a4262c; --code-bg: #f5f5f5; --focus: #4f52b2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 8px 0 4px; }
+  h2 { font-size: 1.1rem; margin: 0 0 12px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    padding: 20px; margin: 0 0 18px;
+  }
+  label { display: block; font-weight: 600; margin: 0 0 6px; }
+  input[type=text] {
+    width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 1px solid var(--line);
+    border-radius: 6px; font-family: inherit;
+  }
+  input[type=text]:focus, button:focus, textarea:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  button {
+    font: inherit; font-weight: 600; border: 1px solid transparent; border-radius: 6px;
+    padding: 10px 16px; cursor: pointer; background: var(--brand); color: var(--brand-ink);
+  }
+  button.secondary { background: #ffffff; color: var(--ink); border-color: var(--line); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .note {
+    background: #eff6fc; border: 1px solid #c7e0f4; border-radius: 6px; padding: 10px 12px;
+    font-size: 0.9rem; margin: 12px 0 0;
+  }
+  .privacy { border-color: #c7e0f4; }
+  .resolved { display: none; margin-top: 16px; }
+  .resolved.show { display: block; }
+  .kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; margin: 8px 0 0; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; word-break: break-all; }
+  .status { margin: 12px 0 0; font-size: 0.92rem; min-height: 1.2em; }
+  .status.err { color: var(--err); }
+  .status.ok { color: var(--ok); }
+  code, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+  .copybox { display: flex; gap: 8px; align-items: stretch; margin-top: 8px; }
+  .copybox textarea {
+    flex: 1; resize: vertical; min-height: 48px; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 6px; font-family: inherit; font-size: 0.9rem; background: var(--code-bg);
+  }
+  ol.steps { margin: 8px 0 0; padding-left: 20px; }
+  ol.steps li { margin: 4px 0; }
+  .foot { color: var(--muted); font-size: 0.85rem; margin-top: 24px; }
+  a { color: var(--brand); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cowork ROI — Team installer generator</h1>
+  <p class="sub">Bake your team's Teams channel into the Cowork ROI member skill, so your teammates
+     install it and it posts to the right channel <strong>without ever being asked for a link</strong>.</p>
+
+  <div class="card">
+    <h2>1 · Paste your team's Teams channel link</h2>
+    <label for="link">Teams channel link</label>
+    <input id="link" type="text" autocomplete="off" spellcheck="false"
+           placeholder="https://teams.microsoft.com/l/channel/19%3A…%40thread.tacv2/Cowork%20report?groupId=…" />
+    <div class="row">
+      <button id="parseBtn" type="button">Parse &amp; verify</button>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <div id="resolved" class="resolved" aria-live="polite">
+      <h2 style="margin-top:16px;">2 · Confirm the resolved channel</h2>
+      <dl class="kv">
+        <dt>Channel name</dt><dd id="rName">—</dd>
+        <dt>team_id</dt><dd id="rTeam">—</dd>
+        <dt>channel_id</dt><dd id="rChannel">—</dd>
+      </dl>
+      <div class="row">
+        <button id="downloadBtn" type="button" disabled>Download configured skill (.zip)</button>
+      </div>
+      <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
+    </div>
+
+    <p class="note privacy">
+      🔒 Your channel link is processed <strong>entirely in your browser</strong>. It is never uploaded
+      to any server — this page makes zero third-party network calls.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>How your team installs this</h2>
+    <ol class="steps">
+      <li>Send them the downloaded <span class="mono">.zip</span>.</li>
+      <li>They open Copilot Cowork and upload the zip with this ask:</li>
+    </ol>
+    <div class="copybox">
+      <textarea id="installText" readonly>In Copilot Cowork, upload this zip and ask it to install the skill.</textarea>
+      <button id="copyBtn" class="secondary" type="button">Copy</button>
+    </div>
+    <p class="note">On first run the skill reads the baked-in channel and posts straight to it — no link
+       prompt. (If you ever hand someone the un-configured skill, it falls back to asking for the link,
+       exactly as before.)</p>
+  </div>
+
+  <p class="foot">
+    100% static &amp; client-side. Built from the skill files in this repository.
+    See <a href="README.md">docs/README.md</a> for the manager flow and the one-time GitHub Pages setup.
+  </p>
+</div>
+
+<script src="jszip.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

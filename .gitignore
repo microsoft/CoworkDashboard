@@ -1,0 +1,11 @@
+# Scratch / working files (not part of the skill or the Pages generator)
+_temp/
+
+# Python caches from running the bundled scripts
+__pycache__/
+*.pyc
+
+# Per-run and per-user artifacts that must never be committed
+working/
+cowork-process-registry*.json
+cowork-roi-member-channel.*.json

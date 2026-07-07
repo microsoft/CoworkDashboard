@@ -1,0 +1,7 @@
+{
+  "_note": "Per-team channel config. Filled by the installer generator at download time. If channel_link (or team_id+channel_id) is populated, the skill uses it instead of asking on first run. Never commit a populated copy.",
+  "channel_link": "",
+  "team_id": "",
+  "channel_id": "",
+  "channel_name": ""
+}
