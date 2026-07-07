@@ -26,8 +26,35 @@ This skill is **self-contained** — it bundles its own analysis pipeline (`clas
    `Documents/Cowork/skills/cowork-roi-member/`
 2. Changes appear after OneDrive sync (~35 seconds).
 
+## First-time setup (read this before your first run)
+
+This skill posts each person's report into a **shared Teams channel** that the whole team writes to. If you run the skill without belonging to that channel, it has **nowhere to post** and will not work.
+
+So before anyone runs it, the team needs **one** dedicated Teams channel, created by the group's **manager / admin / lead**. This is a **one-time setup** — once it's in place and automated, nobody needs to do it again.
+
+> **Are you a team member (not the lead)?** Wait for your manager/admin/lead to send you the channel link, then jump to [Use it](#use-it). Everything below in this section is for the person setting the channel up.
+
+### For the manager / admin / lead — how to configure the channel
+
+1. **Create a Teams channel** named:
+   `Cowork Report - {name of your team}`
+   (for example, `Cowork Report - ROI Advisors`).
+2. **Invite everyone who will be measured** in the run and add them as **owners** of the channel.
+3. **Keep the channel data-only.** This channel exists *only* for the Cowork member skill to post individual reports. **Nobody should hold manual conversations in it** — stray messages can break the downstream digestion/aggregation of the data.
+4. **Copy the channel link.** Open the channel's **⋯** menu and choose **Copy link**:
+
+   ![Copy the channel link from the ⋯ menu](images/copy-channel-link.png)
+
+5. **Share that link with your team.** Every member will paste it when they run the skill (see below), so the reports all land in this one channel.
+
 ## Use it
 
 Ask Cowork: **"post my Cowork ROI stats to the team channel."**
+
+The first time you run it, the skill will **ask which Teams channel to post the report to**. Paste the channel link your manager / admin / lead shared with you (the one they copied in step 4 above). After that, the skill posts your de-identified report straight into the shared channel.
+
+Here's what a posted report looks like in the channel:
+
+![Example of a Cowork ROI report posted in the team channel](images/example-report-post.png)
 
 See [`cowork-roi-member/README.md`](cowork-roi-member/README.md) and [`cowork-roi-member/SKILL.md`](cowork-roi-member/SKILL.md) for full documentation.
