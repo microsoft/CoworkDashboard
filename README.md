@@ -4,6 +4,14 @@ A self-contained skill for **Microsoft Copilot Cowork** that posts a **de-identi
 
 This is the **aggregated / team-rollup member step** companion to the personal [What Cowork Did for Me](https://github.com/Fepilot/What-Cowork-did-for-me) report skill.
 
+## Contents
+
+- [What it does](#what-it-does)
+- [Download](#download)
+- [First-time setup — for admins / managers / leads only](#first-time-setup)
+- [Use it / run it — for everyone](#use-it)
+
+<a id="what-it-does"></a>
 ## What it does
 
 It harvests your own Copilot Cowork sessions from OneDrive, computes research-anchored **time-saved / value / speed** metrics, and renders them as HTML tables (headline KPIs, time-by-category, value pillars, jobs-to-be-done, work-by-business-process, roles, skills, analyzed → produced, deliverables, activity-by-day).
@@ -14,6 +22,7 @@ Privacy by design:
 - Each deliverable is labelled with the business process it supported (no file names)
 - Every session is individually selectable in a privacy opt-out picker before posting
 
+<a id="download"></a>
 ## Download
 
 Grab everything in one file: [`cowork-roi-member.zip`](cowork-roi-member.zip) — contains the full `cowork-roi-member/` skill folder ready to unzip into your Cowork skills directory.
@@ -26,13 +35,14 @@ This skill is **self-contained** — it bundles its own analysis pipeline (`clas
    `Documents/Cowork/skills/cowork-roi-member/`
 2. Changes appear after OneDrive sync (~35 seconds).
 
+<a id="first-time-setup"></a>
 ## First-time setup — for the admin / manager / lead only (read this before your first run)
 
 This skill posts each person's report into a **shared Teams channel** that the whole team writes to. If you run the skill without belonging to that channel, it has **nowhere to post** and will not work.
 
 So before anyone runs it, the team needs **one** dedicated Teams channel, created by the group's **manager / admin / lead**. This is a **one-time setup** — once it's in place and automated, nobody needs to do it again.
 
-> **Are you a team member (not the lead)?** Wait for your manager/admin/lead to send you the channel link, then jump to [Use it](#use-it). Everything below in this section is for the person setting the channel up.
+> **Are you a team member (not the lead)?** Wait for your manager/admin/lead to send you the channel link, then jump to [Use it — for team members](#use-it). Everything below in this section is for the person setting the channel up.
 
 ### For the manager / admin / lead — how to configure the channel
 
@@ -47,7 +57,8 @@ So before anyone runs it, the team needs **one** dedicated Teams channel, create
 
 5. **Share that link with your team.** Every member will paste it when they run the skill (see below), so the reports all land in this one channel.
 
-## Use it
+<a id="use-it"></a>
+## Use it — for team members
 
 Ask Cowork: **"post my Cowork ROI stats to the team channel."**
 
