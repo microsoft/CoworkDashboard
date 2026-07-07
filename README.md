@@ -14,6 +14,10 @@ Privacy by design:
 - Each deliverable is labelled with the business process it supported (no file names)
 - Every session is individually selectable in a privacy opt-out picker before posting
 
+## Download
+
+Grab everything in one file: [`cowork-roi-member.zip`](cowork-roi-member.zip) — contains the full `cowork-roi-member/` skill folder ready to unzip into your Cowork skills directory.
+
 ## Install
 
 This skill is **self-contained** — it bundles its own analysis pipeline (`classify.py`, `compute.py`, taxonomy data, harvest references). No other skill is required.
