@@ -87,7 +87,7 @@
     if (!res.ok) {
       resolved = null;
       panel.classList.remove("show");
-      showGenericNotes(true);
+      refreshDownloadNotes();
       setStatus(status, "✕ " + res.error, "err");
       return;
     }
@@ -96,18 +96,37 @@
     $("rTeam").textContent = res.team_id;
     $("rChannel").textContent = res.channel_id;
     panel.classList.add("show");
-    showGenericNotes(false);
+    refreshDownloadNotes();
     setStatus(status, "");
     setStatus($("dlStatus"), "");
     setStatus($("dlMgrStatus"), "");
   }
 
-  // Show/hide the "this will be a generic copy" note next to each download button.
-  function showGenericNotes(show) {
-    ["genNote", "genNoteMgr"].forEach(function (id) {
-      var el = $(id);
-      if (el) { if (show) { el.classList.remove("hidden"); } else { el.classList.add("hidden"); } }
-    });
+  // Toggle a note by id.
+  function toggleNote(id, show) {
+    var el = $(id);
+    if (el) { if (show) { el.classList.remove("hidden"); } else { el.classList.add("hidden"); } }
+  }
+
+  // Text shown under each download button once a channel is verified — prefer the friendly name.
+  function bakedNoteText() {
+    if (resolved.channel_name) {
+      return "\u2713 Set to post to \u201c" + resolved.channel_name + "\u201d.";
+    }
+    return "\u2713 Set to post to channel " + resolved.channel_id + " (team " + resolved.team_id + ").";
+  }
+
+  // Under each download button: the "generic copy" warning, or — once verified — the target channel.
+  function refreshDownloadNotes() {
+    var baked = !!resolved;
+    toggleNote("genNote", !baked);
+    toggleNote("genNoteMgr", !baked);
+    toggleNote("bakeNote", baked);
+    toggleNote("bakeNoteMgr", baked);
+    if (baked) {
+      var txt = bakedNoteText();
+      ["bakeNote", "bakeNoteMgr"].forEach(function (id) { var el = $(id); if (el) el.textContent = txt; });
+    }
   }
 
   // Editing the link invalidates any prior verification — fall back to generic until re-verified.
@@ -115,7 +134,7 @@
     resolved = null;
     var panel = $("resolved");
     if (panel) panel.classList.remove("show");
-    showGenericNotes(true);
+    refreshDownloadNotes();
     setStatus($("status"), "");
     setStatus($("dlStatus"), "");
     setStatus($("dlMgrStatus"), "");

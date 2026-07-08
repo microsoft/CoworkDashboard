@@ -181,6 +181,7 @@
   }
   .dl-note { margin: 8px 0 0; font-size: 0.85rem; color: #e7b96b; }
   .dl-note.hidden { display: none; }
+  .dl-note.baked { color: var(--ok); }
 
   .status { margin: 14px 0 0; font-size: 0.92rem; min-height: 1.2em; color: var(--muted); }
   .status.err { color: var(--err); }
@@ -334,6 +335,7 @@
       </div>
       <p class="dl-note" id="genNoteMgr">No channel added in step 1 yet — this will be a <strong>generic</strong>
          copy that asks you for the channel link on first run. Add your channel in step 1 to bake it in.</p>
+      <p class="dl-note baked hidden" id="bakeNoteMgr"></p>
       <div id="dlMgrStatus" class="status" role="status" aria-live="polite"></div>
     </div>
     <p>Then open <strong>Copilot Cowork</strong> and upload the manager zip you just downloaded —
@@ -361,6 +363,7 @@
       </div>
       <p class="dl-note" id="genNote">No channel added in step 1 yet — this will be a <strong>generic</strong>
          copy that asks each teammate for the channel link on first run. Add your channel in step 1 to bake it in.</p>
+      <p class="dl-note baked hidden" id="bakeNote"></p>
       <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
     </div>
     <p>Send that <strong>team-member</strong> zip to everyone whose Copilot work you'd like included — over
