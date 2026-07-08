@@ -345,7 +345,7 @@
       <textarea id="installMgrText" readonly>Install the attached Cowork ROI - Team Dashboard Cowork Skill into my Cowork skills.</textarea>
       <button id="copyMgrBtn" class="secondary" type="button">Copy</button>
     </div>
-    <p class="note">Your team's channel is already built in, so it won't ask you for a link. Once it's
+    <p class="note"><span id="mgrBakeState">Add your channel in step 1 to bake it into this download — otherwise this generic copy asks you for the channel link the first time you run it.</span> Once it's
        installed, you can say “build the team Cowork ROI dashboard” any time — or ask it to run on a schedule
        and email your team automatically every couple of weeks.</p>
   </section>
@@ -374,8 +374,7 @@
       <textarea id="installText" readonly>Install the attached Cowork ROI - Team Member Cowork Skill into my Cowork skills.</textarea>
       <button id="copyBtn" class="secondary" type="button">Copy</button>
     </div>
-    <p class="note">Because your channel is already baked in, no one on your team is ever asked for a link —
-       their reports simply start posting to your channel. When each teammate installs it, the skill asks
+    <p class="note"><span id="memBakeState">Add your channel in step 1 to bake it into this download — otherwise each teammate is asked for the channel link the first time they run it.</span> When each teammate installs it, the skill asks
        whether to run once or <strong>automate every 15 days</strong> — have them choose to automate, so their
        reports keep posting on their own and the whole system stays hands-off.</p>
     <p class="muted small">Running this yourself too? If you (the manager) also want your own Copilot Cowork work
@@ -407,6 +406,6 @@
 </div>
 
 <script src="jszip.min.js"></script>
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

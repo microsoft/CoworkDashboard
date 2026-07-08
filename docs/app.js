@@ -127,6 +127,15 @@
       var txt = bakedNoteText();
       ["bakeNote", "bakeNoteMgr"].forEach(function (id) { var el = $(id); if (el) el.textContent = txt; });
     }
+    var mgrState = $("mgrBakeState");
+    var memState = $("memBakeState");
+    if (baked) {
+      if (mgrState) mgrState.textContent = "Your team's channel is already built in, so it won't ask you for a link.";
+      if (memState) memState.textContent = "Because your channel is already baked in, no one on your team is ever asked for a link \u2014 their reports simply start posting to your channel.";
+    } else {
+      if (mgrState) mgrState.textContent = "Add your channel in step 1 to bake it into this download \u2014 otherwise this generic copy asks you for the channel link the first time you run it.";
+      if (memState) memState.textContent = "Add your channel in step 1 to bake it into this download \u2014 otherwise each teammate is asked for the channel link the first time they run it.";
+    }
   }
 
   // Editing the link invalidates any prior verification — fall back to generic until re-verified.
