@@ -1,12 +1,14 @@
-name: Sync skill template to docs
+name: Sync skill templates to docs
 
-# Keeps docs/skill-template/ (the files the GitHub Pages generator zips up) in lockstep with the
-# canonical skill folder. Runs on pushes to main that touch the skill or this workflow.
+# Keeps docs/skill-template/ (the files the Installer Studio page zips up) in lockstep with the two
+# canonical skill folders — the team-member skill and the vendored manager (dashboard) skill.
+# Runs on pushes to main that touch either skill or this workflow.
 on:
   push:
     branches: [ main ]
     paths:
       - "cowork-roi-member/**"
+      - "Cowork ROI Team Dashboard - Cowork Skill/**"
       - ".github/workflows/sync-template.yml"
   workflow_dispatch:
 
@@ -24,7 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Rebuild docs/skill-template from the skill folder
+      - name: Rebuild the team-member skill template
         run: |
           set -euo pipefail
           SRC="cowork-roi-member"
@@ -34,8 +36,6 @@ jobs:
           rm -rf "$DEST_SKILL"
           mkdir -p "$DEST_SKILL"
 
-          # Mirror the skill, excluding CHANGELOGs, caches, transient run output, and per-user files.
-          # Never ship a populated per-user registry or channel memory.
           rsync -a \
             --exclude 'CHANGELOG-*.md' \
             --exclude '__pycache__/' \
@@ -56,22 +56,72 @@ jobs:
           }
           JSON
 
-          # Regenerate manifest.json: every file path under skill-template, relative to skill-template.
+      - name: Rebuild the manager (dashboard) skill template
+        run: |
+          set -euo pipefail
+          MGR_SRC="Cowork ROI Team Dashboard - Cowork Skill/cowork-roi-team-dashboard"
+          DEST_ROOT="docs/skill-template"
+          DEST_SKILL="$DEST_ROOT/cowork-roi-team-dashboard"
+
+          rm -rf "$DEST_SKILL"
+          mkdir -p "$DEST_SKILL"
+
+          rsync -a \
+            --exclude 'CHANGELOG.md' \
+            --exclude '__pycache__/' \
+            --exclude '*.pyc' \
+            --exclude 'working/' \
+            "$MGR_SRC"/ "$DEST_SKILL"/
+
+          # Blank the channel fields in the shipped config (keep every operational default + note).
+          python3 - <<'PY'
+          import json
+          p = "docs/skill-template/cowork-roi-team-dashboard/config/team_config.json"
+          with open(p, encoding="utf-8") as f:
+              cfg = json.load(f)
+          for k in ("team_name", "team_id", "channel_name", "channel_id", "channel_link"):
+              if k in cfg:
+                  cfg[k] = ""
+          with open(p, "w", encoding="utf-8") as f:
+              json.dump(cfg, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+          print("blanked channel fields in team_config.json")
+          PY
+
+      - name: Regenerate manifests
+        run: |
+          set -euo pipefail
           python3 - <<'PY'
           import json, os
           root = "docs/skill-template"
-          paths = []
-          for dirpath, _dirs, files in os.walk(os.path.join(root, "cowork-roi-member")):
-              for f in files:
-                  full = os.path.join(dirpath, f)
-                  rel = os.path.relpath(full, root).replace(os.sep, "/")
-                  paths.append(rel)
-          paths.sort()
-          with open(os.path.join(root, "manifest.json"), "w", encoding="utf-8") as fh:
-              json.dump(paths, fh, indent=2)
-              fh.write("\n")
-          print("manifest entries:", len(paths))
+          def manifest(skill_dir, out_name):
+              paths = []
+              base = os.path.join(root, skill_dir)
+              for dirpath, _dirs, files in os.walk(base):
+                  for f in files:
+                      rel = os.path.relpath(os.path.join(dirpath, f), root).replace(os.sep, "/")
+                      paths.append(rel)
+              paths.sort()
+              with open(os.path.join(root, out_name), "w", encoding="utf-8") as fh:
+                  json.dump(paths, fh, indent=2)
+                  fh.write("\n")
+              print(out_name, "->", len(paths), "entries")
+          manifest("cowork-roi-member", "manifest.json")
+          manifest("cowork-roi-team-dashboard", "manifest-dashboard.json")
           PY
+
+      - name: Warn if shared taxonomy files drift between the two skills
+        run: |
+          set -uo pipefail
+          MEM="cowork-roi-member"
+          MGR="Cowork ROI Team Dashboard - Cowork Skill/cowork-roi-team-dashboard"
+          for f in scripts/process_groups.json scripts/skills_vocabulary.json scripts/roles_taxonomy.json references/value-pillars.md; do
+            if [ -f "$MEM/$f" ] && [ -f "$MGR/$f" ]; then
+              if ! cmp -s "$MEM/$f" "$MGR/$f"; then
+                echo "::warning::Shared contract file '$f' differs between the member and manager skills — aggregation may drift. Keep them byte-for-byte identical."
+              fi
+            fi
+          done
 
       - name: Commit if changed
         run: |
@@ -80,7 +130,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain docs/skill-template)" ]; then
             git add docs/skill-template
-            git commit -m "chore: sync docs/skill-template from skill folder"
+            git commit -m "chore: sync docs/skill-template from skill folders"
             git push
           else
             echo "docs/skill-template already up to date."

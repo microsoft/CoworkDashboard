@@ -1,0 +1,15 @@
+[
+  "cowork-roi-team-dashboard/config/team_config.json",
+  "cowork-roi-team-dashboard/examples/sample_raw_messages.json",
+  "cowork-roi-team-dashboard/README.md",
+  "cowork-roi-team-dashboard/references/value-pillars.md",
+  "cowork-roi-team-dashboard/scripts/build_dashboard.py",
+  "cowork-roi-team-dashboard/scripts/build_guide_pdf.py",
+  "cowork-roi-team-dashboard/scripts/parse_posts.py",
+  "cowork-roi-team-dashboard/scripts/process_groups.json",
+  "cowork-roi-team-dashboard/scripts/resolve_channel.py",
+  "cowork-roi-team-dashboard/scripts/roles_taxonomy.json",
+  "cowork-roi-team-dashboard/scripts/skill_aliases.json",
+  "cowork-roi-team-dashboard/scripts/skills_vocabulary.json",
+  "cowork-roi-team-dashboard/SKILL.md"
+]
