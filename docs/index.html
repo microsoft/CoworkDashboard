@@ -4,90 +4,272 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex" />
-<title>Cowork ROI — Team installer generator</title>
+<meta name="color-scheme" content="dark" />
+<title>Channel Forge · Cowork ROI team installer</title>
 <style>
   :root {
-    --bg: #f3f2f1; --card: #ffffff; --ink: #242424; --muted: #605e5c;
-    --brand: #4f52b2; --brand-ink: #ffffff; --line: #e1dfdd; --ok: #107c10;
-    --err: #a4262c; --code-bg: #f5f5f5; --focus: #4f52b2;
+    --bg-0: #060b1e;
+    --bg-1: #0a1636;
+    --panel: rgba(56, 118, 214, 0.10);
+    --panel-2: rgba(80, 140, 235, 0.16);
+    --border: rgba(96, 165, 250, 0.30);
+    --border-strong: rgba(125, 211, 252, 0.60);
+    --text: #eaf1ff;
+    --muted: #9fb4de;
+    --a: #38bdf8;   /* sky */
+    --b: #6366f1;   /* indigo */
+    --c: #22d3ee;   /* cyan */
+    --ok: #34d399;
+    --err: #fb7185;
+    --field: rgba(4, 10, 28, 0.66);
+    --mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
-    margin: 0; background: var(--bg); color: var(--ink);
+    margin: 0; color: var(--text); background: var(--bg-0);
     font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
+    line-height: 1.55; -webkit-font-smoothing: antialiased; position: relative; min-height: 100vh;
+    overflow-x: hidden;
   }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.6rem; margin: 8px 0 4px; }
-  h2 { font-size: 1.1rem; margin: 0 0 12px; }
-  .sub { color: var(--muted); margin: 0 0 20px; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(900px 520px at 82% -8%, rgba(56, 189, 248, 0.18), transparent 60%),
+      radial-gradient(760px 480px at 6% 4%, rgba(99, 102, 241, 0.22), transparent 58%),
+      radial-gradient(1100px 700px at 50% 118%, rgba(34, 211, 238, 0.12), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-0) 60%);
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: -1; opacity: 0.5;
+    background-image:
+      linear-gradient(rgba(120, 170, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120, 170, 255, 0.05) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(1000px 700px at 50% 0%, #000 30%, transparent 75%);
+  }
+  .wrap { max-width: 840px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* Hero */
+  .hero { text-align: center; margin: 8px 0 30px; }
+  .badge-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 0 0 20px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.02em; padding: 6px 12px; border-radius: 999px; color: #cfe3ff;
+    background: rgba(56, 120, 220, 0.14); border: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+  .logo {
+    width: 74px; height: 74px; margin: 0 auto 18px; border-radius: 20px; display: grid; place-items: center;
+    background: linear-gradient(145deg, var(--a), var(--b)); position: relative;
+    box-shadow: 0 14px 40px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .logo svg { width: 40px; height: 40px; }
+  .kicker {
+    text-transform: uppercase; letter-spacing: 0.28em; font-size: 0.72rem; font-weight: 700;
+    color: #7fb3ff; margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3.1rem); line-height: 1.05; margin: 0 0 14px; font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, #ffffff 8%, #bfe0ff 42%, #8ab8ff 72%, #a6f0ff 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .tagline { color: var(--muted); font-size: 1.08rem; max-width: 620px; margin: 0 auto; }
+  .tagline strong { color: #dcecff; }
+
+  /* Cards */
   .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
-    padding: 20px; margin: 0 0 18px;
+    position: relative; background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--border); border-radius: 18px; padding: 26px; margin: 0 0 22px;
+    box-shadow: 0 20px 50px rgba(2, 8, 26, 0.55), inset 0 1px 0 rgba(160, 200, 255, 0.10);
+    backdrop-filter: blur(10px);
   }
-  label { display: block; font-weight: 600; margin: 0 0 6px; }
+  .card::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 1px; border-radius: 18px 18px 0 0;
+    background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+  }
+  .step-head { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+  .step-num {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+    font-weight: 800; font-size: 0.95rem; color: #04122e;
+    background: linear-gradient(145deg, var(--a), var(--c));
+    box-shadow: 0 6px 18px rgba(34, 211, 238, 0.35);
+  }
+  .step-head h2 { font-size: 1.18rem; margin: 0; font-weight: 700; letter-spacing: -0.01em; }
+
+  label { display: block; font-weight: 600; margin: 0 0 8px; color: #cfe0ff; font-size: 0.95rem; }
   input[type=text] {
-    width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 1px solid var(--line);
-    border-radius: 6px; font-family: inherit;
+    width: 100%; padding: 13px 15px; font-size: 0.98rem; color: var(--text);
+    background: var(--field); border: 1px solid var(--border); border-radius: 12px; font-family: var(--mono);
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
-  input[type=text]:focus, button:focus, textarea:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  input[type=text]::placeholder { color: #6f86b8; }
+  input[type=text]:focus {
+    outline: none; border-color: var(--a);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22), 0 0 24px rgba(56, 189, 248, 0.15);
+  }
+  button:focus-visible, summary:focus-visible, a:focus-visible {
+    outline: 2px solid var(--a); outline-offset: 2px;
+  }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
   button {
-    font: inherit; font-weight: 600; border: 1px solid transparent; border-radius: 6px;
-    padding: 10px 16px; cursor: pointer; background: var(--brand); color: var(--brand-ink);
+    font: inherit; font-weight: 700; border: 1px solid transparent; border-radius: 12px;
+    padding: 12px 20px; cursor: pointer; color: #04122e; letter-spacing: 0.01em;
+    background: linear-gradient(135deg, var(--a), var(--b)); position: relative;
+    box-shadow: 0 10px 26px rgba(56, 120, 235, 0.40), inset 0 1px 0 rgba(255,255,255,0.4);
+    transition: transform 0.12s, box-shadow 0.15s, filter 0.15s;
   }
-  button.secondary { background: #ffffff; color: var(--ink); border-color: var(--line); }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:hover { transform: translateY(-1px); box-shadow: 0 14px 34px rgba(56, 120, 235, 0.55); filter: brightness(1.05); }
+  button:active { transform: translateY(0); }
+  button.secondary {
+    background: rgba(80, 140, 235, 0.12); color: #dcecff; border-color: var(--border-strong);
+    box-shadow: none;
+  }
+  button.secondary:hover { background: rgba(80, 140, 235, 0.22); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; filter: grayscale(0.3); }
+
   .note {
-    background: #eff6fc; border: 1px solid #c7e0f4; border-radius: 6px; padding: 10px 12px;
-    font-size: 0.9rem; margin: 12px 0 0;
+    background: rgba(56, 120, 220, 0.10); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; font-size: 0.9rem; margin: 16px 0 0; color: #cfe0ff;
   }
-  .privacy { border-color: #c7e0f4; }
-  .resolved { display: none; margin-top: 16px; }
-  .resolved.show { display: block; }
-  .kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; margin: 8px 0 0; }
-  .kv dt { color: var(--muted); }
-  .kv dd { margin: 0; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; word-break: break-all; }
-  .status { margin: 12px 0 0; font-size: 0.92rem; min-height: 1.2em; }
+  .note.privacy { border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.08); }
+
+  .resolved { display: none; margin-top: 22px; }
+  .resolved.show { display: block; animation: rise 0.35s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .readout {
+    margin: 6px 0 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    background: var(--field);
+  }
+  .readout .rowline {
+    display: grid; grid-template-columns: 150px 1fr; gap: 12px; padding: 12px 15px;
+    border-bottom: 1px solid rgba(96, 165, 250, 0.14); align-items: start;
+  }
+  .readout .rowline:last-child { border-bottom: none; }
+  .readout .k { color: var(--muted); font-size: 0.86rem; }
+  .readout .v { margin: 0; font-family: var(--mono); font-size: 0.9rem; color: #e7f2ff; word-break: break-all; }
+  .verified-tag {
+    display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 0.9rem;
+    color: var(--ok); margin: 0 0 12px;
+  }
+  .verified-tag .chk {
+    width: 20px; height: 20px; border-radius: 50%; background: rgba(52, 211, 153, 0.15);
+    border: 1px solid rgba(52, 211, 153, 0.5); display: grid; place-items: center; color: var(--ok);
+    font-size: 0.72rem;
+  }
+
+  .status { margin: 14px 0 0; font-size: 0.92rem; min-height: 1.2em; color: var(--muted); }
   .status.err { color: var(--err); }
   .status.ok { color: var(--ok); }
-  code, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
-  .copybox { display: flex; gap: 8px; align-items: stretch; margin-top: 8px; }
+  code, .mono { font-family: var(--mono); }
+  .mono { color: #bcd6ff; }
+
+  .copybox { display: flex; gap: 10px; align-items: stretch; margin-top: 12px; }
   .copybox textarea {
-    flex: 1; resize: vertical; min-height: 48px; padding: 10px 12px; border: 1px solid var(--line);
-    border-radius: 6px; font-family: inherit; font-size: 0.9rem; background: var(--code-bg);
+    flex: 1; resize: vertical; min-height: 52px; padding: 12px 14px; color: var(--text);
+    border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 0.92rem;
+    background: var(--field);
   }
-  ol.steps { margin: 8px 0 0; padding-left: 20px; }
-  ol.steps li { margin: 4px 0; }
-  .foot { color: var(--muted); font-size: 0.85rem; margin-top: 24px; }
-  a { color: var(--brand); }
+  .copybox textarea:focus { outline: none; border-color: var(--a); box-shadow: 0 0 0 3px rgba(56,189,248,0.20); }
+
+  ol.steps { margin: 10px 0 0; padding-left: 22px; }
+  ol.steps li { margin: 6px 0; color: #d3e2ff; }
+  ol.steps li::marker { color: var(--a); font-weight: 700; }
+  .muted { color: var(--muted); }
+  .small { font-size: 0.86rem; }
+  .muted.small { margin: 12px 0 0; }
+
+  details.help {
+    margin: 14px 0 0; border: 1px solid var(--border); border-radius: 12px; padding: 12px 15px;
+    background: rgba(4, 10, 28, 0.4); font-size: 0.92rem;
+  }
+  details.help > summary {
+    cursor: pointer; font-weight: 700; color: var(--a); list-style: none; display: flex; align-items: center; gap: 8px;
+  }
+  details.help > summary::-webkit-details-marker { display: none; }
+  details.help > summary::before {
+    content: "＋"; font-weight: 700; color: var(--c); transition: transform 0.15s;
+  }
+  details.help[open] > summary::before { content: "－"; }
+  details.help[open] > summary { margin-bottom: 8px; }
+  details.help .muted { margin: 10px 0 0; word-break: break-word; }
+
+  .foot { color: var(--muted); font-size: 0.85rem; margin-top: 30px; text-align: center; }
+  a { color: var(--a); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  @media (max-width: 520px) {
+    .readout .rowline { grid-template-columns: 1fr; gap: 4px; }
+    .card { padding: 20px; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Cowork ROI — Team installer generator</h1>
-  <p class="sub">Bake your team's Teams channel into the Cowork ROI member skill, so your teammates
-     install it and it posts to the right channel <strong>without ever being asked for a link</strong>.</p>
+  <header class="hero">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13.5 2 4 13.2h6.2L9 22l10.5-12h-6.6L13.5 2Z" fill="#04122e" stroke="#04122e" stroke-width="0.6" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p class="kicker">Cowork ROI · Team setup</p>
+    <h1>Channel Forge</h1>
+    <p class="tagline">Forge a ready-to-install Cowork ROI skill with your team's Teams channel
+       <strong>baked right in</strong> — so teammates install it and it posts to the right place,
+       never asking anyone for a link.</p>
+    <div class="badge-row" style="margin-top:22px;">
+      <span class="pill"><span class="dot"></span> Runs 100% in your browser</span>
+      <span class="pill"><span class="dot"></span> Zero third-party calls</span>
+      <span class="pill"><span class="dot"></span> Your link never leaves this page</span>
+    </div>
+  </header>
 
-  <div class="card">
-    <h2>1 · Paste your team's Teams channel link</h2>
+  <section class="card">
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <h2>Paste your team's Teams channel link</h2>
+    </div>
     <label for="link">Teams channel link</label>
     <input id="link" type="text" autocomplete="off" spellcheck="false"
            placeholder="https://teams.microsoft.com/l/channel/19%3A…%40thread.tacv2/Cowork%20report?groupId=…" />
+
+    <details class="help">
+      <summary>Where do I find this link in Teams?</summary>
+      <ol class="steps">
+        <li>Open <strong>Microsoft Teams</strong> (desktop or web) and go to the channel you created for
+            Cowork reports (e.g. <span class="mono">Cowork report - {team}</span>).</li>
+        <li>Hover the channel name in the left list and click the <strong>⋯ More options</strong> button
+            that appears to its right (or right-click the channel).</li>
+        <li>Choose <strong>Get link to channel</strong> (older Teams calls it <strong>Copy link</strong>).</li>
+        <li>In the dialog, click <strong>Copy</strong>, then paste it into the box above.</li>
+      </ol>
+      <p class="muted">The link looks like
+        <span class="mono">https://teams.microsoft.com/l/channel/19%3A…%40thread.tacv2/…?groupId=…</span>.
+        A plain <em>chat</em> link or a browser address-bar URL won't contain the
+        <span class="mono">groupId</span> — use <strong>Get link to channel</strong> so it does.</p>
+    </details>
+
     <div class="row">
       <button id="parseBtn" type="button">Parse &amp; verify</button>
     </div>
+    <p class="muted small">“Verify” checks the link right here in your browser — it pulls out the
+       <span class="mono">team_id</span>, <span class="mono">channel_id</span> and channel name, confirms the
+       channel id is a real <span class="mono">…@thread.…</span> id and the team id is a valid GUID, and shows
+       them below for you to confirm. It does <strong>not</strong> contact Teams or sign you in; nothing is
+       sent anywhere. The Download button stays disabled until the link passes these checks.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
 
     <div id="resolved" class="resolved" aria-live="polite">
-      <h2 style="margin-top:16px;">2 · Confirm the resolved channel</h2>
-      <dl class="kv">
-        <dt>Channel name</dt><dd id="rName">—</dd>
-        <dt>team_id</dt><dd id="rTeam">—</dd>
-        <dt>channel_id</dt><dd id="rChannel">—</dd>
-      </dl>
+      <p class="verified-tag"><span class="chk">✓</span> Verified — confirm the details below</p>
+      <div class="readout">
+        <div class="rowline"><span class="k">Channel name</span><p class="v" id="rName">—</p></div>
+        <div class="rowline"><span class="k">team_id</span><p class="v" id="rTeam">—</p></div>
+        <div class="rowline"><span class="k">channel_id</span><p class="v" id="rChannel">—</p></div>
+      </div>
       <div class="row">
-        <button id="downloadBtn" type="button" disabled>Download configured skill (.zip)</button>
+        <button id="downloadBtn" type="button" disabled>⬇ Download configured skill (.zip)</button>
       </div>
       <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
     </div>
@@ -96,10 +278,13 @@
       🔒 Your channel link is processed <strong>entirely in your browser</strong>. It is never uploaded
       to any server — this page makes zero third-party network calls.
     </p>
-  </div>
+  </section>
 
-  <div class="card">
-    <h2>How your team installs this</h2>
+  <section class="card">
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <h2>How your team installs it</h2>
+    </div>
     <ol class="steps">
       <li>Send them the downloaded <span class="mono">.zip</span>.</li>
       <li>They open Copilot Cowork and upload the zip with this ask:</li>
@@ -111,11 +296,12 @@
     <p class="note">On first run the skill reads the baked-in channel and posts straight to it — no link
        prompt. (If you ever hand someone the un-configured skill, it falls back to asking for the link,
        exactly as before.)</p>
-  </div>
+  </section>
 
   <p class="foot">
-    100% static &amp; client-side. Built from the skill files in this repository.
-    See <a href="README.md">docs/README.md</a> for the manager flow and the one-time GitHub Pages setup.
+    100% static &amp; client-side · built from the skill files in this repository.<br />
+    See the <a href="https://github.com/Rance9/cowork-roi-member/blob/main/docs/README.md">docs README</a>
+    for the manager flow and the one-time GitHub Pages setup.
   </p>
 </div>
 
