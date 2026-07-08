@@ -115,7 +115,7 @@
     background: var(--field); border: 1px solid var(--border); border-radius: 12px; font-family: var(--mono);
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-  input[type=text]::placeholder { color: #363d50; }
+  input[type=text]::placeholder { color: #2a3044; }
   input[type=text]:focus {
     outline: none; border-color: var(--a);
     box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22), 0 0 24px rgba(56, 189, 248, 0.15);
@@ -176,6 +176,8 @@
     display: inline-block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
     color: #04122e; background: linear-gradient(145deg, var(--a), var(--c)); border-radius: 6px; padding: 2px 8px; margin-right: 8px;
   }
+  .dl-note { margin: 8px 0 0; font-size: 0.85rem; color: #e7b96b; }
+  .dl-note.hidden { display: none; }
 
   .status { margin: 14px 0 0; font-size: 0.92rem; min-height: 1.2em; color: var(--muted); }
   .status.err { color: var(--err); }
@@ -233,9 +235,10 @@
     </div>
     <p class="kicker">Personalized team installers</p>
     <h1>Cowork ROI Installer Studio</h1>
-    <p class="tagline">Roll the <strong>Cowork ROI</strong> skill out to your team in minutes. Each person
-       shares a private, easy-to-read summary of the impact they're getting from Copilot Cowork — and it
-       lands in your team's Teams channel automatically, without anyone being asked to paste a link.</p>
+    <p class="tagline">Set up <strong>Cowork ROI</strong> for your team in a few minutes. It's a pair of
+       Microsoft Copilot <strong>Cowork</strong> skills that measure the time and money your team saves with
+       Copilot and turn it into a private, easy-to-read team report emailed to you. This page bakes your Teams
+       channel into both skills so they install ready to go — with nothing for your team to set up.</p>
     <div class="badge-row" style="margin-top:22px;">
       <span class="pill"><span class="dot"></span> Runs 100% in your browser</span>
       <span class="pill"><span class="dot"></span> Zero third-party calls</span>
@@ -298,34 +301,39 @@
        <span class="mono">team_id</span>, <span class="mono">channel_id</span> and channel name, confirms the
        channel id is a real <span class="mono">…@thread.…</span> id and the team id is a valid GUID, and shows
        them below for you to confirm. It does <strong>not</strong> contact Teams or sign you in; nothing is
-       sent anywhere. The download buttons stay disabled until the link passes these checks.</p>
+       sent anywhere. You can download either skill without this step — but adding a verified channel bakes it
+       into the zip so no one is asked for a link.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
 
     <div id="resolved" class="resolved" aria-live="polite">
-      <p class="verified-tag"><span class="chk">✓</span> Verified — confirm the details, then download both skills</p>
+      <p class="verified-tag"><span class="chk">✓</span> Verified — your channel will be baked into both downloads below</p>
       <div class="readout">
         <div class="rowline"><span class="k">Channel name</span><p class="v" id="rName">—</p></div>
         <div class="rowline"><span class="k">team_id</span><p class="v" id="rTeam">—</p></div>
         <div class="rowline"><span class="k">channel_id</span><p class="v" id="rChannel">—</p></div>
       </div>
+    </div>
 
-      <div class="dl-block">
-        <p class="dl-label"><span class="tag">You install</span> The <strong>manager</strong> skill — builds
-           and emails the team dashboard.</p>
-        <div class="row">
-          <button id="downloadMgrBtn" type="button" disabled>⬇ Download the manager skill (.zip)</button>
-        </div>
-        <div id="dlMgrStatus" class="status" role="status" aria-live="polite"></div>
+    <div class="dl-block">
+      <p class="dl-label"><span class="tag">You install</span> Manager skill —
+         <strong>Cowork ROI - Team Dashboard Cowork Skill</strong></p>
+      <div class="row">
+        <button id="downloadMgrBtn" type="button">⬇ Download the manager skill (.zip)</button>
       </div>
+      <p class="dl-note" id="genNoteMgr">No channel added yet — this will be a <strong>generic</strong> copy that
+         asks whoever installs it for the channel link on first run. Add your channel above to bake it in.</p>
+      <div id="dlMgrStatus" class="status" role="status" aria-live="polite"></div>
+    </div>
 
-      <div class="dl-block">
-        <p class="dl-label"><span class="tag">Send to team</span> The <strong>team-member</strong> skill —
-           each teammate installs this to post their stats.</p>
-        <div class="row">
-          <button id="downloadBtn" type="button" disabled>⬇ Download the team-member skill (.zip)</button>
-        </div>
-        <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
+    <div class="dl-block">
+      <p class="dl-label"><span class="tag">Send to team</span> Team-member skill —
+         <strong>Cowork ROI - Team Member Cowork Skill</strong></p>
+      <div class="row">
+        <button id="downloadBtn" type="button">⬇ Download the team-member skill (.zip)</button>
       </div>
+      <p class="dl-note" id="genNote">No channel added yet — this will be a <strong>generic</strong> copy that
+         asks each teammate for the channel link on first run. Add your channel above to bake it in.</p>
+      <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
     </div>
 
     <p class="note privacy">
@@ -337,7 +345,7 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">2</span>
-      <h2>Install the manager skill (that's you)</h2>
+      <h2>Install the manager skill — “Cowork ROI - Team Dashboard Cowork Skill” (that's you)</h2>
     </div>
     <p>Open <strong>Copilot Cowork</strong>, upload the <strong>manager</strong> zip you just downloaded, and
        ask it to install the skill:</p>
@@ -348,14 +356,12 @@
     <p class="note">Your team's channel is already built in, so it won't ask you for a link. Once it's
        installed, you can say “build the team Cowork ROI dashboard” any time — or ask it to run on a schedule
        and email your team automatically every couple of weeks.</p>
-    <p class="muted small">Want your own Copilot work counted in the team numbers too? Also install the
-       team-member skill (below) on your own Copilot Cowork — that part's optional.</p>
   </section>
 
   <section class="card">
     <div class="step-head">
       <span class="step-num">3</span>
-      <h2>Share the team-member skill with your team</h2>
+      <h2>Share the team-member skill — “Cowork ROI - Team Member Cowork Skill” — with your team</h2>
     </div>
     <p>Send the <strong>team-member</strong> zip to everyone whose Copilot work you'd like included — over
        Teams, email, wherever works. Each person uploads it in Copilot Cowork and asks it to install the skill,
@@ -365,7 +371,12 @@
       <button id="copyBtn" class="secondary" type="button">Copy</button>
     </div>
     <p class="note">Because your channel is already baked in, no one on your team is ever asked for a link —
-       their reports simply start posting to your channel.</p>
+       their reports simply start posting to your channel. When each teammate installs it, the skill asks
+       whether to run once or <strong>automate every 15 days</strong> — have them choose to automate, so their
+       reports keep posting on their own and the whole system stays hands-off.</p>
+    <p class="muted small">Running this yourself too? If you (the manager) also want your own Copilot work
+       counted in the team numbers, install this team-member skill on your own Copilot Cowork as well —
+       that part's optional.</p>
   </section>
 
   <section class="card">
@@ -377,8 +388,9 @@
       <li>Each teammate runs the member skill, and their private summary posts to your shared channel.</li>
       <li>Your manager skill reads those posts, builds one anonymized dashboard, and emails your team a
           newsletter with the dashboard and a one-page guide attached.</li>
-      <li>Set the manager skill to run on a schedule (about every two weeks) and it keeps the team's picture
-          up to date on its own — nothing more for you to do.</li>
+      <li>Keep it automated: your manager skill runs on its schedule (about every two weeks), and each
+          teammate's member skill posts on its own 15-day schedule — together they keep the picture current
+          with nothing to re-run by hand.</li>
     </ol>
     <p class="muted small">The manager skill only ever reads what teammates choose to post — it never touches
        anyone's files, and no individual is named in the dashboard or the email.</p>

@@ -84,11 +84,10 @@
     var res = parseTeamsChannelLink($("link").value);
     var status = $("status");
     var panel = $("resolved");
-    var buttons = [$("downloadBtn"), $("downloadMgrBtn")];
     if (!res.ok) {
       resolved = null;
       panel.classList.remove("show");
-      buttons.forEach(function (b) { if (b) b.disabled = true; });
+      showGenericNotes(true);
       setStatus(status, "✕ " + res.error, "err");
       return;
     }
@@ -97,8 +96,27 @@
     $("rTeam").textContent = res.team_id;
     $("rChannel").textContent = res.channel_id;
     panel.classList.add("show");
-    buttons.forEach(function (b) { if (b) b.disabled = false; });
-    setStatus(status, "✓ Link parsed. Confirm the values below, then download both skills.", "ok");
+    showGenericNotes(false);
+    setStatus(status, "✓ Verified — your channel will be baked into both downloads below.", "ok");
+    setStatus($("dlStatus"), "");
+    setStatus($("dlMgrStatus"), "");
+  }
+
+  // Show/hide the "this will be a generic copy" note next to each download button.
+  function showGenericNotes(show) {
+    ["genNote", "genNoteMgr"].forEach(function (id) {
+      var el = $(id);
+      if (el) { if (show) { el.classList.remove("hidden"); } else { el.classList.add("hidden"); } }
+    });
+  }
+
+  // Editing the link invalidates any prior verification — fall back to generic until re-verified.
+  function onLinkChanged() {
+    resolved = null;
+    var panel = $("resolved");
+    if (panel) panel.classList.remove("show");
+    showGenericNotes(true);
+    setStatus($("status"), "");
     setStatus($("dlStatus"), "");
     setStatus($("dlMgrStatus"), "");
   }
@@ -114,11 +132,12 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   }
 
-  // Generic builder: fetch a skill template by manifest, bake its channel config, download the zip.
+  // Builds a skill zip from its template. With a verified channel it bakes it into the config;
+  // without one it ships the generic (blank-config) skill that asks for the channel on first run.
   async function buildAndDownload(opts) {
-    if (!resolved) return;
     var st = $(opts.statusId);
     var btn = $(opts.btnId);
+    var baked = !!resolved;
     btn.disabled = true;
     setStatus(st, "Assembling zip in your browser…");
 
@@ -137,19 +156,23 @@
         if (!resp.ok) throw new Error("could not fetch " + relPath + " (" + resp.status + ")");
         if (relPath === opts.configPath) {
           configText = await resp.text();
-          zip.file(relPath, configText); // placeholder — overwritten with the baked version below
+          zip.file(relPath, configText); // baked builds overwrite this below; generic keeps it blank
         } else {
           zip.file(relPath, await resp.arrayBuffer());
         }
       }
 
-      // Bake the resolved channel into this skill's config, preserving any other settings.
-      zip.file(opts.configPath, opts.fillConfig(configText));
+      if (baked) {
+        // Bake the resolved channel into this skill's config, preserving any other settings.
+        zip.file(opts.configPath, opts.fillConfig(configText));
+      }
 
       var blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
-      var fname = opts.zipPrefix + slugForName(resolved) + ".zip";
+      var fname = baked ? (opts.zipPrefix + slugForName(resolved) + ".zip") : opts.genericName;
       triggerDownload(blob, fname);
-      setStatus(st, "✓ Downloaded " + fname + " — " + opts.successMsg, "ok");
+      var msg = baked ? opts.successMsg
+        : "generic copy — whoever installs it is asked for the channel link on first run.";
+      setStatus(st, "✓ Downloaded " + fname + " — " + msg, "ok");
     } catch (err) {
       setStatus(st, "✕ Could not build the zip: " + (err && err.message ? err.message : err), "err");
     } finally {
@@ -185,6 +208,7 @@
       manifestPath: "manifest.json",
       configPath: "cowork-roi-member/config/team_channel.json",
       zipPrefix: "cowork-roi-member-",
+      genericName: "cowork-roi-member.zip",
       successMsg: "send this one to your team.",
       fillConfig: memberConfig
     });
@@ -196,6 +220,7 @@
       manifestPath: "manifest-dashboard.json",
       configPath: "cowork-roi-team-dashboard/config/team_config.json",
       zipPrefix: "cowork-roi-team-dashboard-",
+      genericName: "cowork-roi-team-dashboard.zip",
       successMsg: "install this one yourself.",
       fillConfig: dashboardConfig
     });
@@ -225,6 +250,7 @@
     document.addEventListener("DOMContentLoaded", function () {
       $("parseBtn").addEventListener("click", onParse);
       $("link").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); onParse(); } });
+      $("link").addEventListener("input", onLinkChanged);
       $("downloadBtn").addEventListener("click", onDownloadMember);
       var mgrBtn = $("downloadMgrBtn"); if (mgrBtn) mgrBtn.addEventListener("click", onDownloadManager);
       $("copyBtn").addEventListener("click", makeCopyHandler("installText", "copyBtn"));

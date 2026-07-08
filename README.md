@@ -21,6 +21,12 @@ manager pastes their team's Teams channel link once and downloads **both** skill
 built in. Nobody is ever asked to paste a link. The rest of this guide walks a manager through the whole
 process.
 
+<p align="center">
+  <a href="images/Installer_Studio_Screenshot.png">
+    <img src="images/Installer_Studio_Screenshot.png" alt="The Installer Studio page — paste your Teams channel link and download both skills, ready to install" width="600" />
+  </a>
+</p>
+
 ## What you'll need first
 
 A **Teams channel** where your team's Cowork reports will be collected — for example
