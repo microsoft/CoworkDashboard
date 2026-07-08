@@ -97,7 +97,7 @@
     $("rChannel").textContent = res.channel_id;
     panel.classList.add("show");
     showGenericNotes(false);
-    setStatus(status, "✓ Verified — your channel will be baked into both downloads below.", "ok");
+    setStatus(status, "");
     setStatus($("dlStatus"), "");
     setStatus($("dlMgrStatus"), "");
   }
