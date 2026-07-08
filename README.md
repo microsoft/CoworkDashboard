@@ -14,8 +14,6 @@ Teams channel**:
   newsletter** (the dashboard plus a one-page guide) on a schedule the manager chooses. It only ever reads
   what teammates post — never anyone's files.
 
-Both skills live in **this single repository** — there's nothing else to clone or install from anywhere else.
-
 To make rollout effortless, this repository also hosts a small web page — the
 **[Installer Studio](https://microsoft.github.io/CoworkDashboard/)** — where a
 manager pastes their team's Teams channel link once and downloads **both** skills with that channel already
