@@ -15,14 +15,14 @@ Teams channel**:
   what teammates post — never anyone's files.
 
 To make rollout effortless, this repository also hosts a small web page — the
-**[Installer Studio](https://microsoft.github.io/CoworkDashboard/)** — where a
+**[Installer Studio](https://aka.ms/CoworkDashboard)** — where a
 manager pastes their team's Teams channel link once and downloads **both** skills with that channel already
 built in. Nobody is ever asked to paste a link. The rest of this guide walks a manager through the whole
 process.
 
 <p align="center">
-  <a href="https://microsoft.github.io/CoworkDashboard/"><img src="images/Installer_Studio_Screenshot.png?v=3" alt="The Installer Studio page (top half) — paste your Teams channel link" width="380" align="top" /></a>
-  <a href="https://microsoft.github.io/CoworkDashboard/"><img src="images/Installer_Studio_Screenshot_2.png?v=3" alt="The Installer Studio page (bottom half) — download both skills, ready to install" width="380" align="top" /></a>
+  <a href="https://aka.ms/CoworkDashboard"><img src="images/Installer_Studio_Screenshot.png?v=3" alt="The Installer Studio page (top half) — paste your Teams channel link" width="380" align="top" /></a>
+  <a href="https://aka.ms/CoworkDashboard"><img src="images/Installer_Studio_Screenshot_2.png?v=3" alt="The Installer Studio page (bottom half) — download both skills, ready to install" width="380" align="top" /></a>
 </p>
 
 ## What you'll need first
@@ -36,7 +36,7 @@ start, and add the people whose work you want included. Keep the channel just fo
 You only do this **once** for your team.
 
 1. **Open the Installer Studio page** in your web browser:
-   https://microsoft.github.io/CoworkDashboard/
+   https://aka.ms/CoworkDashboard
 
 2. **Copy your team's Teams channel link.** In Microsoft Teams, find the channel in the left-hand list,
    hover over its name, and click the **⋯ More options** button that appears (or right-click the channel).
