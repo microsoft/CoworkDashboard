@@ -22,8 +22,8 @@ built in. Nobody is ever asked to paste a link. The rest of this guide walks a m
 process.
 
 <p align="center">
-  <a href="https://rance9.github.io/cowork-roi-member/"><img src="images/Installer_Studio_Screenshot.png" alt="The Installer Studio page (top half) — paste your Teams channel link" width="380" /></a>
-  <a href="https://rance9.github.io/cowork-roi-member/"><img src="images/Installer_Studio_Screenshot_2.png" alt="The Installer Studio page (bottom half) — download both skills, ready to install" width="380" /></a>
+  <a href="https://rance9.github.io/cowork-roi-member/"><img src="images/Installer_Studio_Screenshot.png" alt="The Installer Studio page (top half) — paste your Teams channel link" width="380" align="top" /></a>
+  <a href="https://rance9.github.io/cowork-roi-member/"><img src="images/Installer_Studio_Screenshot_2.png" alt="The Installer Studio page (bottom half) — download both skills, ready to install" width="380" align="top" /></a>
 </p>
 
 ## What you'll need first
