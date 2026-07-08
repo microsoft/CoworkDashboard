@@ -103,24 +103,63 @@
     transition: background .15s ease;
   }
   .nav-cta:hover { background: var(--accent); text-decoration: none; }
+  /* ---- Theme toggle (sun/moon pill switch) ---- */
   .theme-toggle {
-    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
-    width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1;
-    display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
-    transition: background .15s, border-color .15s;
+    background: none; border: 0; padding: 0; cursor: pointer; line-height: 0;
+    flex: 0 0 auto; -webkit-tap-highlight-color: transparent;
   }
-  .theme-toggle:hover { background: var(--surface); border-color: var(--border-strong); }
+  .tt-track {
+    position: relative; display: flex; align-items: stretch;
+    width: 62px; height: 30px; padding: 3px;
+    border-radius: 999px; background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    transition: background .2s ease, border-color .2s ease;
+  }
+  .tt-thumb {
+    position: absolute; top: 3px; bottom: 3px; left: 3px;
+    width: calc(50% - 3px); border-radius: 7px;
+    background: var(--surface); box-shadow: var(--shadow-sm);
+    transition: transform .24s cubic-bezier(.4,0,.2,1), background .2s ease, box-shadow .2s ease;
+  }
+  .tt-ico {
+    position: relative; z-index: 1; flex: 1 1 0;
+    display: grid; place-items: center; color: var(--text-muted);
+    transition: color .2s ease;
+  }
+  .tt-ico svg { width: 15px; height: 15px; display: block; }
+  .tt-sun { color: var(--text); }
+  [data-theme="dark"] .tt-track { background: #14141d; border-color: #2c2c3a; }
+  [data-theme="dark"] .tt-thumb { transform: translateX(100%); background: #3a3d52; box-shadow: none; }
+  [data-theme="dark"] .tt-sun  { color: var(--text-muted); }
+  [data-theme="dark"] .tt-moon { color: #ffffff; }
+  .theme-toggle:hover .tt-track { border-color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 999px; }
+
+  /* ---- Page-wide ambient background ---- */
+  .page-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .page-bg::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(1100px 720px at 82% -6%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%),
+      radial-gradient(900px 640px at 2% 3%, color-mix(in srgb, var(--accent-2) 9%, transparent), transparent 58%),
+      radial-gradient(1200px 900px at 50% 112%, color-mix(in srgb, var(--accent-3) 7%, transparent), transparent 62%);
+  }
+  [data-theme="dark"] .page-bg::before {
+    background:
+      radial-gradient(1100px 720px at 82% -6%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
+      radial-gradient(900px 640px at 2% 3%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 58%),
+      radial-gradient(1200px 900px at 50% 112%, color-mix(in srgb, var(--accent-3) 10%, transparent), transparent 62%);
+  }
+  .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .30; animation: float 22s ease-in-out infinite; }
+  .orb-1 { width: 460px; height: 460px; background: #0078d4; top: -130px; left: -80px; }
+  .orb-2 { width: 380px; height: 380px; background: #8661c5; top: 6%; right: -120px; animation-delay: -7s; }
+  .orb-3 { width: 340px; height: 340px; background: #e3008c; top: 46%; left: 44%; animation-delay: -13s; }
+  .orb-4 { width: 360px; height: 360px; background: #00b294; bottom: -150px; left: 4%; animation-delay: -4s; }
+  [data-theme="dark"] .orb { opacity: .22; }
+  @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(36px, -26px); } }
 
   /* ---- Hero ---- */
-  .hero { position: relative; overflow: hidden; padding: 74px 0 58px; background: var(--bg); }
-  .hero-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-  .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .34; animation: float 18s ease-in-out infinite; }
-  .orb-1 { width: 440px; height: 440px; background: #0078d4; top: -150px; left: -90px; }
-  .orb-2 { width: 360px; height: 360px; background: #8661c5; top: 10px; right: -110px; animation-delay: -6s; }
-  .orb-3 { width: 320px; height: 320px; background: #e3008c; bottom: -170px; left: 42%; animation-delay: -12s; }
-  [data-theme="dark"] .orb { opacity: .2; }
-  @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(38px, -28px); } }
-
+  .hero { position: relative; padding: 74px 0 58px; background: transparent; }
   .hero-wrap { position: relative; z-index: 1; text-align: center; }
   .hero-logo {
     width: 76px; height: 76px; margin: 0 auto 22px; border-radius: 20px; display: grid; place-items: center;
@@ -299,6 +338,9 @@
 </style>
 </head>
 <body>
+<div class="page-bg" aria-hidden="true">
+  <span class="orb orb-1"></span><span class="orb orb-2"></span><span class="orb orb-3"></span><span class="orb orb-4"></span>
+</div>
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="https://github.com/Rance9/cowork-roi-member">
@@ -308,15 +350,18 @@
     <nav class="primary-nav">
       <a href="https://github.com/Rance9/cowork-roi-member/blob/main/README.md">Full guide</a>
       <a class="nav-cta" href="https://github.com/Rance9/cowork-roi-member">GitHub ↗</a>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch light or dark theme" title="Switch theme">🌙</button>
+      <button class="theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle light or dark theme" title="Toggle light or dark theme">
+        <span class="tt-track">
+          <span class="tt-thumb" aria-hidden="true"></span>
+          <span class="tt-ico tt-sun" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span>
+          <span class="tt-ico tt-moon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+        </span>
+      </button>
     </nav>
   </div>
 </header>
 
 <section class="hero">
-  <div class="hero-bg" aria-hidden="true">
-    <span class="orb orb-1"></span><span class="orb orb-2"></span><span class="orb orb-3"></span>
-  </div>
   <div class="wrap hero-wrap">
     <div class="hero-logo"><img src="Copilot_Cowork_Logo.png" alt="Copilot Cowork" /></div>
     <div class="hero-eyebrow">Personalized team installers</div>
@@ -515,13 +560,16 @@
   (function () {
     var btn = document.getElementById("themeToggle");
     if (!btn) return;
-    function paint() { btn.textContent = document.documentElement.getAttribute("data-theme") === "dark" ? "☀️" : "🌙"; }
-    paint();
+    function sync() {
+      var dark = document.documentElement.getAttribute("data-theme") === "dark";
+      btn.setAttribute("aria-checked", dark ? "true" : "false");
+    }
+    sync();
     btn.addEventListener("click", function () {
       var isDark = document.documentElement.getAttribute("data-theme") === "dark";
       if (isDark) { document.documentElement.removeAttribute("data-theme"); } else { document.documentElement.setAttribute("data-theme", "dark"); }
       try { localStorage.setItem("cwtheme", isDark ? "light" : "dark"); } catch (e) {}
-      paint();
+      sync();
     });
   })();
 </script>
