@@ -5,7 +5,7 @@ they're getting from Copilot — the hours saved and the dollar value of that ti
 report that lands in everyone's inbox. It's made of two skills that work together through **one shared
 Teams channel**:
 
-- **Cowork Dashboard — Team Member skill** (this repository). Every teammate runs it on their own work. It turns
+- **Cowork Dashboard — Team Member skill**. Every teammate runs it on their own work. It turns
   their Copilot Cowork activity into a clear, de-identified summary — hours saved, the value of that time,
   the kinds of work Copilot helped with, and what they produced — and posts it as easy-to-read tables into
   the shared channel. Names, file names, and prompts are never shared; only totals and categories.
@@ -17,14 +17,14 @@ Teams channel**:
 Both skills live in **this single repository** — there's nothing else to clone or install from anywhere else.
 
 To make rollout effortless, this repository also hosts a small web page — the
-**[Installer Studio](https://rance9.github.io/cowork-roi-member/)** — where a
+**[Installer Studio](https://microsoft.github.io/CoworkDashboard/)** — where a
 manager pastes their team's Teams channel link once and downloads **both** skills with that channel already
 built in. Nobody is ever asked to paste a link. The rest of this guide walks a manager through the whole
 process.
 
 <p align="center">
-  <a href="https://rance9.github.io/cowork-roi-member/"><img src="images/Installer_Studio_Screenshot.png?v=2" alt="The Installer Studio page (top half) — paste your Teams channel link" width="380" align="top" /></a>
-  <a href="https://rance9.github.io/cowork-roi-member/"><img src="images/Installer_Studio_Screenshot_2.png?v=2" alt="The Installer Studio page (bottom half) — download both skills, ready to install" width="380" align="top" /></a>
+  <a href="https://microsoft.github.io/CoworkDashboard/"><img src="images/Installer_Studio_Screenshot.png?v=3" alt="The Installer Studio page (top half) — paste your Teams channel link" width="380" align="top" /></a>
+  <a href="https://microsoft.github.io/CoworkDashboard/"><img src="images/Installer_Studio_Screenshot_2.png?v=3" alt="The Installer Studio page (bottom half) — download both skills, ready to install" width="380" align="top" /></a>
 </p>
 
 ## What you'll need first
@@ -38,7 +38,7 @@ start, and add the people whose work you want included. Keep the channel just fo
 You only do this **once** for your team.
 
 1. **Open the Installer Studio page** in your web browser:
-   https://rance9.github.io/cowork-roi-member/
+   https://microsoft.github.io/CoworkDashboard/
 
 2. **Copy your team's Teams channel link.** In Microsoft Teams, find the channel in the left-hand list,
    hover over its name, and click the **⋯ More options** button that appears (or right-click the channel).
