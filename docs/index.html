@@ -98,6 +98,16 @@
     box-shadow: 0 6px 18px rgba(34, 211, 238, 0.35);
   }
   .step-head h2 { font-size: 1.18rem; margin: 0; font-weight: 700; letter-spacing: -0.01em; }
+  .step-num.info { background: linear-gradient(145deg, var(--b), var(--c)); box-shadow: 0 6px 18px rgba(99, 102, 241, 0.40); font-size: 1.05rem; }
+  .lead { font-size: 1.04rem; color: #e2edff; margin: 0 0 12px; }
+  .benefits { list-style: none; margin: 16px 0 0; padding: 0; }
+  .benefits li { position: relative; padding-left: 30px; margin: 12px 0; color: #d6e4ff; }
+  .benefits li strong { color: #f0f6ff; }
+  .benefits li::before {
+    content: "✓"; position: absolute; left: 0; top: -1px; color: var(--ok); font-weight: 800;
+    width: 20px; height: 20px; border-radius: 50%; text-align: center; line-height: 20px; font-size: 0.72rem;
+    background: rgba(52, 211, 153, 0.14); border: 1px solid rgba(52, 211, 153, 0.4);
+  }
 
   label { display: block; font-weight: 600; margin: 0 0 8px; color: #cfe0ff; font-size: 0.95rem; }
   input[type=text] {
@@ -216,17 +226,40 @@
     </div>
     <p class="kicker">Personalized team installers</p>
     <h1>Cowork ROI Installer Studio</h1>
-    <p class="tagline">The <strong>Cowork ROI member skill</strong> posts each teammate's de-identified
-       Copilot Cowork impact — as clean summary tables — into one shared Teams channel. This builder
-       bakes <strong>your team's channel</strong> into a ready-to-share copy of the skill, so everyone you
-       roll it out to just installs and runs it: their reports land in the right channel automatically,
-       with no link to paste and nothing to configure.</p>
+    <p class="tagline">Roll the <strong>Cowork ROI</strong> skill out to your team in minutes. Each person
+       shares a private, easy-to-read summary of the impact they're getting from Copilot Cowork — and it
+       lands in your team's Teams channel automatically, without anyone being asked to paste a link.</p>
     <div class="badge-row" style="margin-top:22px;">
       <span class="pill"><span class="dot"></span> Runs 100% in your browser</span>
       <span class="pill"><span class="dot"></span> Zero third-party calls</span>
       <span class="pill"><span class="dot"></span> Your link never leaves this page</span>
     </div>
   </header>
+
+  <section class="card">
+    <div class="step-head">
+      <span class="step-num info">✦</span>
+      <h2>What this is, and why it helps</h2>
+    </div>
+    <p class="lead"><strong>Cowork ROI</strong> is a Microsoft Copilot <strong>Cowork skill</strong> that each
+       person on your team runs on their own work. It looks at what they've done with Copilot Cowork and turns
+       it into a clear, plain-language summary of the impact they're getting — hours saved, the dollar value of
+       that time, the kinds of work Copilot helped with, and what they produced — then posts that summary into
+       one shared Teams channel your team keeps for these reports.</p>
+    <p>Because everyone posts to the same place, you get a single, comparable view of how much value Copilot
+       Cowork is creating across your team — without chasing anyone for numbers or building a spreadsheet.</p>
+    <ul class="benefits">
+      <li><strong>Private by design.</strong> People's names, their file names, and the prompts they typed are
+          never shared — only the totals and the categories of work.</li>
+      <li><strong>Everyone stays in control.</strong> Before anything posts, the skill lets each person leave
+          out any chat or task they'd rather not include.</li>
+      <li><strong>Runs on its own.</strong> It can repeat every couple of weeks and email the person to review
+          first, so the team's picture stays current with no nagging.</li>
+    </ul>
+    <p class="muted">This page prepares a copy of that skill with <strong>your team's channel already built
+       in</strong>, so the people you share it with just install it and run it. The two steps below are all it
+       takes to set up.</p>
+  </section>
 
   <section class="card">
     <div class="step-head">

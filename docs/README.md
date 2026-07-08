@@ -1,11 +1,18 @@
-# Cowork ROI Installer Studio
+# Cowork ROI — Team Member Cowork Skill
 
-A simple web page that prepares a ready-to-use copy of the **Cowork ROI** skill for your team.
-You paste your team's Teams channel link once, and the page gives you a download that already knows
-where to post. Everyone you share it with just installs it and runs it — their Cowork reports go
-straight to your team's channel, and no one on your team is ever asked to find or paste a link.
+**Cowork ROI — Team Member Cowork Skill** is a Microsoft Copilot Cowork skill that each person on a team
+runs on their own work. It turns their Copilot Cowork activity into a clear, de-identified summary of the
+impact they're getting — hours saved, the value of that time, the kinds of work Copilot helped with, and
+what they produced — and posts it as easy-to-read tables into one shared Teams channel the team keeps for
+these reports. People's names, file names, and prompts are never shared; only the totals and work
+categories are. When everyone runs it, the team gets a single, comparable picture of the value Copilot
+Cowork is creating.
 
-Everything happens right in your web browser, and the channel link you paste is never uploaded or stored.
+To make rolling it out effortless, this repository also includes a small web page — the **Installer
+Studio** — where a manager pastes their team's Teams channel link once and downloads a ready-to-use copy of
+the skill with that channel already built in. Team members install that copy and their reports post to the
+right channel automatically, without anyone being asked for a link. The rest of this guide walks a manager
+through using that page.
 
 ## What you'll need first
 
