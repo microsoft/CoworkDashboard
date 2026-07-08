@@ -22,7 +22,7 @@ built in. Nobody is ever asked to paste a link. The rest of this guide walks a m
 process.
 
 <p align="center">
-  <a href="images/Installer_Studio_Screenshot.png">
+  <a href="https://rance9.github.io/cowork-roi-member/">
     <img src="images/Installer_Studio_Screenshot.png" alt="The Installer Studio page — paste your Teams channel link and download both skills, ready to install" width="600" />
   </a>
 </p>

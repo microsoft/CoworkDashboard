@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex" />
 <meta name="color-scheme" content="dark" />
+<link rel="icon" type="image/png" href="Copilot_Cowork_Logo.png" />
 <title>Cowork ROI · Installer Studio</title>
 <style>
   :root {
@@ -61,11 +62,11 @@
   }
   .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 10px var(--ok); }
   .logo {
-    width: 74px; height: 74px; margin: 0 auto 18px; border-radius: 20px; display: grid; place-items: center;
-    background: linear-gradient(145deg, var(--a), var(--b)); position: relative;
-    box-shadow: 0 14px 40px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+    width: 84px; height: 84px; margin: 0 auto 18px; border-radius: 20px; display: grid; place-items: center;
+    overflow: hidden; position: relative;
+    box-shadow: 0 14px 40px rgba(56, 189, 248, 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
   }
-  .logo svg { width: 40px; height: 40px; }
+  .logo img { width: 100%; height: 100%; object-fit: contain; }
   .kicker {
     text-transform: uppercase; letter-spacing: 0.28em; font-size: 0.72rem; font-weight: 700;
     color: #7fb3ff; margin: 0 0 10px;
@@ -228,10 +229,8 @@
 <body>
 <div class="wrap">
   <header class="hero">
-    <div class="logo" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M13.5 2 4 13.2h6.2L9 22l10.5-12h-6.6L13.5 2Z" fill="#04122e" stroke="#04122e" stroke-width="0.6" stroke-linejoin="round"/>
-      </svg>
+    <div class="logo">
+      <img src="Copilot_Cowork_Logo.png" alt="Copilot Cowork" />
     </div>
     <p class="kicker">Personalized team installers</p>
     <h1>Cowork ROI Installer Studio</h1>
@@ -323,7 +322,7 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">2</span>
-      <h2>Install the manager skill — “Cowork ROI - Team Dashboard Cowork Skill” (that's you)</h2>
+      <h2>Install the manager skill — “Cowork ROI - Team Dashboard Cowork Skill”</h2>
     </div>
     <div class="dl-block">
       <p class="dl-label"><span class="tag">You install</span> Manager skill —
@@ -350,7 +349,7 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">3</span>
-      <h2>Share the team-member skill — “Cowork ROI - Team Member Cowork Skill” — with your team</h2>
+      <h2>Share the team-member skill — “Cowork ROI - Team Member Cowork Skill”</h2>
     </div>
     <div class="dl-block">
       <p class="dl-label"><span class="tag">Send to team</span> Team-member skill —
