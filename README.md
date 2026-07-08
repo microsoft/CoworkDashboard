@@ -9,12 +9,12 @@ Teams channel**:
   their Copilot Cowork activity into a clear, de-identified summary — hours saved, the value of that time,
   the kinds of work Copilot helped with, and what they produced — and posts it as easy-to-read tables into
   the shared channel. Names, file names, and prompts are never shared; only totals and categories.
-  (Upstream project: https://github.com/Fepilot/cowork-roi-member.)
 - **Cowork Dashboard — Team Dashboard skill** (the manager skill). The manager/lead runs it. It reads the shared
   channel, combines everyone's summaries into one anonymized HTML dashboard, and **emails the team a
   newsletter** (the dashboard plus a one-page guide) on a schedule the manager chooses. It only ever reads
-  what teammates post — never anyone's files. (Upstream project:
-  https://github.com/Fepilot/cowork-roi-team-dashboard.)
+  what teammates post — never anyone's files.
+
+Both skills live in **this single repository** — there's nothing else to clone or install from anywhere else.
 
 To make rollout effortless, this repository also hosts a small web page — the
 **[Installer Studio](https://rance9.github.io/cowork-roi-member/)** — where a
@@ -86,12 +86,12 @@ the page makes no outside network calls — it only builds the download for you,
 You don't have to let Copilot unpack the zip for you — you can drop the skill into place yourself:
 
 1. **Download** a skill from the page above and **unzip** it. You'll get a single folder — either
-   `cowork-roi-member/` (the team-member skill) or `cowork-roi-team-dashboard/` (the manager skill).
+   `cowork-dashboard-member/` (the team-member skill) or `cowork-dashboard-team-dashboard/` (the manager skill).
 2. **Copy that folder** into your Cowork skills directory (use the line that matches the skill you're
    installing):
    ```
-   Documents/Cowork/skills/cowork-roi-member/
-   Documents/Cowork/skills/cowork-roi-team-dashboard/
+   Documents/Cowork/skills/cowork-dashboard-member/
+   Documents/Cowork/skills/cowork-dashboard-team-dashboard/
    ```
 3. Wait about 35 seconds for OneDrive to sync, and the skill is ready to use in Copilot Cowork.
 

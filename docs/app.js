@@ -1,8 +1,8 @@
 /*
- * Cowork ROI — Team installer generator (client-side only).
+ * Cowork Dashboard — Team installer generator (client-side only).
  *
  * Parses a Teams channel link, shows the resolved ids for confirmation, then assembles a
- * ready-to-distribute copy of the cowork-roi-member skill with config/team_channel.json pre-filled.
+ * ready-to-distribute copy of the cowork-dashboard-member skill with config/team_channel.json pre-filled.
  * Everything runs in the browser: the pasted link never leaves the page, and the only network
  * calls are same-origin fetches of the skill template under ./skill-template/.
  */
@@ -234,9 +234,9 @@
     return buildAndDownload({
       btnId: "downloadBtn", statusId: "dlStatus",
       manifestPath: "manifest.json",
-      configPath: "cowork-roi-member/config/team_channel.json",
-      zipPrefix: "cowork-roi-member-",
-      genericName: "cowork-roi-member.zip",
+      configPath: "cowork-dashboard-member/config/team_channel.json",
+      zipPrefix: "cowork-dashboard-member-",
+      genericName: "cowork-dashboard-member.zip",
       successMsg: "send this one to your team.",
       fillConfig: memberConfig
     });
@@ -246,9 +246,9 @@
     return buildAndDownload({
       btnId: "downloadMgrBtn", statusId: "dlMgrStatus",
       manifestPath: "manifest-dashboard.json",
-      configPath: "cowork-roi-team-dashboard/config/team_config.json",
-      zipPrefix: "cowork-roi-team-dashboard-",
-      genericName: "cowork-roi-team-dashboard.zip",
+      configPath: "cowork-dashboard-team-dashboard/config/team_config.json",
+      zipPrefix: "cowork-dashboard-team-dashboard-",
+      genericName: "cowork-dashboard-team-dashboard.zip",
       successMsg: "install this one yourself.",
       fillConfig: dashboardConfig
     });

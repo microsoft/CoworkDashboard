@@ -7,8 +7,8 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "Cowork ROI - Team Member Cowork Skill/**"
-      - "Cowork ROI - Team Dashboard Cowork Skill/**"
+      - "Cowork Dashboard - Team Member Cowork Skill/**"
+      - "Cowork Dashboard - Team Dashboard Cowork Skill/**"
       - ".github/workflows/sync-template.yml"
   workflow_dispatch:
 
@@ -29,9 +29,9 @@ jobs:
       - name: Rebuild the team-member skill template
         run: |
           set -euo pipefail
-          SRC="Cowork ROI - Team Member Cowork Skill/cowork-roi-member"
+          SRC="Cowork Dashboard - Team Member Cowork Skill/cowork-dashboard-member"
           DEST_ROOT="docs/skill-template"
-          DEST_SKILL="$DEST_ROOT/cowork-roi-member"
+          DEST_SKILL="$DEST_ROOT/cowork-dashboard-member"
 
           rm -rf "$DEST_SKILL"
           mkdir -p "$DEST_SKILL"
@@ -42,7 +42,7 @@ jobs:
             --exclude '*.pyc' \
             --exclude 'working/' \
             --exclude 'cowork-process-registry*.json' \
-            --exclude 'cowork-roi-member-channel.*.json' \
+            --exclude 'cowork-dashboard-member-channel.*.json' \
             "$SRC"/ "$DEST_SKILL"/
 
           # The bundled config template must always ship EMPTY (never a populated per-team copy).
@@ -59,9 +59,9 @@ jobs:
       - name: Rebuild the manager (dashboard) skill template
         run: |
           set -euo pipefail
-          MGR_SRC="Cowork ROI - Team Dashboard Cowork Skill/cowork-roi-team-dashboard"
+          MGR_SRC="Cowork Dashboard - Team Dashboard Cowork Skill/cowork-dashboard-team-dashboard"
           DEST_ROOT="docs/skill-template"
-          DEST_SKILL="$DEST_ROOT/cowork-roi-team-dashboard"
+          DEST_SKILL="$DEST_ROOT/cowork-dashboard-team-dashboard"
 
           rm -rf "$DEST_SKILL"
           mkdir -p "$DEST_SKILL"
@@ -76,7 +76,7 @@ jobs:
           # Blank the channel fields in the shipped config (keep every operational default + note).
           python3 - <<'PY'
           import json
-          p = "docs/skill-template/cowork-roi-team-dashboard/config/team_config.json"
+          p = "docs/skill-template/cowork-dashboard-team-dashboard/config/team_config.json"
           with open(p, encoding="utf-8") as f:
               cfg = json.load(f)
           for k in ("team_name", "team_id", "channel_name", "channel_id", "channel_link"):
@@ -106,15 +106,15 @@ jobs:
                   json.dump(paths, fh, indent=2)
                   fh.write("\n")
               print(out_name, "->", len(paths), "entries")
-          manifest("cowork-roi-member", "manifest.json")
-          manifest("cowork-roi-team-dashboard", "manifest-dashboard.json")
+          manifest("cowork-dashboard-member", "manifest.json")
+          manifest("cowork-dashboard-team-dashboard", "manifest-dashboard.json")
           PY
 
       - name: Warn if shared taxonomy files drift between the two skills
         run: |
           set -uo pipefail
-          MEM="Cowork ROI - Team Member Cowork Skill/cowork-roi-member"
-          MGR="Cowork ROI - Team Dashboard Cowork Skill/cowork-roi-team-dashboard"
+          MEM="Cowork Dashboard - Team Member Cowork Skill/cowork-dashboard-member"
+          MGR="Cowork Dashboard - Team Dashboard Cowork Skill/cowork-dashboard-team-dashboard"
           for f in scripts/process_groups.json scripts/skills_vocabulary.json scripts/roles_taxonomy.json references/value-pillars.md; do
             if [ -f "$MEM/$f" ] && [ -f "$MGR/$f" ]; then
               if ! cmp -s "$MEM/$f" "$MGR/$f"; then
