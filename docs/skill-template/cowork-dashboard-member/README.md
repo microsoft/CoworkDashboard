@@ -53,7 +53,7 @@ Here's what a posted report looks like in the channel:
 
 ## Use it
 Ask Cowork: **"post my Cowork Dashboard stats to the team channel."** The skill will:
-1. Ask whether to run **once** or **automate every 15 days**.
+1. Ask whether to run **once** or **automate biweekly (every other Monday)** — this prompt appears on your **first run**, not at install.
 2. On your **first run**, ask you to paste the **Teams channel link** your admin/manager/lead shared
    (it parses the `team_id`/`channel_id` from the link and remembers them for next time).
 3. Harvest your last-15-days Cowork sessions.
@@ -129,7 +129,7 @@ cowork-dashboard-member/
 _Full notes: [CHANGELOG-v25.md](CHANGELOG-v25.md). Aligned with `cowork-roi-report` v25._
 
 This release acts on team-lead review feedback. Nothing about the harvest, the mandatory privacy
-opt-out, the fixed ROI Advisors channel, the per-user taxonomy memory, or the research-anchored
+opt-out, the fixed team channel, the per-user taxonomy memory, or the research-anchored
 methodology changed — only the post's content and de-identification.
 
 **Added**

@@ -73,6 +73,30 @@ def canon_skill(name, vocab, aliases):
         return aliases[name]
     return name  # unknown -> passthrough (rare; the member skill restricts to vocab)
 
+def collapse_named_deliverables(items):
+    """Collapse deliverables that share the same de-identified NAME within a process into ONE
+    entry: keep the FINAL occurrence (latest date; tie-break last seen) and, when there is more
+    than one, append '+N versions' to its name (e.g. 'Cowork Dashboard report +4 versions'). Entries
+    without a name (legacy posts) pass through untouched — they aren't distinct-name-collapsible.
+    The Member skill is NOT modified; this is a reader-side aggregation only."""
+    named = collections.OrderedDict()
+    passthrough = []
+    for d in items:
+        nm = (d.get("name") or "").strip()
+        if not nm:
+            passthrough.append(d); continue
+        named.setdefault((d.get("process", ""), nm), []).append(d)
+    out = []
+    for (proc, nm), occ in named.items():
+        idx = max(range(len(occ)), key=lambda i: ((occ[i].get("date") or ""), i))  # latest, then last seen
+        keep = dict(occ[idx])
+        keep["versions"] = len(occ)
+        extra = len(occ) - 1
+        if extra > 0:
+            keep["name"] = f"{nm} +{extra} versions"
+        out.append(keep)
+    return out + passthrough
+
 # ---------------------------------------------------------------- html tables
 class TableGrab(HTMLParser):
     def __init__(self):
@@ -112,6 +136,25 @@ def rng(s):
         re.search(r"([\d.]+)\s*[–\-]\s*([\d.]+)", s)
     return (float(m.group(1)), float(m.group(2))) if m else (None, None)
 
+# First-header-cell signatures of the parser-stable stats tables a genuine Member post carries.
+STATS_HEADER_KEYS = {"metric", "category", "pillar", "process", "role", "skill", "measure",
+                     "input type", "output type", "deliverable type", "deliverable", "type", "date"}
+
+def has_stats_tables(body):
+    """True only when the message carries the de-identified stats tables (≥2 recognized ones).
+    A real Member post has ~11 such tables; an attachment/zip share posted to the channel has 0,
+    so this cleanly skips, e.g., a member-skill .zip dropped in the channel."""
+    if not body or "<table" not in body.lower():
+        return False
+    g = TableGrab()
+    try:
+        g.feed(body)
+    except Exception:
+        return False
+    recognized = sum(1 for t in g.tables
+                     if t and t[0] and t[0][0].strip().lower() in STATS_HEADER_KEYS)
+    return recognized >= 2
+
 # ---------------------------------------------------------------- parse one post
 def parse_body(body, pg, vocab, aliases, rate):
     text = detag(body)
@@ -127,7 +170,7 @@ def parse_body(body, pg, vocab, aliases, rate):
     g = TableGrab(); g.feed(body)
     rec = {"headline": {}, "categories": [], "pillars": [], "processes": [], "roles": [],
            "skills": [], "io": {"inputs": [], "outputs": [], "inputsAnalyzed": 0, "outputsProduced": 0},
-           "deliverables": [], "daily": []}
+           "deliverables": [], "deliverablesDetail": [], "daily": []}
     hl = {"timeTyp": 0.0, "timeLow": None, "timeHigh": None, "expertH": 0.0, "assistedH": 0.0,
           "speed": 0.0, "sessions": 0, "runTasks": 0, "deliverables": 0, "activeDays": 0}
 
@@ -202,6 +245,25 @@ def parse_body(body, pg, vocab, aliases, rate):
                 if len(r) < 3: continue
                 skills = [canon_skill(s.strip(), vocab, aliases) for s in (r[4].split(",") if len(r) > 4 and r[4] not in ("", "—") else []) if s.strip()]
                 rec["deliverables"].append({"type": r[0], "count": inum(r[1]), "hours": fnum(r[2]), "skills": sorted(set(skills))})
+        elif key == "deliverable":                             # Per-deliverable detail WITH the de-identified NAME
+            # Current Member layout: Deliverable | Type | Date | Business process | Skills | Hours | Value
+            for r in rows:
+                if len(r) < 2: continue
+                proc = group_process(r[3], pg) if len(r) > 3 and r[3] not in ("", "—") else ""
+                sk = [canon_skill(s.strip(), vocab, aliases) for s in (r[4].split(",") if len(r) > 4 and r[4] not in ("", "—") else []) if s.strip()]
+                rec["deliverablesDetail"].append({"name": (r[0].strip() if r[0] not in ("", "—") else ""),
+                                                  "type": (r[1] if len(r) > 1 else "File"),
+                                                  "date": (r[2] if len(r) > 2 else ""),
+                                                  "process": proc, "skills": sorted(set(sk)),
+                                                  "hours": fnum(r[5]) if len(r) > 5 else 0.0})
+        elif key == "type":                                    # Legacy per-deliverable rows (no name; Type|Date|Process|Skills|Hours|Value)
+            for r in rows:
+                if len(r) < 3: continue
+                proc = group_process(r[2], pg) if len(r) > 2 and r[2] not in ("", "—") else ""
+                sk = [canon_skill(s.strip(), vocab, aliases) for s in (r[3].split(",") if len(r) > 3 and r[3] not in ("", "—") else []) if s.strip()]
+                rec["deliverablesDetail"].append({"name": "", "type": r[0], "date": (r[1] if len(r) > 1 else ""),
+                                                  "process": proc, "skills": sorted(set(sk)),
+                                                  "hours": fnum(r[4]) if len(r) > 4 else 0.0})
         elif key == "date":                                    # Activity by day
             for r in rows:
                 if len(r) < 2: continue
@@ -222,6 +284,8 @@ def parse_body(body, pg, vocab, aliases, rate):
     rec["processes"] = merge(rec["processes"], lambda x: x["name"],
                              lambda a, b: a.update({"sessions": a["sessions"] + b["sessions"],
                                                     "hours": round(a["hours"] + b["hours"], 2)}))
+    # collapse repeated versions of the same-named deliverable within a process into one entry
+    rec["deliverablesDetail"] = collapse_named_deliverables(rec["deliverablesDetail"])
     hl["expertH"] = hl["timeTyp"]
     rec["headline"] = hl
     return rec, role, period
@@ -245,9 +309,15 @@ def main(a):
     rate = cfg.get("hourly_rate", 72)
     pg, vocab, aliases = load_taxonomies()
     raw = json.load(open(a.inp, encoding="utf-8"))
-    # Member posts are tagged with a "Cowork Dashboard" header; legacy posts used "Cowork ROI".
-    # Accept both so historical channel posts keep aggregating after the rename.
-    msgs = [m for m in normalize_messages(raw) if not m["deleted"] and ("Cowork Dashboard" in (m["body"] or "") or "Cowork ROI" in (m["body"] or ""))]
+    all_msgs = [m for m in normalize_messages(raw) if not m["deleted"] and "Cowork Dashboard" in (m["body"] or "")]
+    # Only parse messages that actually carry the de-identified stats tables. This skips
+    # attachment/zip shares (e.g. a member-skill .zip posted to the channel) that mention
+    # "Cowork Dashboard" but have no parseable stats.
+    msgs = [m for m in all_msgs if has_stats_tables(m["body"])]
+    skipped = len(all_msgs) - len(msgs)
+    if skipped:
+        print(f"[parse_posts] skipped {skipped} message(s) with no recognizable stats tables "
+              f"(attachment/zip or non-stats post)")
 
     # window: keep only posts from the last N days (the latest cycle). --window-days overrides the
     # config's message_lookback_days; anchor is --now or today (UTC). Applied BEFORE the per-sender

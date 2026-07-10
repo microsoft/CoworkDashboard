@@ -10,8 +10,11 @@ A per-Role breakdown appears only when >= kThreshold members share that Role
 
 Tabs (each small, one clear purpose):
   Overview          — auto-insights + the single KPI band.
-  Impact & Value    — value pillars, task categories ($), roles, deliverables by type.
-  How Cowork is used— business process (grouped, lead), skills, category mix (k-anon), analyzed->produced.
+  Impact & Value    — value pillars, task categories ($), roles (+ skills as collapsible detail),
+                      deliverables by FILE FORMAT.
+  How Cowork is used— business process accordion: each row EXPANDS to its deliverable formats + skills
+                      (skills nest in a sub-expand when long); category mix (k-anon), analyzed->produced.
+  Disclaimer        — "modeled tool-impact, not performance" note lives in the blue header (small print).
   Trends            — minimal fortnight-over-fortnight time-saved line.
   Glossary & method — definitions, the value model, privacy rule, sources.
 
@@ -33,6 +36,7 @@ header.top{background:linear-gradient(120deg,var(--brand-d),var(--brand));color:
 .brand{display:flex;align-items:center;gap:12px;margin-bottom:9px}.brand .nm{font-size:13px;letter-spacing:.3px;opacity:.92;font-weight:600}
 header.top h1{font-size:26px;margin:2px 0 4px;font-weight:700;letter-spacing:-.2px}
 header.top .sub{font-size:14px;opacity:.93;margin:0}header.top .gen{font-size:12px;opacity:.82;margin-top:7px}
+header.top .disc{font-size:11px;line-height:1.45;opacity:.9;margin:10px 0 0;max-width:940px}header.top .disc b{font-weight:700}
 .banner{background:#fff7e6;border:1px solid #f3d98b;color:#7a5b00;border-radius:10px;padding:10px 14px;font-size:12.5px;margin:16px 0 0;display:flex;gap:9px;align-items:flex-start}
 @media (prefers-color-scheme:dark){.banner{background:#332a12;border-color:#5c4a17;color:#e8cf8f}}
 .controls{position:sticky;top:0;z-index:30;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 16px;margin:16px 0 0;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end}
@@ -84,10 +88,42 @@ details.meth summary::-webkit-details-marker{display:none}
 details.meth summary::before{content:'\25B8';margin-inline-end:9px;color:var(--brand);display:inline-block;transition:.15s}
 details.meth[open] summary::before{transform:rotate(90deg)}
 details.meth .mbody{padding:0 18px 16px;font-size:13px;color:var(--muted)}details.meth .mbody h4{color:var(--ink);font-size:13px;margin:13px 0 5px}details.meth a{color:var(--brand)}
+details.drill{margin-top:13px;border-top:1px dashed var(--line);padding-top:9px}
+details.drill>summary{cursor:pointer;font-size:12.5px;font-weight:650;color:var(--brand);list-style:none;user-select:none}
+details.drill>summary::-webkit-details-marker{display:none}
+details.drill>summary::before{content:'\25B8';margin-inline-end:7px;display:inline-block;transition:.15s;color:var(--brand)}
+details.drill[open]>summary::before{transform:rotate(90deg)}
+details.drill .dbody{padding-top:11px}
+.dgrp{margin:0 0 15px}.dgrp .dgrp-h{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin:0 0 5px}
+/* Expandable business-process accordion (each row opens to its deliverable formats + skills). */
+.acct{border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.acct-h,.acct-tot,.acct-row>summary{display:grid;grid-template-columns:1fr 92px 78px 92px 66px;gap:10px;align-items:center;padding:10px 14px;font-size:13px}
+.acct-h{background:var(--bg);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--faint);font-weight:700}
+.acct-h .r,.acct-row>summary .r,.acct-tot .r{text-align:right;font-variant-numeric:tabular-nums}
+.acct-row{border-top:1px solid var(--line)}
+.acct-row>summary{cursor:pointer;list-style:none;user-select:none}
+.acct-row>summary::-webkit-details-marker{display:none}
+.acct-row>summary .ap{position:relative;padding-inline-start:17px;font-weight:600}
+.acct-row>summary .ap::before{content:'\25B8';position:absolute;inset-inline-start:0;top:0;color:var(--brand);transition:transform .15s}
+.acct-row[open]>summary .ap::before{transform:rotate(90deg)}
+.acct-row[open]>summary{background:var(--soft)}
+.acct-row>.acct-body{padding:13px 14px 15px;background:var(--bg);border-top:1px dashed var(--line)}
+.acct-tot{border-top:2px solid var(--line);background:var(--bg);font-weight:700}
+.skline{margin-top:11px;font-size:12.5px}.skline .sklbl{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--faint);margin:0 8px 4px 0}
+details.drill.sub{margin-top:11px;border-top:1px dashed var(--line);padding-top:9px}details.drill.sub>summary{font-size:12px}
+/* Flattened per-process deliverable list: distinct deliverables, one level indented, format inline. */
+.dlv-list{margin-inline-start:16px;border-inline-start:2px solid var(--line);padding-inline-start:12px}
+.dlv{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
+.dlv:last-child{border-bottom:none}
+.dlv-nm{font-size:13px;overflow:hidden;text-overflow:ellipsis}
+.fmt-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--brand-d);background:var(--soft);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.dlv-v{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (max-width:860px){.acct-h,.acct-tot,.acct-row>summary{grid-template-columns:1fr 50px 56px 66px 44px;gap:6px;font-size:12px}}
 footer.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint)}
 @media (max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.io2,.insights{grid-template-columns:1fr}.row{grid-template-columns:130px 1fr auto}.stackrow{grid-template-columns:120px 1fr}}
 @media print{body{background:#fff}.controls,.banner,.tabs{display:none}.tab-panel{display:block!important}
 .card,.kpi,details.meth{box-shadow:none;border-color:#ccc}details.meth summary{display:none}details.meth .mbody{display:block!important}
+details.drill .dbody{display:block!important}.acct-row>.acct-body{display:block!important}
 header.top{background:var(--brand)!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}section.block{break-inside:avoid}}
 """
 
@@ -97,6 +133,12 @@ const RATE0=RAW.meta.defaultRate, KMIN=RAW.meta.kThreshold||3;
 const PILL_COLOR={'Transformation':'var(--t)','Revenue Growth':'var(--rg)','Cost Reduction':'var(--cr)','Risk Mitigation':'var(--rm)'};
 const CAT_COLOR={'Analysis & Research':'var(--c0)','Write or debug code':'var(--c1)','Document & content creation':'var(--c2)','Meeting workflows':'var(--c3)','Specialized workflows':'var(--c4)','General assistance / Other':'var(--c6)','Email workflows':'var(--c5)','Communication workflows':'var(--c7)'};
 const PAL=['var(--c0)','var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)','var(--c7)'];
+// Deliverable types → concrete file formats (types like Text/File/Deck/Document overlap; formats don't).
+const FMT={'Deck':'PPTX','Slides':'PPTX','Presentation':'PPTX','Slide deck':'PPTX','Document':'Word','Doc':'Word','Word':'Word','Spreadsheet':'Excel / CSV','Excel':'Excel / CSV','CSV':'Excel / CSV','Web page':'HTML','Webpage':'HTML','Web':'HTML','HTML':'HTML','Text':'Text / MD','Markdown':'Text / MD','Image':'Image','PDF':'PDF','File':'File (other)'};
+const fmtLabel=t=>FMT[t]||t;
+// Display-only remap of grouped process labels (taxonomy files stay byte-for-byte identical).
+const PROC_LABEL={'Skill Development':'Cowork Skill Development'};
+const procLabel=n=>PROC_LABEL[n]||n;
 const posted=RAW.members.filter(m=>m.posted);
 const state={snapshot:RAW.snapshots[RAW.snapshots.length-1].id,rate:RATE0,tab:'overview'};
 const el=id=>document.getElementById(id);
@@ -104,6 +146,7 @@ const money=v=>'$'+Math.round(v).toLocaleString('en-US');
 const hrs=h=>h.toFixed(1)+' h';
 const pct=(n,d)=>d>0?Math.round(n/d*100):0;
 const wk=h=>(h/40).toFixed(1);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 function snapIds(){return state.snapshot==='ALL'?RAW.snapshots.map(s=>s.id):[state.snapshot];}
 function snapLabel(){if(state.snapshot==='ALL')return 'All snapshots';const s=RAW.snapshots.find(x=>x.id===state.snapshot);return s.label+(s.periodStart?' ('+s.periodStart+' → '+s.periodEnd+')':'');}
 function activeMembers(){const ids=snapIds();return posted.filter(m=>ids.some(id=>m.reports[id]));}
@@ -111,7 +154,7 @@ function memberReports(m){return snapIds().map(id=>m.reports[id]).filter(Boolean
 
 function aggregate(members){
   const a={n:members.length,head:{timeTyp:0,timeLow:0,timeHigh:0,expertH:0,assistedH:0,sessions:0,runTasks:0,deliverables:0,activeDays:0},
-    cat:{},pil:{},proc:{},role:{},skill:{},deliv:{},inputs:{},outputs:{},inA:0,outP:0};
+    cat:{},pil:{},proc:{},role:{},skill:{},deliv:{},delivDetail:[],inputs:{},outputs:{},inA:0,outP:0};
   let lowN=0,highN=0;
   members.forEach(m=>memberReports(m).forEach(r=>{
     const h=r.headline;for(const k in a.head){if(k!=='timeLow'&&k!=='timeHigh')a.head[k]+=(h[k]||0);}
@@ -122,6 +165,7 @@ function aggregate(members){
     r.roles.forEach(x=>{const o=a.role[x.name]||(a.role[x.name]={hours:0});o.hours+=x.hours;});
     r.skills.forEach(x=>{const o=a.skill[x.name]||(a.skill[x.name]={deliverables:0,sessions:0,hours:0});o.deliverables+=x.deliverables;o.sessions+=x.sessions;o.hours+=x.hours;});
     r.deliverables.forEach(d=>{const o=a.deliv[d.type]||(a.deliv[d.type]={count:0,hours:0,skills:new Set()});o.count+=d.count;o.hours+=d.hours;(d.skills||[]).forEach(s=>o.skills.add(s));});
+    (r.deliverablesDetail||[]).forEach(d=>a.delivDetail.push(d));
     (r.io.inputs||[]).forEach(i=>a.inputs[i.type]=(a.inputs[i.type]||0)+i.count);
     (r.io.outputs||[]).forEach(i=>a.outputs[i.type]=(a.outputs[i.type]||0)+i.count);
     a.inA+=r.io.inputsAnalyzed||0;a.outP+=r.io.outputsProduced||0;
@@ -132,6 +176,26 @@ function aggregate(members){
 const toArr=o=>Object.keys(o).map(k=>Object.assign({name:k},o[k]));
 const sortH=a=>a.sort((x,y)=>y.hours-x.hours);
 function barRow(label,p,color,v){return `<div class="row"><div class="rl" title="${label}">${label}</div><div class="rbar"><div class="rfill" style="width:${p}%;background:${color}"></div></div><div class="rv">${v}</div></div>`;}
+// Per-process detail shown inside each expandable business-process row: the distinct DELIVERABLES the
+// process produced (file format shown inline on each) + the SKILLS behind them (skills collapse into a
+// sub-expand when the list is long).
+function procDetailHTML(items,R){
+  if(!items||!items.length)
+    return `<div class="sec-note">No per-item detail for this process in the current posts. Deliverable names are de-identified by the Member skill (no file names); the list appears here when a teammate's post carries it.</div>`;
+  // List the distinct deliverables directly under the process — one level indented, file format inline.
+  // Names arrive already version-collapsed by the parser (e.g. "Cowork Dashboard report +4 versions").
+  const list=items.slice().sort((a,b)=>(b.hours||0)-(a.hours||0)).map(d=>{
+    const nm=esc((d.name&&d.name.trim())?d.name:fmtLabel(d.type));
+    return `<div class="dlv"><span class="dlv-nm" title="${nm}">${nm}</span><span class="fmt-tag">${esc(fmtLabel(d.type))}</span><span class="dlv-v">${hrs(d.hours||0)} · ${money((d.hours||0)*R)}</span></div>`;
+  }).join('');
+  const sk={};items.forEach(d=>(d.skills||[]).forEach(s=>sk[s]=(sk[s]||0)+1));
+  const skArr=Object.keys(sk).map(k=>({name:k,n:sk[k]})).sort((a,b)=>b.n-a.n);
+  const skPills=skArr.map(s=>`<span class="pill">${esc(s.name)}${s.n>1?' ·'+s.n:''}</span>`).join('');
+  const skBlock=!skArr.length?'':(skArr.length>6
+     ? `<details class="drill sub"><summary>Skills used · ${skArr.length}</summary><div class="dbody">${skPills}</div></details>`
+     : `<div class="skline"><span class="sklbl">Skills used</span>${skPills}</div>`);
+  return `<div class="dlv-list">${list}</div>`+skBlock;
+}
 
 function render(){
   const R=state.rate,mem=activeMembers(),A=aggregate(mem),H=A.head;
@@ -155,27 +219,36 @@ function render(){
   const ins=[];
   ins.push({i:'⏱️',t:`The team reclaimed <b>${hrs(H.timeTyp)}</b> (~${money(H.expertH*R)}) — about <b>${wk(H.timeTyp)} expert work-weeks</b> at <b>${teamSpeed.toFixed(1)}×</b> leverage over hands-on time.`});
   if(catArr[0])ins.push({i:'🎯',t:`Most leverage is in <b>${catArr[0].name}</b> — <b>${pct(catArr[0].hours,totCatH)}%</b> of saved time.`});
-  if(procArr[0])ins.push({i:'🏭',t:`The biggest business process is <b>${procArr[0].name}</b> — <b>${pct(procArr[0].hours,totProcH)}%</b> of the work.`});
+  if(procArr[0])ins.push({i:'🏭',t:`The biggest business process is <b>${procLabel(procArr[0].name)}</b> — <b>${pct(procArr[0].hours,totProcH)}%</b> of the work.`});
   if(pilArr[0])ins.push({i:'💼',t:`<b>${pilArr[0].name}</b> is the dominant value pillar at <b>${pct(pilArr[0].hours,totPilH)}%</b> of saved hours.`});
-  ins.push({i:'🧭',t:`Read as <b>modeled tool-impact, not performance scores</b> — alongside team context (project phase, seasonality). Anonymized: nothing is shown at an individual level.`});
   el('ov-insights').innerHTML=ins.map(x=>`<div class="ins"><div class="ic">${x.i}</div><div class="tx">${x.t}</div></div>`).join('');
 
   // Impact & Value
   renderDonut('im-pillars',pilArr,totPilH,R);
   (function(){const mx=Math.max(1,...catArr.map(a=>a.hours));el('im-categories').innerHTML=catArr.map(c=>{const band=RAW.meta.categoryBands[c.name]?`<span style="font-size:11px;color:var(--faint)"> &nbsp;band ${RAW.meta.categoryBands[c.name]} min/run</span>`:'';
     return barRow(c.name,c.hours/mx*100,CAT_COLOR[c.name]||'var(--c0)',`<b>${hrs(c.hours)}</b> · ${money(c.hours*R)} · ${c.tasks} tasks · ${pct(c.hours,totCatH)}%`)+`<div style="margin:-4px 0 6px 191px">${band}</div>`;}).join('');})();
-  (function(){const arr=sortH(toArr(A.role)),mx=Math.max(1,...arr.map(a=>a.hours));el('im-roles').innerHTML=arr.length?arr.map((x,i)=>barRow(x.name,x.hours/mx*100,PAL[i%PAL.length],`<b>${hrs(x.hours)}</b> · ${money(x.hours*R)}`)).join(''):'<div class="sec-note">No role data in these posts.</div>';})();
-  (function(){const arr=sortH(toArr(A.deliv)),tc=arr.reduce((s,x)=>s+x.count,0),th=arr.reduce((s,x)=>s+x.hours,0);
-    el('im-deliv').innerHTML=`<table class="dt"><thead><tr><th>Deliverable type</th><th class="r">Count</th><th class="r">Hours</th><th class="r">Value</th><th>Skills behind them</th></tr></thead><tbody>`+
-      arr.map(d=>`<tr><td><b>${d.name}</b></td><td class="r">${d.count}</td><td class="r">${hrs(d.hours)}</td><td class="r">${money(d.hours*R)}</td><td>${[...d.skills].sort().map(s=>`<span class="pill">${s}</span>`).join('')}</td></tr>`).join('')+
-      `<tr class="tot"><td>Total</td><td class="r">${tc}</td><td class="r">${hrs(th)}</td><td class="r">${money(th*R)}</td><td></td></tr></tbody></table>`;})();
+  (function(){const arr=sortH(toArr(A.role)),mx=Math.max(1,...arr.map(a=>a.hours));
+    const roleHtml=arr.length?arr.map((x,i)=>barRow(x.name,x.hours/mx*100,PAL[i%PAL.length],`<b>${hrs(x.hours)}</b> · ${money(x.hours*R)}`)).join(''):'<div class="sec-note">No role data in these posts.</div>';
+    const sk=sortH(toArr(A.skill));
+    const skHtml=sk.length?`<details class="drill"><summary>Skills behind these roles — ${sk.length}</summary><div class="dbody"><table class="dt"><thead><tr><th>Skill</th><th class="r">Deliverables</th><th class="r">Sessions</th><th class="r">Hours</th><th class="r">Value</th></tr></thead><tbody>`+
+      sk.map(s=>`<tr><td>${s.name}</td><td class="r">${s.deliverables}</td><td class="r">${s.sessions}</td><td class="r">${hrs(s.hours)}</td><td class="r">${money(s.hours*R)}</td></tr>`).join('')+
+      `</tbody></table><div class="sec-note" style="margin-top:6px">The specific skills that make up the roles above — the same expertise, one level of detail down.</div></div></details>`:'';
+    el('im-roles').innerHTML=roleHtml+skHtml;})();
+  (function(){
+    const bym={};sortH(toArr(A.deliv)).forEach(d=>{const f=fmtLabel(d.name);const o=bym[f]||(bym[f]={name:f,count:0,hours:0});o.count+=d.count;o.hours+=d.hours;});
+    const arr=sortH(Object.keys(bym).map(k=>bym[k])),tc=arr.reduce((s,x)=>s+x.count,0),th=arr.reduce((s,x)=>s+x.hours,0);
+    let html=`<table class="dt"><thead><tr><th>Format</th><th class="r">Count</th><th class="r">Hours</th><th class="r">Value</th></tr></thead><tbody>`+
+      arr.map(d=>`<tr><td><b>${d.name}</b></td><td class="r">${d.count}</td><td class="r">${hrs(d.hours)}</td><td class="r">${money(d.hours*R)}</td></tr>`).join('')+
+      `<tr class="tot"><td>Total</td><td class="r">${tc}</td><td class="r">${hrs(th)}</td><td class="r">${money(th*R)}</td></tr></tbody></table>`;
+    el('im-deliv').innerHTML=html;})();
 
   // How Cowork is used — process leads
-  (function(){el('wk-proc').innerHTML=`<table class="dt"><thead><tr><th>Business process</th><th class="r">Sessions</th><th class="r">Hours</th><th class="r">Value</th><th class="r">% time</th></tr></thead><tbody>`+
-      procArr.map(p=>`<tr><td>${p.name}</td><td class="r">${p.sessions}</td><td class="r">${hrs(p.hours)}</td><td class="r">${money(p.hours*R)}</td><td class="r">${pct(p.hours,totProcH)}%</td></tr>`).join('')+
-      `<tr class="tot"><td>Total</td><td class="r">${procArr.reduce((s,x)=>s+x.sessions,0)}</td><td class="r">${hrs(totProcH)}</td><td class="r">${money(totProcH*R)}</td><td class="r">100%</td></tr></tbody></table>`;})();
-  (function(){const arr=sortH(toArr(A.skill));el('wk-skills').innerHTML=`<table class="dt"><thead><tr><th>Skill</th><th class="r">Deliverables</th><th class="r">Sessions</th><th class="r">Hours</th><th class="r">Value</th></tr></thead><tbody>`+
-      arr.map(s=>`<tr><td>${s.name}</td><td class="r">${s.deliverables}</td><td class="r">${s.sessions}</td><td class="r">${hrs(s.hours)}</td><td class="r">${money(s.hours*R)}</td></tr>`).join('')+`</tbody></table>`;})();
+  (function(){
+    const byp={};(A.delivDetail||[]).forEach(d=>{const p=d.process||'Other';(byp[p]=byp[p]||[]).push(d);});
+    const head=`<div class="acct-h"><span>Business process</span><span class="r">Sessions</span><span class="r">Hours</span><span class="r">Value</span><span class="r">% time</span></div>`;
+    const rows=procArr.map(p=>`<details class="acct-row"><summary><span class="ap">${procLabel(p.name)}</span><span class="r">${p.sessions}</span><span class="r">${hrs(p.hours)}</span><span class="r">${money(p.hours*R)}</span><span class="r">${pct(p.hours,totProcH)}%</span></summary><div class="acct-body">${procDetailHTML(byp[p.name]||[],R)}</div></details>`).join('');
+    const tot=`<div class="acct-tot"><span>Total</span><span class="r">${procArr.reduce((s,x)=>s+x.sessions,0)}</span><span class="r">${hrs(totProcH)}</span><span class="r">${money(totProcH*R)}</span><span class="r">100%</span></div>`;
+    el('wk-proc').innerHTML=`<div class="acct">${head}${rows}${tot}</div><div class="sec-note" style="margin-top:10px">Click any business process to expand the deliverable formats it produced and the skills behind them.</div>`;})();
   renderCatMix('wk-stack',mem,catArr.map(c=>c.name));
   (function(){const inA=Object.keys(A.inputs).map(k=>({t:k,c:A.inputs[k]})).sort((a,b)=>b.c-a.c),outP=Object.keys(A.outputs).map(k=>({t:k,c:A.outputs[k]})).sort((a,b)=>b.c-a.c);
     const mxi=Math.max(1,...inA.map(x=>x.c)),mxo=Math.max(1,...outP.map(x=>x.c));
@@ -237,9 +310,9 @@ TEMPLATE = """<!DOCTYPE html>
   <h1>Cowork Dashboard — Team Dashboard</h1>
   <p class="sub">__TEAM__ — team impact &amp; how Cowork is used</p>
   <p class="gen">Generated __GENERATED__ · <span id="ctxline"></span></p>
+  <p class="disc"><b>Read as modeled tool-impact, not performance scores</b> — directional estimates of tool-assisted time savings, read with team context (project phase, seasonality), not individual performance. Anonymized &amp; team-level only: de-identified posts (no names, files, or prompts); nothing shown per person; a Role breaks out only when __KTHRESH__+ contributors share it.</p>
 </div></header>
 <div class="wrap">
-  <div class="banner"><span>🔒</span><span><b>Anonymized — numbers only.</b> Built from teammates' de-identified Cowork posts (no names, files, or prompts). Modeled tool-impact estimates for status reporting, <b>not</b> individual performance. Nothing is shown at an individual level; a Role breaks out only when <b>__KTHRESH__+</b> contributors share it. Small-team (v1) view — read with team context.</span></div>
   <div class="controls">
     <div class="ctl"><label for="snapSel">Period</label><select id="snapSel"></select></div>
     <div class="ctl"><label for="rateInput">Hourly rate</label><div class="rate-in"><span>$</span><input id="rateInput" type="number" min="1" step="1" inputmode="numeric"><span>/hr</span></div></div>
@@ -264,14 +337,13 @@ TEMPLATE = """<!DOCTYPE html>
     <section class="block"><h2 class="sec"><span class="dot"></span>Business value pillars</h2><p class="sec-note">Where the saved hours land. Value = hours × the rate above.</p><div class="card" id="im-pillars"></div></section>
     <section class="block"><h2 class="sec"><span class="dot"></span>Where the time went — by task category</h2><p class="sec-note">With the research-anchored time bands (minutes saved per run).</p><div class="card" id="im-categories"></div></section>
     <section class="block"><div class="grid2">
-      <div class="card"><h3>Roles Cowork stood in for</h3><p class="hint">Roles a services firm would have billed.</p><div id="im-roles"></div></div>
-      <div class="card"><h3>Deliverables produced — by type</h3><p class="hint">The output the team shipped, with the skills behind each type.</p><div id="im-deliv"></div></div>
+      <div class="card"><h3>Roles Cowork stood in for</h3><p class="hint">Roles a services firm would have billed — expand for the specific skills behind them.</p><div id="im-roles"></div></div>
+      <div class="card"><h3>Deliverables produced — by format</h3><p class="hint">What the team shipped, as real file formats. Per-item detail sits under <i>Work by business process</i>.</p><div id="im-deliv"></div></div>
     </div></section>
   </div>
 
   <div class="tab-panel" id="tab-work">
-    <section class="block"><h2 class="sec"><span class="dot"></span>Work by business process</h2><p class="sec-note">Grouped into the shared canonical set (mirrors the Member skill). This is the spine of the tab — what the team actually does with Cowork.</p><div class="card" id="wk-proc"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Skills applied</h2><p class="sec-note">Curated to the shared ~30-skill canonical vocabulary.</p><div class="card" id="wk-skills"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Work by business process</h2><p class="sec-note">Grouped into the shared canonical set (mirrors the Member skill). This is the spine of the tab — what the team actually does with Cowork. <b>Each row expands</b> — click a process to see the deliverable formats it produced and the skills behind them.</p><div class="card" id="wk-proc"></div></section>
     <section class="block"><h2 class="sec"><span class="dot"></span>Category mix</h2><p class="sec-note">How saved time splits across task categories — grouped by Role where privacy allows.</p><div class="card" id="wk-stack"></div></section>
     <section class="block"><h2 class="sec"><span class="dot"></span>Analyzed → Produced</h2><p class="sec-note">Inputs the team analyzed vs. deliverables produced, by type.</p><div class="card" id="wk-io"></div></section>
   </div>
@@ -282,7 +354,7 @@ TEMPLATE = """<!DOCTYPE html>
 
   <div class="tab-panel" id="tab-method">
     <details class="meth" open><summary>How to read this dashboard</summary><div class="mbody">
-      <p>Built by aggregating the de-identified Cowork Dashboard posts teammates publish to the team channel. Metric &amp; section titles match the <b>Copilot ROI Report</b> and <b>Cowork Dashboard Member</b> skills. Treat numbers as <b>directional</b>: Cowork isn't the only factor behind any change — consider project phase and seasonality. This is a small, homogeneous-team (v1) view.</p>
+      <p>Built by aggregating the de-identified Cowork Dashboard posts teammates publish to the team channel. Metric &amp; section titles match the <b>Copilot ROI Report</b> and <b>Copilot ROI Member</b> skills. Treat numbers as <b>directional</b>: Cowork isn't the only factor behind any change — consider project phase and seasonality. This is a small, homogeneous-team (v1) view.</p>
       <h4>Privacy</h4>
       <p><b>Nothing is shown at an individual level.</b> Members appear only as counts. The one per-attribute view (category mix) breaks a Role out only when <b>__KTHRESH__+</b> contributors share it; otherwise they collapse into a single combined bar. The only attribute used is the directory <b>Role</b> (job title) that a teammate's post carries — never names, never country, never file names.</p>
       <h4>Value model</h4>

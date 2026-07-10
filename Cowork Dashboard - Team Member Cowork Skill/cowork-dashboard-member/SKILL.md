@@ -1,7 +1,7 @@
 ---
 name: cowork-dashboard-member
 description: |
-  Member step of the team Cowork Dashboard rollup. Harvests the signed-in user's own Copilot Cowork session history from OneDrive, lets the user exclude any chat/task, computes impact metrics, and posts a de-identified, TABLE-FORMATTED stats message to your team's dedicated "Cowork report" Teams channel (the channel link is requested on first run and remembered). Tables cover KPIs, time-by-category, value pillars, jobs-to-be-done, business processes, roles, skills, and deliverable types. Person names, file names and prompts are excluded; process/JTBD and customer/account names are kept. Bundles its own pipeline. Runs once or on a 15-day schedule (scheduled runs email the user to review/exclude sessions before posting).
+  Member step of the team Cowork Dashboard rollup. Harvests the signed-in user's own Copilot Cowork session history from OneDrive, lets the user exclude any chat/task, computes impact metrics, and posts a de-identified, TABLE-FORMATTED stats message to your team's dedicated "Cowork report" Teams channel (the channel link is requested on first run and remembered). Tables cover KPIs, time-by-category, value pillars, jobs-to-be-done, business processes, roles, skills, and deliverable types. Person names, file names and prompts are excluded; process/JTBD and customer/account names are kept. Bundles its own pipeline. Runs once or on a biweekly schedule (every other Monday; scheduled runs email the user to review/exclude sessions before posting).
   Use when the user asks to "post my Cowork Dashboard stats", "send my Cowork stats to the team channel", "run the Cowork Dashboard member step", or "share my Cowork impact with the team".
   Do NOT use for: the full personal HTML report (use cowork-roi-report), the manager-side team dashboard, GitHub Copilot reports, or single-meeting summaries.
 cowork:
@@ -31,7 +31,7 @@ starts with no memory and mints the user's processes from their OWN sessions.
 
 ## When to use
 - "Post my Cowork Dashboard stats to the team channel" / "run the Cowork Dashboard member step"
-- A team cadence (e.g. every 15 days) where each member contributes their stats.
+- A team cadence (e.g. every other Monday) where each member contributes their stats.
 
 ## When NOT to use
 - Full personal HTML report with project detail → `cowork-roi-report`.
@@ -71,11 +71,13 @@ All script paths below are under this skill's own folder:
 ## Workflow
 
 ### 1. Choose run mode + period
-Ask once with **`AskUserQuestion`**: *"Run this once, or automate it every 15 days?"* — options
-**"Just once"** / **"Automate every 15 days (email me to review before each post)"**. The period
+Ask once with **`AskUserQuestion`**: *"Run this once, or automate it every other Monday?"* — options
+**"Just once"** / **"Automate biweekly on Mondays (email me to review before each post)"**. The period
 defaults to the **last 15 days** (ask only if the user names a different window). Window = N days
 ago 00:00 → today 23:59, local time. If they choose automate, still produce a post now **and** set
 up the schedule in step 9.
+
+> **Note:** This automate/schedule prompt appears on the **first RUN** of the skill, not at install.
 
 ### 2. Resolve identity & dates
 `GetMyDetails(select="mail,userPrincipalName,displayName,jobTitle")` (the `mail` is the per-user memory
@@ -97,19 +99,25 @@ ALL session folders in the window:
   Task folders `<Cowork>/Tasks/<goal-slug>-<YYYY-MM-DD>/` (→ `input/`+`output/`), root goal folders
   `<Cowork>/<goal-slug>-<YYYY-MM-DD>/`, and legacy `<Cowork>/sessions/<uuid>/`.
 - **Scope to the Cowork app** — count a folder/artifact ONLY when its `createdBy.application.id` is
-  the Cowork app id `6ab48b67-cd74-4ad4-81af-5932984589be`. **Never** enumerate `Documents/Apps/…`
+  the Cowork app id `6ab48b67-cd74-4ad4-81af-5932984589be` (Cowork's fixed **product** app ID — the same for every user and tenant; leave it as-is, it is NOT a value to fill in). **Never** enumerate `Documents/Apps/…`
   (a different product).
 - Keep session folders whose created/modified date is in the window. For each, list its `output/`
   (and `input/`) for artifact names + extensions. **Fold supporting files** (QA screenshots,
   `-v2`/`-sample` variants, prompts, READMEs, lock files, zips) into the session's primary
   deliverable. Keep output-less (chat-only) sessions.
+- **Deliverable `name` = a clean, de-identified DESCRIPTIVE label — NOT the raw file name.** For each
+  output, write a short readable label (e.g. `ROI newsletter`, `AI-in-One insights deck`, `Clinic
+  operations dashboard`) with the extension, person names, and any customer/account names stripped.
+  This `name` is shown verbatim in the **Deliverable** column of the posted table (§7.9), so it must
+  carry NO personal or customer identifier and NO raw filename. (Keep the real `ext` — it drives
+  classification.)
 - Write `working/cowork_raw.json`:
   ```json
   { "meta": {"user":"<name>","email":"<mail>","role":"<jobTitle from step 2>","generated":"<YYYY-MM-DD>",
              "window":{"from":"...","to":"...","label":"Last N days","months":0.5},"hourly_rate":72},
     "sessions": [ {"id":"<slug>","date":"YYYY-MM-DD","hour":12,"goal":"<short verb-first phrase>",
                    "inputs":[{"name":"report.pdf","ext":"pdf"}],
-                   "outputs":[{"name":"deck.pptx","ext":"pptx","skills":["Presentation Design"]}],
+                   "outputs":[{"name":"AI-in-One insights deck","ext":"pptx","skills":["Presentation Design"]}],
                    "skills":["Data Analysis"], "professional_roles":["Data Analyst"],
                    "has_folder":true, "exec_min":null} ] }
   ```
@@ -179,7 +187,7 @@ skill** (`cowork-roi-report/scripts/build_report.py`). The post is a sequence of
 6. **Roles Cowork assembled for me** — Role · Hours · Value.
 7. **Skills applied** — Skill · Deliverables · Sessions · Value.
 8. **Analyzed → Produced** — Measure · Value, plus **Inputs by type** and **Outputs by type**.
-9. **Deliverables & the skills behind them** — every deliverable made visible and **labelled with the business process it supported**: Type · Date · Business process · Skills · Hours · Value (de-identified — no file names), followed by a **By type** rollup (Deliverable type · Count · Hours · Value · Skills used).
+9. **Deliverables & the skills behind them** — every deliverable made visible with a **de-identified descriptive label** (person/customer/raw-file names stripped — see §3) and **labelled with the business process it supported**: Deliverable · Type · Date · Business process · Skills · Hours · Value, followed by a **By type** rollup (Deliverable type · Count · Hours · Value · Skills used). The **By type** rollup is the shared-contract shape the aggregated Dashboard parses — do not remove its columns; the per-row **Deliverable** label column is member-post-only.
 10. **Activity by day** — Date · Run tasks.
 
 Every value comes from `cowork_roi_data.json`; no hand math.
@@ -191,8 +199,9 @@ Show the user the rendered tables inline, then post to the channel resolved in *
 The platform shows its own approval dialog before anything sends.
 
 ### 9. Automate (only if the user chose it in step 1)
-`SetupScheduledPrompt` (frequency **Day**, interval **15**, hours `["8"]`, name "Cowork Dashboard member
-(every 15 days)") with a **self-contained** description:
+`SetupScheduledPrompt` (frequency **Week**, interval **2**, weekDays `["Monday"]`, hours `["8"]`, name
+"Cowork Dashboard member (biweekly, Mondays)") — a fixed **every-other-Monday at 8 AM** cadence so every
+member's 15-day window aligns regardless of install date — with a **self-contained** description:
 > "Generate my Cowork Dashboard stats for the last 15 days: harvest my Cowork sessions, compute the
 >  table-formatted de-identified post, then EMAIL me that it's ready and ask me to open this task's
 >  chat to exclude any sessions I don't want shared before it posts to my team's Cowork report
@@ -227,6 +236,10 @@ final opt-out + post interactively in the task chat. Confirm setup in plain lang
   dropped from `cowork_raw.json` so they are never classified, costed, named, or sent.
 - **Scheduled runs never auto-post.** A scheduled execution emails the user and stops; posting only
   happens after the user's interactive opt-out. The platform approval dialog is the final gate.
+- **Fixed biweekly cadence.** When automating, always schedule `SetupScheduledPrompt(frequency=Week,
+  interval=2, weekDays=["Monday"], hours=["8"])` — every other Monday at 8 AM — so all members' 15-day
+  windows align regardless of install date. The harvest window stays the **last 15 days**, and the
+  review-email + opt-out flow is unchanged.
 - **One post per run.** Re-running replaces the user's contribution; the manager skill keeps the latest per sender.
 - **Per-user memory — never leak it.** The taxonomy registry is owner-scoped and owner-stamped;
   `reconcile_taxonomy.py` ignores any file that isn't the invoking user's, and a first run starts

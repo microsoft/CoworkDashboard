@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_guide_pdf.py — render the one-page, LANDSCAPE "How to read your Team Cowork Dashboard"
+build_guide_pdf.py — render the one-page, LANDSCAPE "How to read your Team Cowork Dashboard dashboard"
 interpretation guide that is emailed alongside the HTML dashboard.
 
 A visual, plain-language legend: every KPI, the five tabs, the two controls, the privacy model,
