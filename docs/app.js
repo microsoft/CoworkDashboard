@@ -133,8 +133,8 @@
       if (mgrState) mgrState.textContent = "Your team's channel is already built in, so it won't ask you for a link.";
       if (memState) memState.textContent = "Because your channel is already baked in, no one on your team is ever asked for a link \u2014 their reports simply start posting to your channel.";
     } else {
-      if (mgrState) mgrState.textContent = "Add your channel in step 1 to bake it into this download \u2014 otherwise this generic copy asks you for the channel link the first time you run it.";
-      if (memState) memState.textContent = "Add your channel in step 1 to bake it into this download \u2014 otherwise each teammate is asked for the channel link the first time they run it.";
+      if (mgrState) mgrState.textContent = "Add your channel in step 2 to bake it into this download \u2014 otherwise this generic copy asks you for the channel link the first time you run it.";
+      if (memState) memState.textContent = "Add your channel in step 2 to bake it into this download \u2014 otherwise each teammate is asked for the channel link the first time they run it.";
     }
   }
 
@@ -237,7 +237,7 @@
       configPath: "cowork-dashboard-member/config/team_channel.json",
       zipPrefix: "cowork-dashboard-member-",
       genericName: "cowork-dashboard-member.zip",
-      successMsg: "send this one to your team.",
+      successMsg: "post this one into your dedicated channel and @tag your team.",
       fillConfig: memberConfig
     });
   }
@@ -283,6 +283,7 @@
       var mgrBtn = $("downloadMgrBtn"); if (mgrBtn) mgrBtn.addEventListener("click", onDownloadManager);
       $("copyBtn").addEventListener("click", makeCopyHandler("installText", "copyBtn"));
       var copyMgr = $("copyMgrBtn"); if (copyMgr) copyMgr.addEventListener("click", makeCopyHandler("installMgrText", "copyMgrBtn"));
+      var copyRunMember = $("copyRunMemberBtn"); if (copyRunMember) copyRunMember.addEventListener("click", makeCopyHandler("runMemberText", "copyRunMemberBtn"));
     });
   }
 
