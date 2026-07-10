@@ -40,7 +40,8 @@ teammates ──(cowork-dashboard-member)──▶  Teams channel  ──(ListCh
                                                               + skill_aliases         ▼   anonymize → role only)
                                                                                 team_data.json
                                                                           ┌──────────┴───────────┐
-                                       scripts/build_dashboard.py         │                      │  scripts/build_guide_pdf.py
+                                       scripts/build_outputs.py  (one step → one approval, drives both builders below)
+                                       build_dashboard.py                 │                      │  build_guide_pdf.py
                                        (k-anonymity, live rate)           ▼                      ▼  (reportlab, landscape)
                               output/cowork-team-roi-dashboard.html               output/how-to-read-team-roi-dashboard.pdf
                                                                           └──────────┬───────────┘
@@ -58,15 +59,12 @@ teammates ──(cowork-dashboard-member)──▶  Teams channel  ──(ListCh
    ```
    The Team must already exist and you must be a member. The channel **must match** the one
    `cowork-dashboard-member` posts to. (See `SKILL.md → First run`.)
-2. **Read + build (last 15 days) + guide:**
+2. **Read + build (last 15 days) — dashboard + guide in one step:**
    ```bash
    # after saving the channel messages' `value` array to working/raw_messages.json
    python scripts/parse_posts.py --in working/raw_messages.json \
           --config config/team_config.json --out working/team_data.json --window-days 15
-   python scripts/build_dashboard.py --in working/team_data.json \
-          --out output/cowork-team-roi-dashboard.html
-   python scripts/build_guide_pdf.py --out output/how-to-read-team-roi-dashboard.pdf \
-          --data working/team_data.json --config config/team_config.json
+   python scripts/build_outputs.py --in working/team_data.json --config config/team_config.json
    ```
 3. Open `output/cowork-team-roi-dashboard.html`; the skill emails both files to the channel members.
 
@@ -78,10 +76,7 @@ Two real, de-identified posts are bundled:
 python scripts/parse_posts.py --in examples/sample_raw_messages.json \
        --config config/team_config.json --out working/team_data.json \
        --window-days 15 --now 2026-07-02 --generated 2026-07-01
-python scripts/build_dashboard.py --in working/team_data.json \
-       --out output/cowork-team-roi-dashboard.html
-python scripts/build_guide_pdf.py --out output/how-to-read-team-roi-dashboard.pdf \
-       --data working/team_data.json --config config/team_config.json
+python scripts/build_outputs.py --in working/team_data.json --config config/team_config.json
 ```
 
 ## Config (`config/team_config.json`)
@@ -111,15 +106,17 @@ python scripts/build_guide_pdf.py --out output/how-to-read-team-roi-dashboard.pd
 in turn mirrors `cowork-roi-report`). If those change, update this copy too or team aggregation
 drifts. `skill_aliases.json` is reader-only and not part of the contract.
 
-**Deliverable names:** the Member skill strips file names by design, so this dashboard shows
-deliverables **by type**. Showing real names requires a Member-skill change (an opt-in name manifest)
-first — see `SKILL.md → Cross-skill contract`.
+**Deliverable names:** the Member skill emits **de-identified descriptive names** (never raw file
+names). This dashboard lists those names under each business process — repeated versions of the same
+name collapse into one `+N versions` entry — with the file format shown inline; the "by format" table
+on *Impact & Value* stays a type/format rollup.
 
 ## Requirements
 
 - Python 3. The core pipeline (`resolve_channel.py`, `parse_posts.py`, `build_dashboard.py`) is
   **standard library only**. `build_guide_pdf.py` uses **reportlab** (pre-installed in the Copilot
-  Cowork container) to render the one-page PDF guide.
+  Cowork container) to render the one-page PDF guide; `build_outputs.py` runs both builders in one
+  step (so reportlab is needed for the combined step).
 - Runs inside Microsoft Copilot Cowork (Teams + email tools provided by the host). The scripts
   themselves run anywhere Python 3 (+ reportlab for the guide) does.
 
