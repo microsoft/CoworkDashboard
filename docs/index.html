@@ -406,6 +406,28 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">1</span>
+      <h2>Create a dedicated Teams channel for this rollup</h2>
+    </div>
+    <p class="lead">Before anything else, create a <strong>brand-new, dedicated Teams channel</strong> just for
+       these Cowork ROI reports, and add <strong>only</strong> the members you want included (they'll need
+       access to post their summaries here).</p>
+    <ol class="steps">
+      <li>In <strong>Microsoft Teams</strong>, pick a team and choose <strong>⋯ More options → Add channel</strong>
+          (or <strong>Manage team → Add channel</strong>). Give it a clear name like
+          <span class="mono">Cowork report - {team}</span>.</li>
+      <li>Add <strong>only the members you want in this rollup</strong> — everyone you add can see and post here,
+          so keep it to the people whose Copilot Cowork work should be counted.</li>
+      <li>Once it exists, grab its link for the next step: hover the channel name, click
+          <strong>⋯ → Get link to channel</strong>, and click <strong>Copy</strong>.</li>
+    </ol>
+    <p class="note privacy">🔒 <strong>Why a dedicated channel?</strong> A fresh, members-only channel keeps these
+       reports private to the right people and gives the manager skill clean aggregation data — nothing else in
+       the channel to wade through, so totals stay accurate.</p>
+  </section>
+
+  <section class="card">
+    <div class="step-head">
+      <span class="step-num">2</span>
       <h2>Paste your team's Teams channel link</h2>
     </div>
     <label for="link">Teams channel link</label>
@@ -456,7 +478,7 @@
 
   <section class="card">
     <div class="step-head">
-      <span class="step-num">2</span>
+      <span class="step-num">3</span>
       <h2>Install the manager skill — “Cowork Dashboard - Team Dashboard Cowork Skill”</h2>
     </div>
     <div class="dl-block">
@@ -465,8 +487,8 @@
       <div class="row">
         <button id="downloadMgrBtn" type="button">⬇ Download the manager skill (.zip)</button>
       </div>
-      <p class="dl-note" id="genNoteMgr">No channel added in step 1 yet — this will be a <strong>generic</strong>
-         copy that asks you for the channel link on first run. Add your channel in step 1 to bake it in.</p>
+      <p class="dl-note" id="genNoteMgr">No channel added in step 2 yet — this will be a <strong>generic</strong>
+         copy that asks you for the channel link on first run. Add your channel in step 2 to bake it in.</p>
       <p class="dl-note baked hidden" id="bakeNoteMgr"></p>
       <div id="dlMgrStatus" class="status" role="status" aria-live="polite"></div>
     </div>
@@ -477,38 +499,51 @@
       <textarea id="installMgrText" readonly>Install the attached Cowork Dashboard - Team Dashboard Cowork Skill into my Cowork skills.</textarea>
       <button id="copyMgrBtn" class="secondary" type="button">Copy</button>
     </div>
-    <p class="note"><span id="mgrBakeState">Add your channel in step 1 to bake it into this download — otherwise this generic copy asks you for the channel link the first time you run it.</span> Once it's
+    <p class="note"><span id="mgrBakeState">Add your channel in step 2 to bake it into this download — otherwise this generic copy asks you for the channel link the first time you run it.</span> Once it's
        installed, you can say “build the team Cowork Dashboard” any time — or ask it to run on a schedule
        and email your team automatically every couple of weeks.</p>
+    <p class="note privacy">🗓️ <strong>When to run the manager / dashboard skill:</strong> schedule it
+       <strong>1–2 days after</strong> the member cadence, so every member's post is in before it aggregates.
+       For example, if members post <strong>every other Monday</strong>, run the manager skill
+       <strong>Tuesday or Wednesday</strong> of that same week.</p>
   </section>
 
   <section class="card">
     <div class="step-head">
-      <span class="step-num">3</span>
+      <span class="step-num">4</span>
       <h2>Share the team-member skill — “Cowork Dashboard - Team Member Cowork Skill”</h2>
     </div>
     <div class="dl-block">
-      <p class="dl-label"><span class="tag">Send to team</span> Team-member skill —
+      <p class="dl-label"><span class="tag">Post to channel</span> Team-member skill —
          <strong>Cowork Dashboard - Team Member Cowork Skill</strong></p>
       <div class="row">
         <button id="downloadBtn" type="button">⬇ Download the team-member skill (.zip)</button>
       </div>
-      <p class="dl-note" id="genNote">No channel added in step 1 yet — this will be a <strong>generic</strong>
-         copy that asks each teammate for the channel link on first run. Add your channel in step 1 to bake it in.</p>
+      <p class="dl-note" id="genNote">No channel added in step 2 yet — this will be a <strong>generic</strong>
+         copy that asks each teammate for the channel link on first run. Add your channel in step 2 to bake it in.</p>
       <p class="dl-note baked hidden" id="bakeNote"></p>
       <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
     </div>
-    <p>Send that <strong>team-member</strong> zip to everyone whose Copilot Cowork work you'd like included — over
-       Teams, email, wherever works. Each person uploads it in Copilot Cowork —
+    <p><strong>Post that <span class="mono">.zip</span> straight into the dedicated channel you created in step 1</strong>
+       and <strong>@tag every member</strong> so they each install it. No downloading-and-DMing — one post in the
+       shared channel reaches everyone at once. Each person uploads the zip in Copilot Cowork —
        <strong>the <span class="mono">.zip</span> file itself, without unzipping it first</strong> — and asks it to
        install the skill, the same simple step you just did:</p>
+    <p class="note privacy">📎 <strong>Safe to post the zip here:</strong> the manager / dashboard reader
+       <strong>ignores zip files</strong> in the channel — it only reads the members' posted summaries — so
+       dropping the package in the same channel won't affect your aggregation data.</p>
     <div class="copybox">
       <textarea id="installText" readonly>Install the attached Cowork Dashboard - Team Member Cowork Skill into my Cowork skills.</textarea>
       <button id="copyBtn" class="secondary" type="button">Copy</button>
     </div>
-    <p class="note"><span id="memBakeState">Add your channel in step 1 to bake it into this download — otherwise each teammate is asked for the channel link the first time they run it.</span> When each teammate installs it, the skill asks
-       whether to run once or <strong>automate every 15 days</strong> — have them choose to automate, so their
-       reports keep posting on their own and the whole system stays hands-off.</p>
+    <p class="note"><span id="memBakeState">Add your channel in step 2 to bake it into this download — otherwise each teammate is asked for the channel link the first time they run it.</span> <strong>Installing isn't enough —
+       each teammate must run the member skill once.</strong> The automate/schedule prompt (run once, or
+       <strong>automate every 15 days</strong>) appears on that <strong>first run</strong>, not at install — so have
+       everyone kick it off once and choose to automate, and the system stays hands-off from there. Tell them to type:</p>
+    <div class="copybox">
+      <textarea id="runMemberText" readonly>run the Cowork ROI member step</textarea>
+      <button id="copyRunMemberBtn" class="secondary" type="button">Copy</button>
+    </div>
     <p class="muted small">Running this yourself too? If you (the manager) also want your own Copilot Cowork work
        counted in the team numbers, install this team-member skill on your own Copilot Cowork as well —
        that part's optional.</p>
@@ -516,11 +551,12 @@
 
   <section class="card">
     <div class="step-head">
-      <span class="step-num">4</span>
+      <span class="step-num">5</span>
       <h2>That's it — here's what happens next</h2>
     </div>
     <ol class="steps">
-      <li>Each teammate runs the member skill, and their private summary posts to your shared channel.</li>
+      <li>Each teammate runs the member skill once to start it, and their private summary posts to your
+          dedicated channel — on its own 15-day schedule from then on.</li>
       <li>Your manager skill reads those posts, builds one anonymized dashboard, and emails your team a
           newsletter with the dashboard and a one-page guide attached.</li>
       <li>Keep it automated: your manager skill runs on its schedule (about every two weeks), and each
