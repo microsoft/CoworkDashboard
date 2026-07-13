@@ -198,6 +198,21 @@
   .hero-cta:hover { text-decoration: none; transform: translateY(-1px); box-shadow: var(--shadow-lg); }
   .hero-cta svg { flex: 0 0 auto; }
   .hero-actions-note { font-size: 12.5px; color: var(--text-muted); }
+  /* Prominent in-flow demo card */
+  .demo-card { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, var(--surface)), var(--surface)); }
+  .demo-card-inner { display: flex; align-items: center; gap: 26px; }
+  .demo-card-copy { flex: 1 1 auto; }
+  .demo-eyebrow { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .demo-card h2 { margin: 0 0 8px; }
+  .demo-card p { color: var(--text-soft); margin: 0 0 18px; }
+  .demo-btn { display: inline-flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 650; color: var(--on-accent) !important; background: var(--grad); border: 0; border-radius: 10px; padding: 12px 22px; box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .15s ease; }
+  .demo-btn:hover { text-decoration: none; transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+  .demo-card-art { flex: 0 0 132px; height: 108px; position: relative; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+  .demo-chip { position: absolute; border-radius: 5px; opacity: .9; }
+  .demo-chip-a { left: 14px; top: 16px; width: 104px; height: 14px; background: color-mix(in srgb, var(--accent) 55%, transparent); }
+  .demo-chip-b { left: 14px; top: 40px; width: 66px; height: 42px; background: color-mix(in srgb, var(--accent-2) 50%, transparent); }
+  .demo-chip-c { left: 90px; top: 40px; width: 28px; height: 42px; background: color-mix(in srgb, var(--accent-3) 55%, transparent); }
+  @media (max-width: 560px) { .demo-card-art { display: none; } }
 
   /* Cards */
   .card {
@@ -418,6 +433,28 @@
     <p class="muted">Both skills need to know the <strong>one Teams channel</strong> your team uses for these
        reports. This page bakes that channel into <strong>both</strong> downloads for you, so nobody is ever
        asked to paste a link — just follow the steps below.</p>
+  </section>
+
+  <section class="card demo-card">
+    <div class="demo-card-inner">
+      <div class="demo-card-copy">
+        <div class="demo-eyebrow">See it before you install</div>
+        <h2>Preview a live sample of the team report</h2>
+        <p>Open a full, interactive dashboard filled with <strong>invented sample data</strong>. Explore every tab,
+           take the built-in <strong>guided tour</strong> that explains how to read each section, change the hourly
+           rate to re-price everything, and download it with <strong>Save / Print PDF</strong> — so you know exactly
+           what your team will get.</p>
+        <a class="demo-btn" href="demo-report.html" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          See a demo of the report
+        </a>
+      </div>
+      <div class="demo-card-art" aria-hidden="true">
+        <div class="demo-chip demo-chip-a"></div>
+        <div class="demo-chip demo-chip-b"></div>
+        <div class="demo-chip demo-chip-c"></div>
+      </div>
+    </div>
   </section>
 
   <section class="card">
