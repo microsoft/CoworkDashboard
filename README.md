@@ -11,7 +11,7 @@ Teams channel**:
   the shared channel. Names, file names, and prompts are never shared; only totals and categories.
 - **Cowork Dashboard — Team Dashboard skill** (the manager skill). The manager/lead runs it. It reads the shared
   channel, combines everyone's summaries into one anonymized HTML dashboard, and **emails the team a
-  newsletter** (the dashboard plus a one-page guide) on a schedule the manager chooses. It only ever reads
+  newsletter** (the dashboard, with the how-to-read guide built in) on a schedule the manager chooses. It only ever reads
   what teammates post — never anyone's files.
 
 To make rollout effortless, this repository also hosts a small web page — the

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_guide_pdf.py — render the one-page, LANDSCAPE "How to read your Team Cowork Dashboard dashboard"
+build_guide_pdf.py — render the one-page, LANDSCAPE "How to read your Team Cowork Dashboard"
 interpretation guide that is emailed alongside the HTML dashboard.
 
 A visual, plain-language legend: every KPI, the five tabs, the two controls, the privacy model,
@@ -71,7 +71,7 @@ def build(out, team, rate):
     c.setFillColor(BLUE); c.rect(0, H - 64, W, 64, stroke=0, fill=1)
     c.setFillColor(BLUEDK); c.rect(0, H - 64, 6, 64, stroke=0, fill=1)
     c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 19)
-    c.drawString(40, H - 34, "How to Read Your Team Cowork Dashboard Dashboard")
+    c.drawString(40, H - 34, "How to Read Your Team Cowork Dashboard")
     c.setFont("Helvetica", 10.5)
     c.drawString(40, H - 52, "A one-page guide to every number, tab and control — anonymized and team-level only.")
     c.setFont("Helvetica-Bold", 9); c.drawRightString(W - 40, H - 40, str(team)[:34])
