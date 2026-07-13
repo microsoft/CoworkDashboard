@@ -1,7 +1,7 @@
 ---
 name: cowork-dashboard-team-dashboard
 description: |
-  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates post (via the Cowork Dashboard Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (five tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest post per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
+  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates post (via the Cowork Dashboard Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (five tabs), then emails the channel members a summary with the dashboard and a one-page PDF guide attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest post per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
   Use when the user asks to "build the team Cowork Dashboard", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Dashboard report", "email the team dashboard", or set up / refresh the rollup.
   Do NOT use for: the personal report (cowork-roi-report), a member's own post (cowork-dashboard-member), the member-side aggregated post (cowork-roi-report-aggregated), org-wide/large-team aggregation, GitHub Copilot reports, or single-meeting summaries.
 cowork:
@@ -14,9 +14,7 @@ cowork:
 Aggregates the **de-identified Cowork Dashboard posts** teammates publish (via the **Copilot ROI
 Member** skill, `cowork-dashboard-member`) to a shared Teams channel, renders a single self-contained,
 **anonymized** HTML dashboard, and **emails the channel members** a high-level summary with the
-dashboard attached. The interpretation guide is **built into the dashboard** (the **How to read**
-tab, plus a clickable **"?"** on every section title) — there is no separate PDF attachment by
-default, so recipients read everything in one file.
+dashboard and a one-page interpretation guide (PDF) attached.
 
 **This skill only reads what the Member skill posts.** It never harvests anyone's OneDrive and
 never sees names, files, or prompts. If a label (business process, skill, Role) doesn't match the
@@ -85,30 +83,27 @@ python scripts/parse_posts.py --in working/raw_messages.json --config config/tea
   (`skills_vocabulary.json` + `skill_aliases.json`);
 - writes `working/team_data.json` (meta + one snapshot + members[] with role|null + metrics).
 
-### 4. Build the dashboard (guide built in)
+### 4. Build both outputs — dashboard + one-page guide (a single approval)
 ```
 python scripts/build_outputs.py --in working/team_data.json --config config/team_config.json
 ```
-Renders the single deliverable:
+One invocation renders BOTH deliverables, so the manager approves the build **once, not twice**:
 - **`output/cowork-team-roi-dashboard.html`** — self-contained HTML (no external assets). Five small
-  tabs: **Overview** (auto-insights + KPI band) · **Impact & Value** (pillars, categories with $ and
-  **contributor reach** per category, roles, deliverables by format) · **How Cowork is used**
-  (business-process accordion — each process expands to its deliverables, with **type-only items
-  collapsed per format** e.g. "HTML · 5 deliverables" — category mix, analyzed → produced) ·
-  **Trends** (minimal fortnight-over-fortnight line) · **How to read** (the full in-dashboard guide:
-  every KPI, the five tabs, the two controls, how task categories are derived, the privacy model, and
-  the methodology). Every section title also carries a clickable **"?"** popover. Value = hours ×
-  rate, recomputed live by a rate control.
+  tabs: **Overview** (auto-insights + KPI band) · **Impact & Value** (pillars, categories with $,
+  roles, deliverables by format) · **How Cowork is used** (business-process accordion — each process
+  expands to its **distinct deliverables** with the file format inline + the skills behind them —
+  category mix, analyzed → produced) · **Trends** (minimal fortnight-over-fortnight line) ·
+  **Glossary & method**. Value = hours × rate, recomputed live by a rate control.
+- **`output/how-to-read-team-roi-dashboard.pdf`** — a single **landscape** interpretation guide
+  explaining every KPI, the five tabs, the two controls, the privacy model, and the methodology, so
+  recipients can read the dashboard unaided (uses `reportlab`, bundled in the Cowork container).
 
-The **How to read** tab replaces the old standalone one-page PDF — the guide now travels *inside* the
-dashboard, so there is nothing separate to notice or toggle to. `build_outputs.py` just drives
-`build_dashboard.py` (still runnable on its own). The legacy PDF (`build_guide_pdf.py`) is retained
-but **off by default**; pass `--with-pdf` to `build_outputs.py` only if someone explicitly wants a
-printable copy.
+`build_outputs.py` just drives the two builders in sequence; `build_dashboard.py` and
+`build_guide_pdf.py` still run individually if you ever need only one.
 
-### 5. Email the channel members (summary + dashboard attachment) — a separate, expected approval
-The email send is deliberately **not** bundled into step 4: building the file is one approval, and
-sending it to people is a second, distinct approval. If `email_on_run` is true (default) and the
+### 5. Email the channel members (summary + both attachments) — a separate, expected approval
+The email send is deliberately **not** bundled into step 4: building the files is one approval, and
+sending them to people is a second, distinct approval. If `email_on_run` is true (default) and the
 user hasn't said "don't send":
 - **Recipients = the channel members.** `ListChannelMembers(team_id, channel_id)` → resolve each to an
   email/UPN; de-duplicate; include the runner. (A standard channel returns the team members — that's
@@ -117,32 +112,33 @@ user hasn't said "don't send":
   figures from `working/team_data.json` — sum the members' headline metrics (time saved, value =
   hours × rate, sessions, run tasks, deliverables) and name the top 1–2 business processes. Do **not**
   hand-invent numbers; if a figure isn't in the data, omit it.
-- **Send** with the dashboard attached (the guide is inside it — no separate PDF):
+- **Send** with both attachments:
   ```
   SendEmailWithAttachments(
     to=<resolved channel-member emails>,
     subject="Team Cowork Dashboard — latest rollup (<period>)",
     content_type="HTML", body=<summary html>,
-    direct_attachment_file_paths=["output/cowork-team-roi-dashboard.html"])
+    direct_attachment_file_paths=["output/cowork-team-roi-dashboard.html",
+                                  "output/how-to-read-team-roi-dashboard.pdf"])
   ```
   In interactive runs the platform's approval dialog is the confirmation; scheduled runs send
   automatically. The "Powered by Copilot Cowork" footer is appended by the host — don't add your own.
 
 ### 6. Verify + deliver
-`Glob output/cowork-team-roi-dashboard.html` to confirm it exists, then tell the user it's saved and
-the email went to the channel members.
+`Glob output/cowork-team-roi-dashboard.html` and `Glob output/how-to-read-team-roi-dashboard.pdf` to
+confirm both exist, then tell the user they're saved and the email went to the channel members.
 Optionally show a 3-line highlight (time saved, value, top process) — aggregate only.
 
 ### 7. (Optional) automate — run 1–2 days after the member fortnight
 If the user asks, `SetupScheduledPrompt` with a self-contained description: *"Read the last 15 days of
-Cowork Dashboard posts in the team channel, aggregate them into the anonymized team dashboard (the how-to-read
-guide is built into it), save it to my files, and email it to the channel members."*
+Cowork Dashboard posts in the team channel, aggregate them into the anonymized team dashboard and one-page
+PDF guide, save them to my files, and email them to the channel members."*
 
 **Timing:** the Member skill posts on a **biweekly Monday** cycle, so schedule the manager rollup to
 run **1–2 days later — on Wednesday** — which gives teammates Monday and Tuesday to post before the
 rollup reads the channel. Use frequency **Week**, `interval = cadence_days / 7` (= **2** → every other
 Wednesday), `weekDays=["Wednesday"]`, `hours=["9"]`, name "Cowork Dashboard team dashboard". Scheduled runs
-build the dashboard and email the channel members automatically (no interactive approval).
+build both outputs and email the channel members automatically (no interactive approval).
 
 ## Privacy (hard rules)
 - **Never show anything at an individual level.** Members are counts + a number only.
@@ -195,9 +191,9 @@ aggregation breaks — **change them in both bundles together**:
   channel IDs are filled in on first run (not shipped hard-coded).
 - `scripts/resolve_channel.py` — parse a pasted Teams channel/message link → `team_id` + `channel_id`; persist to config (stdlib only).
 - `scripts/parse_posts.py` — channel posts → anonymized `team_data.json` (stdlib only; 15-day window, latest-per-sender, groups processes, canonicalizes skills, k-anon-ready).
-- `scripts/build_dashboard.py` — `team_data.json` → self-contained HTML dashboard with the guide built in (stdlib only): the **How to read** tab, per-section **"?"** helpers, per-category **contributor reach** (with a `<k` privacy floor), and **type-only deliverables collapsed per format**.
-- `scripts/build_guide_pdf.py` — **legacy** one-page landscape interpretation PDF (uses `reportlab`). Retained but off by default; the guide now lives inside the dashboard.
-- `scripts/build_outputs.py` — the build step; renders the dashboard (guide built in). Pass `--with-pdf` to also regenerate the legacy PDF.
+- `scripts/build_dashboard.py` — `team_data.json` → self-contained HTML dashboard (stdlib only).
+- `scripts/build_guide_pdf.py` — one-page landscape interpretation PDF (uses `reportlab`, bundled in Cowork).
+- `scripts/build_outputs.py` — one step that builds BOTH the dashboard and the PDF guide (single approval; drives the two builders above).
 - `scripts/process_groups.json`, `scripts/skills_vocabulary.json`, `scripts/roles_taxonomy.json` — **mirrors** of the Member bundle (shared contract).
 - `scripts/skill_aliases.json` — reader-only skill-label compatibility shim.
 - `references/value-pillars.md` — **mirror** of the four-pillar crosswalk.

@@ -13,7 +13,7 @@
   "privacy_k_threshold": 3,
   "_privacy_note": "Never show anything at an individual level. A per-attribute (Role) breakdown renders ONLY when at least privacy_k_threshold members share that attribute; otherwise those members collapse into a single combined bar. Small, homogeneous teams (v1 scope) usually render one combined bar.",
   "email_on_run": true,
-  "_email_note": "When true, after building the dashboard the skill emails the channel members a high-level summary with the HTML dashboard and the one-page interpretation PDF attached. Recipients are the channel members (resolved at run time); no one outside the channel is added.",
+  "_email_note": "When true, after building the dashboard the skill emails the channel members a high-level summary with the HTML dashboard attached (the how-to-read guide is built into the dashboard; no separate PDF). Recipients are the channel members (resolved at run time); no one outside the channel is added.",
   "team_size": null,
   "_team_size_note": "Optional. Total expected contributors on the team. Left null in v1 (we do not compute adoption %). If set, or resolved via ListChannelMembers COUNT (never names), the dashboard can show 'N of team_size reported'. v1 shows only the count of contributors."
 }

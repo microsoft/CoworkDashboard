@@ -3,47 +3,6 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
-## [1.4.0] — 2026-07-13
-
-Second manager-review pass on the team dashboard. The interpretation guide moves *inside* the
-dashboard, bar tracks align, type-only deliverables collapse, task-category derivation is explained,
-and each task category now shows how many contributors used it.
-
-### Added
-- **In-dashboard "How to read" guide.** The former *Glossary & method* tab is renamed **How to read**
-  and expanded into the full guide the standalone PDF used to carry — the five tabs, the KPI band, the
-  two controls, the privacy model, the value model, the research bands, **how task categories are
-  derived**, and **why some deliverables show only a file format**. Reviewers were missing the separate
-  PDF attachment and toggling between two files; the guide now travels in the one file.
-- **Per-section "?" helpers.** Every section title carries a clickable **"?"** that pops a one- or
-  two-line plain-language explanation in place (click-to-toggle; closes on outside click).
-- **Contributor reach per task category.** Each category row now shows how many contributors used it
-  (e.g. "used by 4 of 5 contributors") so managers can see where usage is concentrated vs. spread —
-  not just hours. **Privacy floor:** below `privacy_k_threshold` (default 3) the exact count is
-  withheld and shown as "used by &lt;3 contributors". Aggregate counts only — never identities.
-
-### Changed
-- **Bar tracks are now uniform.** The value column in every bar row (`.row`) is a fixed width, so the
-  gray track starts and ends at the same place on every row. Previously the `auto` value column sized
-  to its own text, squeezing the `1fr` track by different amounts per row. Count-style rows
-  (inputs/outputs) use a narrow `.rc` value column.
-- **Type-only deliverables collapse per format.** In *Work by business process*, deliverables a post
-  carried without a de-identified name now collapse into one row per format (e.g. "HTML · 5
-  deliverables", hours/value summed) instead of repeating "HTML" many times. Named deliverables still
-  list individually. Clarified that a format-only row means the name wasn't posted — not a
-  recognition failure.
-- **PDF guide retired from the default flow.** `build_outputs.py` now builds the dashboard only (the
-  guide is inside it) and prints one line. The legacy `build_guide_pdf.py` is retained but **off by
-  default**; pass `--with-pdf` to regenerate a printable copy. The email attaches only the HTML
-  dashboard.
-- **SKILL.md** updated throughout: intro, build step 4 (dashboard-only, guide built in), email step 5
-  (single attachment), verify step 6, the scheduled-run description, and the bundled-files list.
-
-### Verified
-- Rebuilt dashboard: embedded data parses, the app JavaScript runs with no runtime errors under a DOM
-  shim, 4 categories show exact reach and 2 fall under the `<3` floor, and type-only deliverables
-  collapse to per-format rows. No taxonomy/parser change — the `cowork-dashboard-member` contract is intact.
-
 ## [1.3.0] — 2026-07-10
 
 Manager-review follow-ups: robust ingestion, named deliverables under each process, a single build
