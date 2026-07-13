@@ -394,8 +394,8 @@
     <h1>Set up <span class="grad">Cowork Team Report</span> for your team</h1>
     <p class="hero-sub">A pair of Microsoft Copilot <strong>Cowork</strong> skills that measure the time and
        money your team saves with Copilot Cowork — your team's real ROI — and turn it into a private,
-       easy-to-read team report emailed to you. This page bakes your Teams channel into both skills so they
-       install ready to go — with nothing for your team to set up.</p>
+       easy-to-read team report emailed to you. Download each skill below and upload it to Copilot Cowork —
+       each one asks for your Teams channel link the first time it runs, so there's nothing to configure up front.</p>
     <div class="trust-row">
       <span class="trust-pill"><span class="trust-dot b"></span> Quantifies your team's Copilot Cowork ROI</span>
       <span class="trust-pill"><span class="trust-dot p"></span> Private &amp; de-identified</span>
@@ -431,8 +431,8 @@
           totals and categories, and nothing is ever shown at an individual level.</li>
     </ul>
     <p class="muted">Both skills need to know the <strong>one Teams channel</strong> your team uses for these
-       reports. This page bakes that channel into <strong>both</strong> downloads for you, so nobody is ever
-       asked to paste a link — just follow the steps below.</p>
+       reports. Create that channel first (step 1) and keep its link handy — each skill asks for it the
+       <strong>first time it runs</strong>. Just follow the steps below.</p>
   </section>
 
   <section class="card demo-card">
@@ -511,12 +511,13 @@
        <span class="mono">team_id</span>, <span class="mono">channel_id</span> and channel name, confirms the
        channel id is a real <span class="mono">…@thread.…</span> id and the team id is a valid GUID, and shows
        them below for you to confirm. It does <strong>not</strong> contact Teams or sign you in; nothing is
-       sent anywhere. You can download either skill without this step — but adding a verified channel bakes it
-       into the zip so no one is asked for a link.</p>
+       sent anywhere. This step is <strong>optional</strong> — it just double-checks your link looks right
+       before you paste it into each skill on its first run. The downloads below are the ready-to-use skills
+       either way.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
 
     <div id="resolved" class="resolved" aria-live="polite">
-      <p class="verified-tag"><span class="chk">✓</span> Verified — your channel will be baked into both skill downloads in the steps below</p>
+      <p class="verified-tag"><span class="chk">✓</span> Looks good — paste this same link into each skill the first time you run it</p>
       <div class="readout">
         <div class="rowline"><span class="k">Channel name</span><p class="v" id="rName">—</p></div>
         <div class="rowline"><span class="k">team_id</span><p class="v" id="rTeam">—</p></div>
@@ -541,8 +542,8 @@
       <div class="row">
         <button id="downloadMgrBtn" type="button">⬇ Download the manager skill (.zip)</button>
       </div>
-      <p class="dl-note" id="genNoteMgr">No channel added in step 2 yet — this will be a <strong>generic</strong>
-         copy that asks you for the channel link on first run. Add your channel in step 2 to bake it in.</p>
+      <p class="dl-note" id="genNoteMgr">This is the ready-to-use manager skill. It asks for your Teams
+         channel link the <strong>first time you run it</strong> — nothing to set up before then.</p>
       <p class="dl-note baked hidden" id="bakeNoteMgr"></p>
       <div id="dlMgrStatus" class="status" role="status" aria-live="polite"></div>
     </div>
@@ -553,7 +554,7 @@
       <textarea id="installMgrText" readonly>Install the attached Cowork Team Report - Team Dashboard Cowork Skill into my Cowork skills.</textarea>
       <button id="copyMgrBtn" class="secondary" type="button">Copy</button>
     </div>
-    <p class="note"><span id="mgrBakeState">Add your channel in step 2 to bake it into this download — otherwise this generic copy asks you for the channel link the first time you run it.</span> Once it's
+    <p class="note"><span id="mgrBakeState">It asks for your Teams channel link the first time you run it.</span> Once it's
        installed, you can say “build the team Cowork Team Report” any time — or ask it to run on a schedule
        and email your team automatically every couple of weeks.</p>
     <p class="note privacy">🗓️ <strong>When to run the manager / dashboard skill:</strong> schedule it
@@ -573,8 +574,8 @@
       <div class="row">
         <button id="downloadBtn" type="button">⬇ Download the team-member skill (.zip)</button>
       </div>
-      <p class="dl-note" id="genNote">No channel added in step 2 yet — this will be a <strong>generic</strong>
-         copy that asks each teammate for the channel link on first run. Add your channel in step 2 to bake it in.</p>
+      <p class="dl-note" id="genNote">This is the ready-to-use team-member skill. Each teammate is asked for
+         the Teams channel link the <strong>first time they run it</strong> — nothing to set up before then.</p>
       <p class="dl-note baked hidden" id="bakeNote"></p>
       <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
     </div>
@@ -590,7 +591,7 @@
       <textarea id="installText" readonly>Install the attached Cowork Team Report - Team Member Cowork Skill into my Cowork skills.</textarea>
       <button id="copyBtn" class="secondary" type="button">Copy</button>
     </div>
-    <p class="note"><span id="memBakeState">Add your channel in step 2 to bake it into this download — otherwise each teammate is asked for the channel link the first time they run it.</span> <strong>Installing isn't enough —
+    <p class="note"><span id="memBakeState">Each teammate is asked for the Teams channel link the first time they run it.</span> <strong>Installing isn't enough —
        each teammate must run the member skill once.</strong> The automate/schedule prompt (run once, or
        <strong>automate biweekly — every other Monday</strong>) appears on that <strong>first run</strong>, not at install — so have
        everyone kick it off once and choose to automate, and the system stays hands-off from there. Tell them to type:</p>
