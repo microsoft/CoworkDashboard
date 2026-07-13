@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cowork Dashboard — compute the methodology payload from a classified-sessions JSON.
+"""Cowork Team Report — compute the methodology payload from a classified-sessions JSON.
 
 v5 (artifact-scaled speed multiplier). The skill harvests the signed-in user's
 own Cowork sessions, classifies each into run tasks AND records the distinct

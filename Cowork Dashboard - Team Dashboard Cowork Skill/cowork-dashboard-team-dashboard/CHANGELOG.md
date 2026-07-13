@@ -1,4 +1,4 @@
-# Changelog — Cowork Dashboard Team Dashboard
+# Changelog — Cowork Team Report Team Dashboard
 
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
@@ -59,7 +59,7 @@ step, and schedule guidance aligned to the member fortnight.
   posted, de-identified — never raw file names.)
 - **Version collapse.** Deliverables sharing the same de-identified name within a process collapse
   into ONE entry: the final (latest) one is kept and annotated `+N versions`
-  (e.g. `Cowork Dashboard report +4 versions`).
+  (e.g. `Cowork Team Report +4 versions`).
 - **`scripts/build_outputs.py`.** One step that builds BOTH the HTML dashboard and the one-page PDF
   guide in a single invocation, so the manager approves the **build once, not twice**. It drives the
   two existing builders (still runnable individually). The **email send stays a separate, expected
@@ -140,7 +140,7 @@ now emailed to the channel members with a one-page interpretation guide.
 
 ## [1.0.0] — 2026-07-01
 
-First release. Manager-side rollup that reads teammates' de-identified Cowork Dashboard posts from a
+First release. Manager-side rollup that reads teammates' de-identified Cowork Team Report posts from a
 shared Teams channel and renders one self-contained, anonymized HTML dashboard.
 
 ### Added

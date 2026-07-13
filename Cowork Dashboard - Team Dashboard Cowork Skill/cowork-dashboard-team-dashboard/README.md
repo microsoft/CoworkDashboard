@@ -1,4 +1,4 @@
-# Cowork Dashboard — Team Dashboard
+# Cowork Team Report — Team Dashboard
 
 A Microsoft Copilot **Cowork skill** that rolls up a small team's Copilot Cowork ROI. It reads the
 de-identified stats each teammate posts to a shared Teams channel and renders **one self-contained,
@@ -52,7 +52,7 @@ teammates ──(cowork-dashboard-member)──▶  Teams channel  ──(ListCh
 ## Quick start
 
 1. **Point it at the channel** (first run only). The skill asks for the **link of the Teams channel**
-   where the team posts its Cowork Dashboard stats (in Teams: channel ⋯ → *Get link to channel*), then
+   where the team posts its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to channel*), then
    resolves + saves the IDs:
    ```bash
    python scripts/resolve_channel.py --link "<pasted channel url>" --config config/team_config.json

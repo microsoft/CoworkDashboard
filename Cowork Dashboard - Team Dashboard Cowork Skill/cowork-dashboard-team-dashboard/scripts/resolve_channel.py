@@ -4,7 +4,7 @@ resolve_channel.py — turn a pasted Microsoft Teams CHANNEL (or channel-message
 team_id + channel_id this skill reads, and persist them into config/team_config.json.
 
 Runs on the FIRST use of the skill (when the config has no channel yet). The skill asks the user
-to paste the link of the Teams channel where teammates post their Cowork Dashboard stats; this script
+to paste the link of the Teams channel where teammates post their Cowork Team Report stats; this script
 extracts the IDs deterministically from that URL — no Graph call needed — and writes them back so
 every later run reads the exact same place.
 

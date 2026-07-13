@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cowork Dashboard — TF-IDF session classifier v6.
+"""Cowork Team Report — TF-IDF session classifier v6.
 
 Drop-in replacement for the hand-crafted keyword-lexicon classifier.
 

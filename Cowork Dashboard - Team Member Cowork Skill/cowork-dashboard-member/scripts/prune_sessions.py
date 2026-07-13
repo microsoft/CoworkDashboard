@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-prune_sessions.py — privacy opt-out helper for the Cowork Dashboard member skill.
+prune_sessions.py — privacy opt-out helper for the Cowork Team Report member skill.
 
 Two modes, both operating on the harvested working/cowork_raw.json (the canonical
 pre-compute session list):

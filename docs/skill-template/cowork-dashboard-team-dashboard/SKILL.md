@@ -1,17 +1,17 @@
 ---
 name: cowork-dashboard-team-dashboard
 description: |
-  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates post (via the Cowork Dashboard Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (five tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest post per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
-  Use when the user asks to "build the team Cowork Dashboard", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Dashboard report", "email the team dashboard", or set up / refresh the rollup.
+  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates post (via the Cowork Team Report Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (five tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest post per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
+  Use when the user asks to "build the team Cowork Team Report", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Team Report", "email the team dashboard", or set up / refresh the rollup.
   Do NOT use for: the personal report (cowork-roi-report), a member's own post (cowork-dashboard-member), the member-side aggregated post (cowork-roi-report-aggregated), org-wide/large-team aggregation, GitHub Copilot reports, or single-meeting summaries.
 cowork:
   category: analysis
   icon: BarChart4
 ---
 
-# Cowork Dashboard — Team Dashboard (manager rollup)
+# Cowork Team Report — Team Dashboard (manager rollup)
 
-Aggregates the **de-identified Cowork Dashboard posts** teammates publish (via the **Copilot ROI
+Aggregates the **de-identified Cowork Team Report posts** teammates publish (via the **Copilot ROI
 Member** skill, `cowork-dashboard-member`) to a shared Teams channel, renders a single self-contained,
 **anonymized** HTML dashboard, and **emails the channel members** a high-level summary with the
 dashboard attached. The interpretation guide is **built into the dashboard** (the **How to read**
@@ -35,7 +35,7 @@ the Member skill's (see *Cross-skill contract*).
 - **Org-wide / multi-team / cross-channel aggregation** — out of scope for v1; don't force it.
 - **GitHub Copilot / IDE usage reports**, **daily briefings**, or **single-meeting summaries** —
   different skills entirely.
-- If the shared channel has **no Cowork Dashboard posts in the last 15 days**, don't fabricate a dashboard —
+- If the shared channel has **no Cowork Team Report posts in the last 15 days**, don't fabricate a dashboard —
   say the window was empty and offer to widen it.
 
 ## First run — point the skill at the channel (once)
@@ -44,7 +44,7 @@ The rollup reads ONE shared Teams channel that teammates post to. The channel is
 
 1. **Load `config/team_config.json`.** If `team_id` **or** `channel_id` is blank, this is a first run.
 2. **Ask for the channel link.** Use `AskUserQuestion` to ask the user to paste the **link of the
-   Teams channel** where the team posts its Cowork Dashboard stats (in Teams: channel ⋯ → *Get link to
+   Teams channel** where the team posts its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to
    channel*). This must be the same channel `cowork-dashboard-member` posts to.
 3. **Resolve + persist the IDs** from that link — no Graph call needed:
    ```
@@ -121,7 +121,7 @@ user hasn't said "don't send":
   ```
   SendEmailWithAttachments(
     to=<resolved channel-member emails>,
-    subject="Team Cowork Dashboard — latest rollup (<period>)",
+    subject="Team Cowork Team Report — latest rollup (<period>)",
     content_type="HTML", body=<summary html>,
     direct_attachment_file_paths=["output/cowork-team-roi-dashboard.html"])
   ```
@@ -135,13 +135,13 @@ Optionally show a 3-line highlight (time saved, value, top process) — aggregat
 
 ### 7. (Optional) automate — run 1–2 days after the member fortnight
 If the user asks, `SetupScheduledPrompt` with a self-contained description: *"Read the last 15 days of
-Cowork Dashboard posts in the team channel, aggregate them into the anonymized team dashboard (the how-to-read
+Cowork Team Report posts in the team channel, aggregate them into the anonymized team dashboard (the how-to-read
 guide is built into it), save it to my files, and email it to the channel members."*
 
 **Timing:** the Member skill posts on a **biweekly Monday** cycle, so schedule the manager rollup to
 run **1–2 days later — on Wednesday** — which gives teammates Monday and Tuesday to post before the
 rollup reads the channel. Use frequency **Week**, `interval = cadence_days / 7` (= **2** → every other
-Wednesday), `weekDays=["Wednesday"]`, `hours=["9"]`, name "Cowork Dashboard team dashboard". Scheduled runs
+Wednesday), `weekDays=["Wednesday"]`, `hours=["9"]`, name "Cowork Team Report team dashboard". Scheduled runs
 build the dashboard and email the channel members automatically (no interactive approval).
 
 ## Privacy (hard rules)
