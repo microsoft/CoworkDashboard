@@ -1,10 +1,10 @@
 /*
- * Cowork Team Report — Team installer generator (client-side only).
+ * Cowork Team Report — Team installer helper (client-side only).
  *
- * Parses a Teams channel link, shows the resolved ids for confirmation, then assembles a
- * ready-to-distribute copy of the cowork-dashboard-member skill with config/team_channel.json pre-filled.
- * Everything runs in the browser: the pasted link never leaves the page, and the only network
- * calls are same-origin fetches of the skill template under ./skill-template/.
+ * The two download buttons hand over the exact, ready-to-use skill zips under ./downloads/.
+ * Each skill asks for the team's Teams channel link the first time it runs, so nothing is baked
+ * in here. The optional "Parse & verify" tool just sanity-checks a pasted channel link in the
+ * browser (the link never leaves the page) so the manager knows it looks right before first run.
  */
 (function () {
   "use strict";
@@ -74,12 +74,6 @@
     el.className = "status" + (cls ? " " + cls : "");
   }
 
-  function slugForName(res) {
-    var base = (res.channel_name || res.team_id || "team").toLowerCase();
-    base = base.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    return base || "team";
-  }
-
   function onParse() {
     var res = parseTeamsChannelLink($("link").value);
     var status = $("status");
@@ -108,34 +102,13 @@
     if (el) { if (show) { el.classList.remove("hidden"); } else { el.classList.add("hidden"); } }
   }
 
-  // Text shown under each download button once a channel is verified — prefer the friendly name.
-  function bakedNoteText() {
-    if (resolved.channel_name) {
-      return "\u2713 Set to post to \u201c" + resolved.channel_name + "\u201d.";
-    }
-    return "\u2713 Set to post to channel " + resolved.channel_id + " (team " + resolved.team_id + ").";
-  }
-
-  // Under each download button: the "generic copy" warning, or — once verified — the target channel.
+  // Under each download button: reassure that the ready-to-use skill asks for the channel on
+  // first run. Nothing is baked in, so we simply keep the first-run notes visible.
   function refreshDownloadNotes() {
-    var baked = !!resolved;
-    toggleNote("genNote", !baked);
-    toggleNote("genNoteMgr", !baked);
-    toggleNote("bakeNote", baked);
-    toggleNote("bakeNoteMgr", baked);
-    if (baked) {
-      var txt = bakedNoteText();
-      ["bakeNote", "bakeNoteMgr"].forEach(function (id) { var el = $(id); if (el) el.textContent = txt; });
-    }
-    var mgrState = $("mgrBakeState");
-    var memState = $("memBakeState");
-    if (baked) {
-      if (mgrState) mgrState.textContent = "Your team's channel is already built in, so it won't ask you for a link.";
-      if (memState) memState.textContent = "Because your channel is already baked in, no one on your team is ever asked for a link \u2014 their reports simply start posting to your channel.";
-    } else {
-      if (mgrState) mgrState.textContent = "Add your channel in step 2 to bake it into this download \u2014 otherwise this generic copy asks you for the channel link the first time you run it.";
-      if (memState) memState.textContent = "Add your channel in step 2 to bake it into this download \u2014 otherwise each teammate is asked for the channel link the first time they run it.";
-    }
+    toggleNote("genNote", true);
+    toggleNote("genNoteMgr", true);
+    toggleNote("bakeNote", false);
+    toggleNote("bakeNoteMgr", false);
   }
 
   // Editing the link invalidates any prior verification — fall back to generic until re-verified.
@@ -160,97 +133,40 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   }
 
-  // Builds a skill zip from its template. With a verified channel it bakes it into the config;
-  // without one it ships the generic (blank-config) skill that asks for the channel on first run.
-  async function buildAndDownload(opts) {
+  // Hands over the exact, ready-to-use skill zip under ./downloads/ — no in-browser assembly.
+  async function downloadStatic(opts) {
     var st = $(opts.statusId);
     var btn = $(opts.btnId);
-    var baked = !!resolved;
     btn.disabled = true;
-    setStatus(st, "Assembling zip in your browser…");
-
+    setStatus(st, "Preparing your download…");
     try {
-      var manifest = await (await fetch("skill-template/" + opts.manifestPath, { cache: "no-store" })).json();
-      if (!Array.isArray(manifest) || !manifest.length) {
-        throw new Error("template manifest is empty");
-      }
-
-      var zip = new JSZip();
-      var configText = null;
-
-      for (var i = 0; i < manifest.length; i++) {
-        var relPath = manifest[i];
-        var resp = await fetch("skill-template/" + relPath, { cache: "no-store" });
-        if (!resp.ok) throw new Error("could not fetch " + relPath + " (" + resp.status + ")");
-        if (relPath === opts.configPath) {
-          configText = await resp.text();
-          zip.file(relPath, configText); // baked builds overwrite this below; generic keeps it blank
-        } else {
-          zip.file(relPath, await resp.arrayBuffer());
-        }
-      }
-
-      if (baked) {
-        // Bake the resolved channel into this skill's config, preserving any other settings.
-        zip.file(opts.configPath, opts.fillConfig(configText));
-      }
-
-      var blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
-      var fname = baked ? (opts.zipPrefix + slugForName(resolved) + ".zip") : opts.genericName;
-      triggerDownload(blob, fname);
-      var msg = baked ? opts.successMsg
-        : "generic copy — whoever installs it is asked for the channel link on first run.";
-      setStatus(st, "✓ Downloaded " + fname + " — " + msg, "ok");
+      var resp = await fetch(opts.file, { cache: "no-store" });
+      if (!resp.ok) throw new Error("could not fetch " + opts.file + " (" + resp.status + ")");
+      var blob = await resp.blob();
+      triggerDownload(blob, opts.fname);
+      setStatus(st, "✓ Downloaded " + opts.fname + " — " + opts.successMsg, "ok");
     } catch (err) {
-      setStatus(st, "✕ Could not build the zip: " + (err && err.message ? err.message : err), "err");
+      setStatus(st, "✕ Could not start the download: " + (err && err.message ? err.message : err), "err");
     } finally {
       btn.disabled = false;
     }
   }
 
-  // Member skill config — a small file with just the channel fields.
-  function memberConfig() {
-    return JSON.stringify({
-      _note: "Per-team channel config baked by the installer generator. The skill uses these ids on first run instead of asking for a link.",
-      channel_link: $("link").value.trim(),
-      team_id: resolved.team_id,
-      channel_id: resolved.channel_id,
-      channel_name: resolved.channel_name
-    }, null, 2) + "\n";
-  }
-
-  // Manager (dashboard) skill config — keep every operational default; only fill the channel fields.
-  function dashboardConfig(templateText) {
-    var cfg;
-    try { cfg = JSON.parse(templateText); } catch (e) { cfg = {}; }
-    cfg.team_id = resolved.team_id;
-    cfg.channel_id = resolved.channel_id;
-    cfg.channel_name = resolved.channel_name;
-    cfg.channel_link = $("link").value.trim();
-    return JSON.stringify(cfg, null, 2) + "\n";
-  }
-
   function onDownloadMember() {
-    return buildAndDownload({
+    return downloadStatic({
       btnId: "downloadBtn", statusId: "dlStatus",
-      manifestPath: "manifest.json",
-      configPath: "cowork-dashboard-member/config/team_channel.json",
-      zipPrefix: "cowork-dashboard-member-",
-      genericName: "cowork-dashboard-member.zip",
-      successMsg: "post this one into your dedicated channel and @tag your team.",
-      fillConfig: memberConfig
+      file: "downloads/cowork-roi-member.zip",
+      fname: "cowork-roi-member.zip",
+      successMsg: "post this one into your dedicated channel and @tag your team."
     });
   }
 
   function onDownloadManager() {
-    return buildAndDownload({
+    return downloadStatic({
       btnId: "downloadMgrBtn", statusId: "dlMgrStatus",
-      manifestPath: "manifest-dashboard.json",
-      configPath: "cowork-dashboard-team-dashboard/config/team_config.json",
-      zipPrefix: "cowork-dashboard-team-dashboard-",
-      genericName: "cowork-dashboard-team-dashboard.zip",
-      successMsg: "install this one yourself.",
-      fillConfig: dashboardConfig
+      file: "downloads/cowork-roi-team-dashboard.zip",
+      fname: "cowork-roi-team-dashboard.zip",
+      successMsg: "install this one yourself."
     });
   }
 
