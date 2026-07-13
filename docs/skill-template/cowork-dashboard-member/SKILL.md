@@ -1,17 +1,17 @@
 ---
 name: cowork-dashboard-member
 description: |
-  Member step of the team Cowork Dashboard rollup. Harvests the signed-in user's own Copilot Cowork session history from OneDrive, lets the user exclude any chat/task, computes impact metrics, and posts a de-identified, TABLE-FORMATTED stats message to your team's dedicated "Cowork report" Teams channel (the channel link is requested on first run and remembered). Tables cover KPIs, time-by-category, value pillars, jobs-to-be-done, business processes, roles, skills, and deliverable types. Person names, file names and prompts are excluded; process/JTBD and customer/account names are kept. Bundles its own pipeline. Runs once or on a biweekly schedule (every other Monday; scheduled runs email the user to review/exclude sessions before posting).
-  Use when the user asks to "post my Cowork Dashboard stats", "send my Cowork stats to the team channel", "run the Cowork Dashboard member step", or "share my Cowork impact with the team".
+  Member step of the team Cowork Team Report rollup. Harvests the signed-in user's own Copilot Cowork session history from OneDrive, lets the user exclude any chat/task, computes impact metrics, and posts a de-identified, TABLE-FORMATTED stats message to your team's dedicated "Cowork report" Teams channel (the channel link is requested on first run and remembered). Tables cover KPIs, time-by-category, value pillars, jobs-to-be-done, business processes, roles, skills, and deliverable types. Person names, file names and prompts are excluded; process/JTBD and customer/account names are kept. Bundles its own pipeline. Runs once or on a biweekly schedule (every other Monday; scheduled runs email the user to review/exclude sessions before posting).
+  Use when the user asks to "post my Cowork Team Report stats", "send my Cowork stats to the team channel", "run the Cowork Team Report member step", or "share my Cowork impact with the team".
   Do NOT use for: the full personal HTML report (use cowork-roi-report), the manager-side team dashboard, GitHub Copilot reports, or single-meeting summaries.
 cowork:
   category: productivity
   icon: PeopleTeam
 ---
 
-# Cowork Dashboard — Member step (de-identified table post to the team channel)
+# Cowork Team Report — Member step (de-identified table post to the team channel)
 
-Produces the **per-person, de-identified** input to a team Cowork Dashboard, rendered as
+Produces the **per-person, de-identified** input to a team Cowork Team Report, rendered as
 **HTML tables** so it's both readable in Teams and easy for a downstream Cowork task to parse.
 **No person names, file names or prompts leave the machine** — the post carries aggregate totals,
 task categories, value pillars, roles, skills, deliverable/IO breakdowns, and the de-duplicated
@@ -30,7 +30,7 @@ folder). **There is NO bundled seed and nothing user-specific ships in the folde
 starts with no memory and mints the user's processes from their OWN sessions.
 
 ## When to use
-- "Post my Cowork Dashboard stats to the team channel" / "run the Cowork Dashboard member step"
+- "Post my Cowork Team Report stats to the team channel" / "run the Cowork Team Report member step"
 - A team cadence (e.g. every other Monday) where each member contributes their stats.
 
 ## When NOT to use
@@ -195,20 +195,20 @@ Every value comes from `cowork_roi_data.json`; no hand math.
 ### 8. Show + post
 Show the user the rendered tables inline, then post to the channel resolved in **Target channel**
 (reused from memory, or asked-for and parsed from the pasted link on first run):
-`PostChannelMessage(team_id=<resolved team_id>, channel_id=<resolved channel_id>, subject="Cowork Dashboard — <window label>", body=<the HTML body>)`.
+`PostChannelMessage(team_id=<resolved team_id>, channel_id=<resolved channel_id>, subject="Cowork Team Report — <window label>", body=<the HTML body>)`.
 The platform shows its own approval dialog before anything sends.
 
 ### 9. Automate (only if the user chose it in step 1)
 `SetupScheduledPrompt` (frequency **Week**, interval **2**, weekDays `["Monday"]`, hours `["8"]`, name
-"Cowork Dashboard member (biweekly, Mondays)") — a fixed **every-other-Monday at 8 AM** cadence so every
+"Cowork Team Report member (biweekly, Mondays)") — a fixed **every-other-Monday at 8 AM** cadence so every
 member's 15-day window aligns regardless of install date — with a **self-contained** description:
-> "Generate my Cowork Dashboard stats for the last 15 days: harvest my Cowork sessions, compute the
+> "Generate my Cowork Team Report stats for the last 15 days: harvest my Cowork sessions, compute the
 >  table-formatted de-identified post, then EMAIL me that it's ready and ask me to open this task's
 >  chat to exclude any sessions I don't want shared before it posts to my team's Cowork report
 >  channel. Do not post until I've reviewed."
 
 **On each scheduled execution (no user present):** harvest → map-my-work → compute a draft, then
-`SendEmailWithAttachments(to=[<user's own email>], subject="Your Cowork Dashboard post is ready to review",
+`SendEmailWithAttachments(to=[<user's own email>], subject="Your Cowork Team Report post is ready to review",
 body="<headline summary + the session inventory list>")` telling them to open **this task's chat** to
 run the opt-out picker and post. **Never auto-post on a scheduled run** — the user always does the
 final opt-out + post interactively in the task chat. Confirm setup in plain language.

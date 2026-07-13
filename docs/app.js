@@ -1,5 +1,5 @@
 /*
- * Cowork Dashboard — Team installer generator (client-side only).
+ * Cowork Team Report — Team installer generator (client-side only).
  *
  * Parses a Teams channel link, shows the resolved ids for confirmation, then assembles a
  * ready-to-distribute copy of the cowork-dashboard-member skill with config/team_channel.json pre-filled.

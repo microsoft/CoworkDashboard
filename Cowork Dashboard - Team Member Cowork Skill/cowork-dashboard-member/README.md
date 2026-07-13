@@ -1,6 +1,6 @@
-# Cowork Dashboard — Member skill (self-contained)
+# Cowork Team Report — Member skill (self-contained)
 
-Posts a **de-identified, table-formatted** Cowork Dashboard summary to your team's Teams channel, with a
+Posts a **de-identified, table-formatted** Cowork Team Report summary to your team's Teams channel, with a
 **privacy opt-out** so you can exclude any chat/task before it posts. It harvests your own Copilot
 Cowork sessions from OneDrive, computes research-anchored time-saved / value / speed metrics, and
 renders them as HTML tables (headline KPIs, time-by-category, value pillars, jobs-to-be-done,
@@ -49,10 +49,10 @@ by the manager / admin / lead. This is a one-time setup.
 
 Here's what a posted report looks like in the channel:
 
-![Example of a Cowork Dashboard report posted in the team channel](../../images/example-report-post.png)
+![Example of a Cowork Team Report posted in the team channel](../../images/example-report-post.png)
 
 ## Use it
-Ask Cowork: **"post my Cowork Dashboard stats to the team channel."** The skill will:
+Ask Cowork: **"post my Cowork Team Report stats to the team channel."** The skill will:
 1. Ask whether to run **once** or **automate biweekly (every other Monday)** — this prompt appears on your **first run**, not at install.
 2. On your **first run**, ask you to paste the **Teams channel link** your admin/manager/lead shared
    (it parses the `team_id`/`channel_id` from the link and remembers them for next time).

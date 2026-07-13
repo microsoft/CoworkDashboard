@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-parse_posts.py — read the de-identified Cowork Dashboard posts colleagues published to the
+parse_posts.py — read the de-identified Cowork Team Report posts colleagues published to the
 team channel and turn them into ONE aggregated, anonymized team_data.json that
 build_dashboard.py renders.
 
@@ -76,7 +76,7 @@ def canon_skill(name, vocab, aliases):
 def collapse_named_deliverables(items):
     """Collapse deliverables that share the same de-identified NAME within a process into ONE
     entry: keep the FINAL occurrence (latest date; tie-break last seen) and, when there is more
-    than one, append '+N versions' to its name (e.g. 'Cowork Dashboard report +4 versions'). Entries
+    than one, append '+N versions' to its name (e.g. 'Cowork Team Report +4 versions'). Entries
     without a name (legacy posts) pass through untouched — they aren't distinct-name-collapsible.
     The Member skill is NOT modified; this is a reader-side aggregation only."""
     named = collections.OrderedDict()
@@ -309,10 +309,10 @@ def main(a):
     rate = cfg.get("hourly_rate", 72)
     pg, vocab, aliases = load_taxonomies()
     raw = json.load(open(a.inp, encoding="utf-8"))
-    all_msgs = [m for m in normalize_messages(raw) if not m["deleted"] and "Cowork Dashboard" in (m["body"] or "")]
+    all_msgs = [m for m in normalize_messages(raw) if not m["deleted"] and "Cowork Team Report" in (m["body"] or "")]
     # Only parse messages that actually carry the de-identified stats tables. This skips
     # attachment/zip shares (e.g. a member-skill .zip posted to the channel) that mention
-    # "Cowork Dashboard" but have no parseable stats.
+    # "Cowork Team Report" but have no parseable stats.
     msgs = [m for m in all_msgs if has_stats_tables(m["body"])]
     skipped = len(all_msgs) - len(msgs)
     if skipped:
@@ -338,7 +338,7 @@ def main(a):
             latest[fid] = m
     senders = sorted(latest.values(), key=lambda x: x["created"])
     if not senders:
-        raise SystemExit("No Cowork Dashboard posts found in the input.")
+        raise SystemExit("No Cowork Team Report posts found in the input.")
 
     members, periods, posted_dates = [], [], []
     for i, m in enumerate(senders, 1):

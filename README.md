@@ -1,15 +1,15 @@
-# Cowork Dashboard — Team Member Cowork Skill
+# Cowork Team Report — Team Member Cowork Skill
 
-**Cowork Dashboard** is a two-part Microsoft Copilot **Cowork** solution that shows a team the **ROI**
+**Cowork Team Report** is a two-part Microsoft Copilot **Cowork** solution that shows a team the **ROI**
 they're getting from Copilot — the hours saved and the dollar value of that time — and turns it into a tidy
 report that lands in everyone's inbox. It's made of two skills that work together through **one shared
 Teams channel**:
 
-- **Cowork Dashboard — Team Member skill**. Every teammate runs it on their own work. It turns
+- **Cowork Team Report — Team Member skill**. Every teammate runs it on their own work. It turns
   their Copilot Cowork activity into a clear, de-identified summary — hours saved, the value of that time,
   the kinds of work Copilot helped with, and what they produced — and posts it as easy-to-read tables into
   the shared channel. Names, file names, and prompts are never shared; only totals and categories.
-- **Cowork Dashboard — Team Dashboard skill** (the manager skill). The manager/lead runs it. It reads the shared
+- **Cowork Team Report — Team Dashboard skill** (the manager skill). The manager/lead runs it. It reads the shared
   channel, combines everyone's summaries into one anonymized HTML dashboard, and **emails the team a
   newsletter** (the dashboard, with the how-to-read guide built in) on a schedule the manager chooses. It only ever reads
   what teammates post — never anyone's files.
@@ -52,7 +52,7 @@ You only do this **once** for your team.
 5. **Install the manager skill (that's you).** Open **Copilot Cowork**, upload the *manager* zip
    **(upload the `.zip` file as-is — don't unzip it first)**, and ask it to install the skill (for example:
    *“upload this zip file and ask it to install the skill”*). Because your channel is already built in, it
-   won't ask you for a link. Once installed, you can say *“build the team Cowork Dashboard”* any time —
+   won't ask you for a link. Once installed, you can say *“build the team Cowork Team Report”* any time —
    or ask it to run on a schedule and email the team automatically.
 
 6. **Share the team-member skill with your team.** Send the *team-member* zip to everyone whose Copilot work

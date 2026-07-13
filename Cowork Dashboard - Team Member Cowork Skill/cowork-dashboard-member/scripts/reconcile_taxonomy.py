@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cowork Dashboard — taxonomy memory reconciler (align-first, create-if-novel).
+"""Cowork Team Report — taxonomy memory reconciler (align-first, create-if-novel).
 
 Runs BEFORE classify.py. Reads the harvested sessions (working/cowork_raw.json)
 and the invoking user's durable, PER-USER PROCESS/PROJECT registry, then for each
