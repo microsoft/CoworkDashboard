@@ -68,9 +68,11 @@ into the emailed newsletter — refreshing on its schedule with nothing more for
 
 ## What the downloads contain
 
-Each download is an ordinary copy of the matching skill with **your channel already filled in**, so it works
-the moment it's installed. (If anyone ever installs a plain, un-configured copy, the skill simply asks for
-the channel link the first time it runs, the way it normally would.)
+Each Installer Studio download is an ordinary copy of the matching skill with **your channel already filled in**,
+so it works the moment it's installed. Nothing else about the skill is changed — the only difference between a
+baked copy and a plain one is a single small channel config file (`config/team_channel.json` for the team-member
+skill, `config/team_config.json` for the manager skill). If anyone ever installs a plain, un-configured copy, the
+skill simply asks for the channel link the first time it runs, the way it normally would.
 
 ## Is my channel link private?
 
@@ -79,12 +81,26 @@ the page makes no outside network calls — it only builds the download for you,
 
 ---
 
+## Two ways to get the skills
+
+- **A — Installer Studio (recommended).** Paste your channel link on the
+  [page above](https://aka.ms/CoworkDashboard) and download the two zips. Your channel is **baked in**, so you
+  and your team just upload each zip and run it — nobody is asked for a link.
+- **B — Grab the zips straight from this repo (manual).** The un-baked skill zips live next to each skill folder
+  and under [`docs/downloads/`](docs/downloads/). These ship with a **blank** channel, so the first time each
+  skill runs in Copilot Cowork it **asks you to paste the Teams channel link**, then remembers it. Use this if you
+  can't (or don't want to) use the Installer Studio page.
+
+Both paths install the exact same skill code — path A only pre-fills the channel config so there's no first-run
+question.
+
 ## Prefer to install by hand?
 
 You don't have to let Copilot unpack the zip for you — you can drop the skill into place yourself:
 
-1. **Download** a skill from the page above and **unzip** it. You'll get a single folder — either
-   `cowork-dashboard-member/` (the team-member skill) or `cowork-dashboard-team-dashboard/` (the manager skill).
+1. **Get a skill zip** — either from the [Installer Studio](https://aka.ms/CoworkDashboard) page (channel baked in)
+   or straight from this repo (blank channel, see option B above) — and **unzip** it. You'll get a single folder,
+   either `cowork-dashboard-member/` (the team-member skill) or `cowork-dashboard-team-dashboard/` (the manager skill).
 2. **Copy that folder** into your Cowork skills directory (use the line that matches the skill you're
    installing):
    ```
@@ -93,4 +109,5 @@ You don't have to let Copilot unpack the zip for you — you can drop the skill 
    ```
 3. Wait about 35 seconds for OneDrive to sync, and the skill is ready to use in Copilot Cowork.
 
-Because your channel is already baked into the folder, there's nothing else to configure.
+If you used an Installer Studio download, your channel is already baked in and there's nothing else to configure.
+If you used a blank copy from this repo, the skill asks for your Teams channel link the first time it runs.
