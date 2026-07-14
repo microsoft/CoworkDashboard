@@ -3,9 +3,11 @@
  *
  * The two download buttons hand over ready-to-use skill zips that already have the manager's
  * Teams channel BAKED IN. When you paste your channel link and it verifies, the download builds
- * the zip in your browser (via JSZip) with the team_id / channel_id written into the skill files,
- * so teammates just upload the zip — no first-run link to paste. Everything happens locally; the
- * link never leaves the page.
+ * the zip in your browser (via JSZip) and writes the team_id / channel_id into the skill's channel
+ * CONFIG file only (member: config/team_channel.json, manager: config/team_config.json) — the same
+ * file each skill already reads on first run. No SKILL.md, script, or other skill logic is touched,
+ * so an app-baked zip and a hand-downloaded one run identical skill code; the baked one just skips
+ * the first-run "paste the link" prompt. Everything happens locally; the link never leaves the page.
  */
 (function () {
   "use strict";
@@ -66,24 +68,19 @@
     return { ok: true, channel_id: channelId, team_id: teamId, channel_name: channelName, link: input };
   }
 
-  // ---- Baking: inject the resolved channel into the skill files inside each zip -----------------
+  // ---- Baking: inject the resolved channel into each skill's channel CONFIG file ---------------
   //
-  // These two helpers are PURE (string/JSON in → string out) so they can be unit-tested offline.
-
-  // Member skill: SKILL.md and README.md carry <YOUR_TEAM_*> / <YOUR_CHANNEL_*> placeholders.
-  function patchMemberFile(text, ch) {
-    var teamName = ch.team_name || ch.channel_name || "your team";
-    var channelName = ch.channel_name || "the Cowork channel";
-    return text
-      .split("<YOUR_TEAM_NAME>").join(teamName)
-      .split("<YOUR_TEAM_ID>").join(ch.team_id)
-      .split("<YOUR_CHANNEL_NAME>").join(channelName)
-      .split("<YOUR_CHANNEL_ID>").join(ch.channel_id);
-  }
-
-  // Manager skill: config/team_config.json ships with blank channel fields. Fill them so the skill
-  // skips its first-run "paste the link" prompt and reads the right channel straight away.
-  function patchTeamConfig(jsonText, ch) {
+  // This helper is PURE (JSON text in → JSON text out) so it can be unit-tested offline. It ONLY
+  // fills the channel fields that already exist in the config — key order, comments (_note fields),
+  // pricing, and every other value are preserved. No skill logic file is ever modified.
+  //
+  //   member  → config/team_channel.json  (channel_link, team_id, channel_id, channel_name)
+  //   manager → config/team_config.json   (same channel fields; pricing/privacy fields untouched)
+  //
+  // A blank config makes the skill ask for the link on first run; a filled one makes it skip that
+  // prompt and read the right channel straight away — so baked and hand-downloaded zips behave the
+  // same except for that first-run question.
+  function patchChannelConfig(jsonText, ch) {
     var cfg;
     try {
       cfg = JSON.parse(jsonText);
@@ -91,15 +88,14 @@
       // If the config can't be parsed for some reason, leave it untouched rather than corrupt it.
       return jsonText;
     }
-    cfg.team_id = ch.team_id;
-    cfg.channel_id = ch.channel_id;
-    if (ch.channel_name) cfg.channel_name = ch.channel_name;
-    if (ch.team_name) cfg.team_name = ch.team_name;
-    if (ch.link) cfg.channel_link = ch.link;
+    if ("channel_link" in cfg) cfg.channel_link = ch.link || "";
+    if ("team_id" in cfg) cfg.team_id = ch.team_id || "";
+    if ("channel_id" in cfg) cfg.channel_id = ch.channel_id || "";
+    if ("channel_name" in cfg && ch.channel_name) cfg.channel_name = ch.channel_name;
     return JSON.stringify(cfg, null, 2) + "\n";
   }
 
-  // Load the static zip, patch the matching entries in place, and return a fresh Blob.
+  // Load the static zip, patch the channel config entry in place, and return a fresh Blob.
   async function bakeZip(file, ch, kind) {
     if (typeof JSZip === "undefined") {
       throw new Error("the zip builder (JSZip) didn't load — refresh the page and try again.");
@@ -108,20 +104,18 @@
     if (!resp.ok) throw new Error("could not fetch " + file + " (" + resp.status + ")");
     var zip = await JSZip.loadAsync(await resp.blob());
 
-    var edits = [];
+    var configRe = kind === "member"
+      ? /\/config\/team_channel\.json$/i
+      : /\/config\/team_config\.json$/i;
+
+    var targets = [];
     zip.forEach(function (path, entry) {
-      if (entry.dir) return;
-      if (kind === "member" && (/\/SKILL\.md$/i.test(path) || /\/README\.md$/i.test(path))) {
-        edits.push({ path: path, fn: patchMemberFile });
-      } else if (kind === "manager" && /\/config\/team_config\.json$/i.test(path)) {
-        edits.push({ path: path, fn: patchTeamConfig });
-      }
+      if (!entry.dir && configRe.test(path)) targets.push(path);
     });
 
-    for (var i = 0; i < edits.length; i++) {
-      var e = edits[i];
-      var original = await zip.file(e.path).async("string");
-      zip.file(e.path, e.fn(original, ch));
+    for (var i = 0; i < targets.length; i++) {
+      var original = await zip.file(targets[i]).async("string");
+      zip.file(targets[i], patchChannelConfig(original, ch));
     }
 
     return zip.generateAsync({ type: "blob", compression: "DEFLATE" });
@@ -260,8 +254,8 @@
   function onDownloadMember() {
     return downloadBaked({
       btnId: "downloadBtn", statusId: "dlStatus", kind: "member",
-      file: "downloads/cowork-roi-member.zip",
-      fname: "cowork-roi-member.zip",
+      file: "downloads/cowork-dashboard-member.zip",
+      fname: "cowork-dashboard-member.zip",
       successMsg: "post this one into your dedicated channel and @tag your team."
     });
   }
@@ -269,8 +263,8 @@
   function onDownloadManager() {
     return downloadBaked({
       btnId: "downloadMgrBtn", statusId: "dlMgrStatus", kind: "manager",
-      file: "downloads/cowork-roi-team-dashboard.zip",
-      fname: "cowork-roi-team-dashboard.zip",
+      file: "downloads/cowork-dashboard-team-dashboard.zip",
+      fname: "cowork-dashboard-team-dashboard.zip",
       successMsg: "install this one yourself."
     });
   }
@@ -313,8 +307,7 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = {
       parseTeamsChannelLink: parseTeamsChannelLink,
-      patchMemberFile: patchMemberFile,
-      patchTeamConfig: patchTeamConfig
+      patchChannelConfig: patchChannelConfig
     };
   }
 })();

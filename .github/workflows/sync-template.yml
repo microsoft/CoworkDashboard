@@ -9,6 +9,7 @@ on:
     paths:
       - "Cowork Dashboard - Team Member Cowork Skill/**"
       - "Cowork Dashboard - Team Dashboard Cowork Skill/**"
+      - "tools/build_skill_downloads.py"
       - ".github/workflows/sync-template.yml"
   workflow_dispatch:
 
@@ -110,6 +111,15 @@ jobs:
           manifest("cowork-dashboard-team-dashboard", "manifest-dashboard.json")
           PY
 
+      - name: Rebuild the served download zips from the skill folders
+        run: |
+          set -euo pipefail
+          # The Installer Studio page serves docs/downloads/*.zip (and offers the same zips next to
+          # each skill folder). Rebuild them straight from the canonical source so the one-click
+          # downloads can never drift from the maintained skills. The script aborts if a populated
+          # channel config is ever found, so a real team's channel can't be published by accident.
+          python3 tools/build_skill_downloads.py
+
       - name: Warn if shared taxonomy files drift between the two skills
         run: |
           set -uo pipefail
@@ -128,10 +138,12 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain docs/skill-template)" ]; then
-            git add docs/skill-template
-            git commit -m "chore: sync docs/skill-template from skill folders"
+          git add docs/skill-template docs/downloads \
+            "Cowork Dashboard - Team Member Cowork Skill/cowork-dashboard-member.zip" \
+            "Cowork Dashboard - Team Dashboard Cowork Skill/cowork-dashboard-team-dashboard.zip"
+          if [ -n "$(git status --porcelain docs/skill-template docs/downloads 'Cowork Dashboard - Team Member Cowork Skill/cowork-dashboard-member.zip' 'Cowork Dashboard - Team Dashboard Cowork Skill/cowork-dashboard-team-dashboard.zip')" ]; then
+            git commit -m "chore: sync skill templates + download zips from skill folders"
             git push
           else
-            echo "docs/skill-template already up to date."
+            echo "docs/skill-template and download zips already up to date."
           fi
