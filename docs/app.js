@@ -1,10 +1,11 @@
 /*
  * Cowork Team Report — Team installer helper (client-side only).
  *
- * The two download buttons hand over the exact, ready-to-use skill zips under ./downloads/.
- * Each skill asks for the team's Teams channel link the first time it runs, so nothing is baked
- * in here. The optional "Parse & verify" tool just sanity-checks a pasted channel link in the
- * browser (the link never leaves the page) so the manager knows it looks right before first run.
+ * The two download buttons hand over ready-to-use skill zips that already have the manager's
+ * Teams channel BAKED IN. When you paste your channel link and it verifies, the download builds
+ * the zip in your browser (via JSZip) with the team_id / channel_id written into the skill files,
+ * so teammates just upload the zip — no first-run link to paste. Everything happens locally; the
+ * link never leaves the page.
  */
 (function () {
   "use strict";
@@ -62,14 +63,80 @@
       if (!/^\d+$/.test(cand)) channelName = cand.trim();
     }
 
-    return { ok: true, channel_id: channelId, team_id: teamId, channel_name: channelName };
+    return { ok: true, channel_id: channelId, team_id: teamId, channel_name: channelName, link: input };
+  }
+
+  // ---- Baking: inject the resolved channel into the skill files inside each zip -----------------
+  //
+  // These two helpers are PURE (string/JSON in → string out) so they can be unit-tested offline.
+
+  // Member skill: SKILL.md and README.md carry <YOUR_TEAM_*> / <YOUR_CHANNEL_*> placeholders.
+  function patchMemberFile(text, ch) {
+    var teamName = ch.team_name || ch.channel_name || "your team";
+    var channelName = ch.channel_name || "the Cowork channel";
+    return text
+      .split("<YOUR_TEAM_NAME>").join(teamName)
+      .split("<YOUR_TEAM_ID>").join(ch.team_id)
+      .split("<YOUR_CHANNEL_NAME>").join(channelName)
+      .split("<YOUR_CHANNEL_ID>").join(ch.channel_id);
+  }
+
+  // Manager skill: config/team_config.json ships with blank channel fields. Fill them so the skill
+  // skips its first-run "paste the link" prompt and reads the right channel straight away.
+  function patchTeamConfig(jsonText, ch) {
+    var cfg;
+    try {
+      cfg = JSON.parse(jsonText);
+    } catch (e) {
+      // If the config can't be parsed for some reason, leave it untouched rather than corrupt it.
+      return jsonText;
+    }
+    cfg.team_id = ch.team_id;
+    cfg.channel_id = ch.channel_id;
+    if (ch.channel_name) cfg.channel_name = ch.channel_name;
+    if (ch.team_name) cfg.team_name = ch.team_name;
+    if (ch.link) cfg.channel_link = ch.link;
+    return JSON.stringify(cfg, null, 2) + "\n";
+  }
+
+  // Load the static zip, patch the matching entries in place, and return a fresh Blob.
+  async function bakeZip(file, ch, kind) {
+    if (typeof JSZip === "undefined") {
+      throw new Error("the zip builder (JSZip) didn't load — refresh the page and try again.");
+    }
+    var resp = await fetch(file, { cache: "no-store" });
+    if (!resp.ok) throw new Error("could not fetch " + file + " (" + resp.status + ")");
+    var zip = await JSZip.loadAsync(await resp.blob());
+
+    var edits = [];
+    zip.forEach(function (path, entry) {
+      if (entry.dir) return;
+      if (kind === "member" && (/\/SKILL\.md$/i.test(path) || /\/README\.md$/i.test(path))) {
+        edits.push({ path: path, fn: patchMemberFile });
+      } else if (kind === "manager" && /\/config\/team_config\.json$/i.test(path)) {
+        edits.push({ path: path, fn: patchTeamConfig });
+      }
+    });
+
+    for (var i = 0; i < edits.length; i++) {
+      var e = edits[i];
+      var original = await zip.file(e.path).async("string");
+      zip.file(e.path, e.fn(original, ch));
+    }
+
+    return zip.generateAsync({ type: "blob", compression: "DEFLATE" });
   }
 
   // ---- DOM wiring ------------------------------------------------------------------------------
   var $ = function (id) { return document.getElementById(id); };
   var resolved = null; // last successful parse
 
+  // Default (un-baked) copy for the state spans, restored when there's no verified link.
+  var DEFAULT_MGR_STATE = "It asks for your Teams channel link the first time you run it.";
+  var DEFAULT_MEM_STATE = "Each teammate is asked for the Teams channel link the first time they run it.";
+
   function setStatus(el, msg, cls) {
+    if (!el) return;
     el.textContent = msg || "";
     el.className = "status" + (cls ? " " + cls : "");
   }
@@ -102,13 +169,34 @@
     if (el) { if (show) { el.classList.remove("hidden"); } else { el.classList.add("hidden"); } }
   }
 
-  // Under each download button: reassure that the ready-to-use skill asks for the channel on
-  // first run. Nothing is baked in, so we simply keep the first-run notes visible.
+  function setText(id, txt) {
+    var el = $(id);
+    if (el) el.textContent = txt;
+  }
+
+  // Under each download button: when a channel is verified, tell the manager it will be baked into
+  // the zip (nothing to paste on first run). Otherwise, prompt them to verify a link first.
   function refreshDownloadNotes() {
-    toggleNote("genNote", true);
-    toggleNote("genNoteMgr", true);
-    toggleNote("bakeNote", false);
-    toggleNote("bakeNoteMgr", false);
+    if (resolved) {
+      var name = resolved.channel_name || "your team's channel";
+      var baked = "✓ Your channel (" + name + ") will be baked into this zip — teammates just upload it, no first-run link to paste.";
+      var bakedMgr = "✓ Your channel (" + name + ") will be baked into this zip — no first-run link to paste.";
+      setText("bakeNote", baked);
+      setText("bakeNoteMgr", bakedMgr);
+      toggleNote("bakeNote", true);
+      toggleNote("bakeNoteMgr", true);
+      toggleNote("genNote", false);
+      toggleNote("genNoteMgr", false);
+      setText("mgrBakeState", "The channel is already baked into your download — no first-run link to paste.");
+      setText("memBakeState", "The channel is already baked into the zip you share — no first-run link to paste.");
+    } else {
+      toggleNote("bakeNote", false);
+      toggleNote("bakeNoteMgr", false);
+      toggleNote("genNote", true);
+      toggleNote("genNoteMgr", true);
+      setText("mgrBakeState", DEFAULT_MGR_STATE);
+      setText("memBakeState", DEFAULT_MEM_STATE);
+    }
   }
 
   // Editing the link invalidates any prior verification — fall back to generic until re-verified.
@@ -133,28 +221,45 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   }
 
-  // Hands over the exact, ready-to-use skill zip under ./downloads/ — no in-browser assembly.
-  async function downloadStatic(opts) {
+  // Resolve the channel to bake: prefer the verified parse; otherwise try to parse the link field
+  // live so a manager who typed a good link but didn't click "verify" still gets a baked zip.
+  function requireChannel(statusEl) {
+    if (resolved) return resolved;
+    var res = parseTeamsChannelLink($("link") ? $("link").value : "");
+    if (res.ok) {
+      resolved = res;
+      onParse(); // reflect it in the UI + readout
+      return resolved;
+    }
+    setStatus(statusEl, "✕ Paste your Teams channel link above and click “Parse & verify” first — it gets baked into the download.", "err");
+    var linkEl = $("link");
+    if (linkEl) linkEl.focus();
+    return null;
+  }
+
+  // Build + hand over the channel-baked skill zip.
+  async function downloadBaked(opts) {
     var st = $(opts.statusId);
     var btn = $(opts.btnId);
+    var ch = requireChannel(st);
+    if (!ch) return;
     btn.disabled = true;
-    setStatus(st, "Preparing your download…");
+    setStatus(st, "Baking your channel into the skill…");
     try {
-      var resp = await fetch(opts.file, { cache: "no-store" });
-      if (!resp.ok) throw new Error("could not fetch " + opts.file + " (" + resp.status + ")");
-      var blob = await resp.blob();
+      var blob = await bakeZip(opts.file, ch, opts.kind);
       triggerDownload(blob, opts.fname);
-      setStatus(st, "✓ Downloaded " + opts.fname + " — " + opts.successMsg, "ok");
+      var name = ch.channel_name || "your channel";
+      setStatus(st, "✓ Downloaded " + opts.fname + " with " + name + " baked in — " + opts.successMsg, "ok");
     } catch (err) {
-      setStatus(st, "✕ Could not start the download: " + (err && err.message ? err.message : err), "err");
+      setStatus(st, "✕ Could not build the download: " + (err && err.message ? err.message : err), "err");
     } finally {
       btn.disabled = false;
     }
   }
 
   function onDownloadMember() {
-    return downloadStatic({
-      btnId: "downloadBtn", statusId: "dlStatus",
+    return downloadBaked({
+      btnId: "downloadBtn", statusId: "dlStatus", kind: "member",
       file: "downloads/cowork-roi-member.zip",
       fname: "cowork-roi-member.zip",
       successMsg: "post this one into your dedicated channel and @tag your team."
@@ -162,8 +267,8 @@
   }
 
   function onDownloadManager() {
-    return downloadStatic({
-      btnId: "downloadMgrBtn", statusId: "dlMgrStatus",
+    return downloadBaked({
+      btnId: "downloadMgrBtn", statusId: "dlMgrStatus", kind: "manager",
       file: "downloads/cowork-roi-team-dashboard.zip",
       fname: "cowork-roi-team-dashboard.zip",
       successMsg: "install this one yourself."
@@ -200,11 +305,16 @@
       $("copyBtn").addEventListener("click", makeCopyHandler("installText", "copyBtn"));
       var copyMgr = $("copyMgrBtn"); if (copyMgr) copyMgr.addEventListener("click", makeCopyHandler("installMgrText", "copyMgrBtn"));
       var copyRunMember = $("copyRunMemberBtn"); if (copyRunMember) copyRunMember.addEventListener("click", makeCopyHandler("runMemberText", "copyRunMemberBtn"));
+      refreshDownloadNotes();
     });
   }
 
-  // Exposed for the offline resolver self-test (docs/skill-template not required).
+  // Exposed for the offline resolver + baking self-tests.
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { parseTeamsChannelLink: parseTeamsChannelLink };
+    module.exports = {
+      parseTeamsChannelLink: parseTeamsChannelLink,
+      patchMemberFile: patchMemberFile,
+      patchTeamConfig: patchTeamConfig
+    };
   }
 })();

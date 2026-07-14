@@ -511,13 +511,13 @@
        <span class="mono">team_id</span>, <span class="mono">channel_id</span> and channel name, confirms the
        channel id is a real <span class="mono">…@thread.…</span> id and the team id is a valid GUID, and shows
        them below for you to confirm. It does <strong>not</strong> contact Teams or sign you in; nothing is
-       sent anywhere. This step is <strong>optional</strong> — it just double-checks your link looks right
-       before you paste it into each skill on its first run. The downloads below are the ready-to-use skills
-       either way.</p>
+       sent anywhere. <strong>Do this before you download</strong> — the downloads below then <strong>bake this
+       channel straight into each skill zip</strong> (in your browser), so you and your teammates just upload
+       the zip with nothing to paste on first run.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
 
     <div id="resolved" class="resolved" aria-live="polite">
-      <p class="verified-tag"><span class="chk">✓</span> Looks good — paste this same link into each skill the first time you run it</p>
+      <p class="verified-tag"><span class="chk">✓</span> Looks good — this channel will be baked into the skill zips you download below</p>
       <div class="readout">
         <div class="rowline"><span class="k">Channel name</span><p class="v" id="rName">—</p></div>
         <div class="rowline"><span class="k">team_id</span><p class="v" id="rTeam">—</p></div>
@@ -647,7 +647,7 @@
 </footer>
 
 <script src="jszip.min.js"></script>
-<script src="app.js?v=3"></script>
+<script src="app.js?v=4"></script>
 <script>
   (function () {
     var btn = document.getElementById("themeToggle");
