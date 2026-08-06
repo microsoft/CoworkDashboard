@@ -10,7 +10,7 @@ A per-Role breakdown appears only when >= kThreshold members share that Role
 
 Tabs (each small, one clear purpose):
   Overview          — auto-insights + the single KPI band.
-  Impact & Value    — value pillars, task categories ($), roles (+ skills as collapsible detail),
+  Impact & Value    — task categories ($), roles (+ skills as collapsible detail),
                       deliverables by FILE FORMAT.
   How Cowork is used— business process accordion: each row EXPANDS to its deliverable formats + skills
                       (skills nest in a sub-expand when long); category mix (k-anon), analyzed->produced.
@@ -21,14 +21,15 @@ Tabs (each small, one clear purpose):
 Every $ figure = hours x rate, computed live in the browser (live rate control).
 Usage: python build_dashboard.py --in working/team_data.json --out output/cowork-team-roi-dashboard.html
 """
-import json, argparse
+import json, argparse, re
 
 CSS = r"""
 :root{--bg:#f3f4f8;--panel:#fff;--ink:#1f2329;--muted:#5d6470;--faint:#8a909c;--line:#e4e7ee;
 --brand:#0f6cbd;--brand-d:#0b5394;--soft:#eaf3fb;--good:#107c10;--shadow:0 1px 2px rgba(16,24,40,.06),0 4px 16px rgba(16,24,40,.06);
---t:#0f6cbd;--rg:#107c10;--cr:#ca5010;--rm:#8764b8;
---c0:#0f6cbd;--c1:#2e8b57;--c2:#ca5010;--c3:#8764b8;--c4:#0099bc;--c5:#c4314b;--c6:#7a7574;--c7:#498205;}
-@media (prefers-color-scheme:dark){:root{--bg:#16181d;--panel:#1f2228;--ink:#e9ebef;--muted:#a7adb8;--faint:#7c828d;--line:#2c3038;--brand:#4aa3e8;--brand-d:#74b9ee;--soft:#1b2a39;--shadow:0 1px 2px rgba(0,0,0,.4);}}
+/* Analyzed -> Produced (input/output columns) — two colors NOT in the task category palette: a warm amber-GOLD (not olive) for inputs analyzed, magenta for outputs produced. Keeps this section distinct from the task categories. */
+--io-in:#d99c1e;--io-out:#b4009e;
+--c0:#0f6cbd;--c1:#2e8b57;--c2:#ca5010;--c3:#8764b8;--c4:#0099bc;--c5:#c4314b;--c6:#7a7574;--c7:#498205;--donut-edge:rgba(0,0,0,.16);}
+@media (prefers-color-scheme:dark){:root{--bg:#16181d;--panel:#1f2228;--ink:#e9ebef;--muted:#a7adb8;--faint:#7c828d;--line:#2c3038;--brand:#4aa3e8;--brand-d:#74b9ee;--soft:#1b2a39;--shadow:0 1px 2px rgba(0,0,0,.4);--donut-edge:rgba(255,255,255,.26);}}
 *{box-sizing:border-box}html,body{margin:0;padding:0}
 body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1140px;margin:0 auto;padding:0 20px 60px}
@@ -49,7 +50,7 @@ header.top .disc{font-size:11px;line-height:1.45;opacity:.9;margin:10px 0 0;max-
 .tab-btn{font:inherit;font-size:13.5px;font-weight:600;padding:11px 15px;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
 .tab-btn.on{color:var(--brand);border-bottom-color:var(--brand)}.tab-btn:hover{color:var(--ink)}
 .tab-panel{display:none}.tab-panel.on{display:block}
-section.block{margin:24px 0 0}
+section.block{margin:24px 0 0;scroll-margin-top:120px}
 h2.sec{font-size:16px;font-weight:700;margin:0 0 3px;display:flex;align-items:center;gap:9px;position:relative;flex-wrap:wrap}
 h2.sec .dot{width:9px;height:9px;border-radius:3px;background:var(--brand)}
 .sec-note{font-size:12.5px;color:var(--muted);margin:0 0 13px}
@@ -78,23 +79,44 @@ table.dt th{text-align:left;font-size:11px;text-transform:uppercase;letter-spaci
 table.dt th.r,table.dt td.r{text-align:right;font-variant-numeric:tabular-nums}
 table.dt td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}table.dt tr:last-child td{border-bottom:none}
 table.dt tr.tot td{font-weight:700;border-top:2px solid var(--line);background:var(--bg)}
+.catsw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:8px;vertical-align:middle;flex:none}
+.footnote{font-size:11.5px;color:var(--faint);margin-top:9px;line-height:1.5}.footnote b{color:var(--muted)}
 .pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--brand-d);font-weight:600;margin:1px 3px 1px 0}
 .insights{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .ins{display:flex;gap:11px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)}
 .ins .ic{font-size:18px;line-height:1.2}.ins .tx{font-size:13px}.ins .tx b{font-weight:700}
+.ins.insgroup{flex-direction:column;gap:11px}
+.insgroup .ig-h{font-size:13px;font-weight:700;color:var(--ink)}
+.insgroup .ig-rows{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.insgroup .ig-row{display:flex;gap:9px;align-items:flex-start}
+.insgroup .ig-row .ic{font-size:17px;line-height:1.2}.insgroup .ig-row .tx{font-size:12.5px}.insgroup .ig-row .tx b{font-weight:700}
+.insgroup .ig-cat{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--faint);font-weight:700;margin-bottom:3px}
+.insgroup .ig-cat.navlink{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:0;cursor:pointer;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;color:var(--faint)}
+.insgroup .ig-cat.navlink:hover,.insgroup .ig-cat.navlink:focus-visible{color:var(--ink);text-decoration:underline;text-decoration-style:dotted;text-decoration-color:var(--faint);outline:none}
+.insgroup .ig-cat.navlink .ig-arrow{font-size:11px;opacity:.75}
+/* Glossary hover tooltip: a term with a dotted underline pops its definition (from the Glossary) on hover/focus. */
+.gloss{position:relative;cursor:help;border-bottom:1px dotted currentColor}
+.gloss>.gtip{position:absolute;top:calc(100% + 6px);inset-inline-start:0;z-index:70;width:220px;max-width:70vw;background:var(--ink);color:var(--panel);border-radius:8px;padding:8px 10px;font-size:12px;font-weight:400;line-height:1.45;text-transform:none;letter-spacing:normal;box-shadow:var(--shadow);display:none;white-space:normal}
+.gloss:hover>.gtip,.gloss:focus>.gtip,.gloss:focus-within>.gtip{display:block}
+/* Inline cross-reference link — jumps to the named section/tab. */
+.xref{display:inline;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline dotted;text-decoration-color:var(--faint);text-underline-offset:2px}
+.xref:hover,.xref:focus-visible{text-decoration-color:var(--ink);outline:none}
+.insgroup .ig-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:1px}
+.insgroup .ig-val{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .donut-wrap{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
 .legend{display:flex;flex-direction:column;gap:7px;font-size:12.5px}.legend .li{display:flex;align-items:center;gap:9px}
-.legend .sw{width:12px;height:12px;border-radius:3px;flex:none}.legend .lt{flex:1}.legend .lv{color:var(--muted);font-variant-numeric:tabular-nums}
+.legend .sw{width:12px;height:12px;border-radius:3px;flex:none;box-shadow:inset 0 0 0 1px var(--donut-edge)}.legend .lt{flex:1}.legend .lv{color:var(--muted);font-variant-numeric:tabular-nums}
 .stackrow{display:grid;grid-template-columns:200px 1fr;align-items:center;gap:11px;padding:6px 0}
-.stackbar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--bg)}.stackseg{height:100%}
+.stackbar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--bg)}.stackseg{height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}.segpct{font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.45);white-space:nowrap;line-height:1}
 .io2{display:grid;grid-template-columns:1fr 1fr;gap:26px}.io2 h4{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--faint);margin:0 0 10px}
 .svgtrend{width:100%;height:150px}.trend-empty{font-size:12.5px;color:var(--muted);margin-top:8px}
-details.meth{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin-bottom:12px}
+details.meth{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin-bottom:12px;scroll-margin-top:120px}
 details.meth summary{cursor:pointer;padding:14px 18px;font-weight:700;font-size:14px;list-style:none}
 details.meth summary::-webkit-details-marker{display:none}
 details.meth summary::before{content:'\25B8';margin-inline-end:9px;color:var(--brand);display:inline-block;transition:.15s}
 details.meth[open] summary::before{transform:rotate(90deg)}
 details.meth .mbody{padding:0 18px 16px;font-size:13px;color:var(--muted)}details.meth .mbody h4{color:var(--ink);font-size:13px;margin:13px 0 5px}details.meth a{color:var(--brand)}
+details.meth .mbody ul{margin:4px 0 12px;padding-inline-start:20px}details.meth .mbody li{margin:3px 0}
 details.drill{margin-top:13px;border-top:1px dashed var(--line);padding-top:9px}
 details.drill>summary{cursor:pointer;font-size:12.5px;font-weight:650;color:var(--brand);list-style:none;user-select:none}
 details.drill>summary::-webkit-details-marker{display:none}
@@ -127,7 +149,7 @@ details.drill.sub{margin-top:11px;border-top:1px dashed var(--line);padding-top:
 .dlv-v{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 @media (max-width:860px){.acct-h,.acct-tot,.acct-row>summary{grid-template-columns:1fr 50px 56px 66px 44px;gap:6px;font-size:12px}}
 footer.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint)}
-@media (max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.io2,.insights{grid-template-columns:1fr}.row{grid-template-columns:118px 1fr 132px}.row.rc{grid-template-columns:118px 1fr 46px}.row .rv{white-space:normal}.stackrow{grid-template-columns:120px 1fr}.helppop{max-width:78vw}}
+@media (max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.io2,.insights{grid-template-columns:1fr}.insgroup .ig-rows{grid-template-columns:1fr}.row{grid-template-columns:118px 1fr 132px}.row.rc{grid-template-columns:118px 1fr 46px}.row .rv{white-space:normal}.stackrow{grid-template-columns:120px 1fr}.helppop{max-width:78vw}}
 @media print{body{background:#fff}.controls,.banner,.tabs{display:none}.tab-panel{display:block!important}
 .card,.kpi,details.meth{box-shadow:none;border-color:#ccc}details.meth summary{display:none}details.meth .mbody{display:block!important}
 details.drill .dbody{display:block!important}.acct-row>.acct-body{display:block!important}
@@ -137,12 +159,14 @@ header.top{background:var(--brand)!important}*{-webkit-print-color-adjust:exact;
 JS = r"""
 const RAW=JSON.parse(document.getElementById('cw-data').textContent);
 const RATE0=RAW.meta.defaultRate, KMIN=RAW.meta.kThreshold||3;
-const PILL_COLOR={'Transformation':'var(--t)','Revenue Growth':'var(--rg)','Cost Reduction':'var(--cr)','Risk Mitigation':'var(--rm)'};
 const CAT_COLOR={'Analysis & Research':'var(--c0)','Write or debug code':'var(--c1)','Document & content creation':'var(--c2)','Meeting workflows':'var(--c3)','Specialized workflows':'var(--c4)','General assistance / Other':'var(--c6)','Email workflows':'var(--c5)','Communication workflows':'var(--c7)'};
 const PAL=['var(--c0)','var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)','var(--c7)'];
 // Deliverable types → concrete file formats (types like Text/File/Deck/Document overlap; formats don't).
 const FMT={'Deck':'PPTX','Slides':'PPTX','Presentation':'PPTX','Slide deck':'PPTX','Document':'Word','Doc':'Word','Word':'Word','Spreadsheet':'Excel / CSV','Excel':'Excel / CSV','CSV':'Excel / CSV','Web page':'HTML','Webpage':'HTML','Web':'HTML','HTML':'HTML','Text':'Text / MD','Markdown':'Text / MD','Image':'Image','PDF':'PDF','File':'File (other)'};
 const fmtLabel=t=>FMT[t]||t;
+// Glossary map (built from the Glossary tab at build time) → hover tooltips on matching KPI labels.
+const GLOSSARY=__GLOSSARY__;
+function glossLabel(t){const d=GLOSSARY[String(t).toLowerCase()];return d?`<span class="gloss" tabindex="0">${t}<span class="gtip">${d}</span></span>`:t;}
 // Display-only remap of grouped process labels (taxonomy files stay byte-for-byte identical).
 const PROC_LABEL={'Skill Development':'Cowork Skill Development'};
 const procLabel=n=>PROC_LABEL[n]||n;
@@ -161,13 +185,12 @@ function memberReports(m){return snapIds().map(id=>m.reports[id]).filter(Boolean
 
 function aggregate(members){
   const a={n:members.length,head:{timeTyp:0,timeLow:0,timeHigh:0,expertH:0,assistedH:0,sessions:0,runTasks:0,deliverables:0,activeDays:0},
-    cat:{},pil:{},proc:{},role:{},skill:{},deliv:{},delivDetail:[],inputs:{},outputs:{},inA:0,outP:0};
+    cat:{},proc:{},role:{},skill:{},deliv:{},delivDetail:[],inputs:{},outputs:{},inA:0,outP:0};
   let lowN=0,highN=0;
   members.forEach(m=>memberReports(m).forEach(r=>{
     const h=r.headline;for(const k in a.head){if(k!=='timeLow'&&k!=='timeHigh')a.head[k]+=(h[k]||0);}
     if(h.timeLow!=null){a.head.timeLow+=h.timeLow;lowN++;} if(h.timeHigh!=null){a.head.timeHigh+=h.timeHigh;highN++;}
     r.categories.forEach(c=>{const o=a.cat[c.name]||(a.cat[c.name]={tasks:0,hours:0});o.tasks+=c.tasks;o.hours+=c.hours;});
-    r.pillars.forEach(p=>{const o=a.pil[p.name]||(a.pil[p.name]={hours:0,sessions:0});o.hours+=p.hours;o.sessions+=(p.sessions||0);});
     r.processes.forEach(p=>{const o=a.proc[p.name]||(a.proc[p.name]={sessions:0,hours:0});o.sessions+=p.sessions;o.hours+=p.hours;});
     r.roles.forEach(x=>{const o=a.role[x.name]||(a.role[x.name]={hours:0});o.hours+=x.hours;});
     r.skills.forEach(x=>{const o=a.skill[x.name]||(a.skill[x.name]={deliverables:0,sessions:0,hours:0});o.deliverables+=x.deliverables;o.sessions+=x.sessions;o.hours+=x.hours;});
@@ -194,7 +217,7 @@ function procDetailHTML(items,R){
   if(!items||!items.length)
     return `<div class="sec-note">No per-item detail for this process in the current posts. Deliverable names are de-identified by the Member skill (no file names); the list appears here when a teammate's post carries it.</div>`;
   // Distinct NAMED deliverables list individually; UNNAMED ones (a teammate's post carried only the
-  // file type, not a de-identified name) collapse into ONE row per format, e.g. "HTML · 5 deliverables".
+  // file type, not a de-identified name) collapse into ONE row per format, e.g., "HTML · 5 deliverables".
   const named=[],byfmt={};
   items.forEach(d=>{
     const nm=(d.name&&String(d.name).trim())?String(d.name).trim():'';
@@ -218,34 +241,35 @@ function render(){
   const R=state.rate,mem=activeMembers(),A=aggregate(mem),H=A.head;
   const teamSpeed=H.assistedH>0?H.expertH/H.assistedH:0;
   const catArr=sortH(toArr(A.cat)),totCatH=catArr.reduce((s,x)=>s+x.hours,0);
-  const pilArr=sortH(toArr(A.pil)),totPilH=pilArr.reduce((s,x)=>s+x.hours,0);
   const procArr=sortH(toArr(A.proc)),totProcH=procArr.reduce((s,x)=>s+x.hours,0);
   el('ctxline').textContent=`${snapLabel()} · ${mem.length} contributor${mem.length===1?'':'s'} · $${R}/hr`;
 
   // Overview KPIs
   el('ov-kpis').innerHTML=[
-    {l:'Time saved',v:hrs(H.timeTyp),s:`≈ ${wk(H.timeTyp)} expert work-weeks · ${hrs(H.timeLow)}–${hrs(H.timeHigh)}`,h:1},
-    {l:'Value / cost reduction',v:money(H.expertH*R),s:`at $${R}/hr · ${money(H.timeLow*R)}–${money(H.timeHigh*R)}`,h:1},
-    {l:'Team speed multiplier',v:teamSpeed.toFixed(1)+'×',s:`${hrs(H.expertH)} expert ÷ ${hrs(H.assistedH)} hands-on`,h:1},
+    {l:'Time saved',v:hrs(H.timeTyp),s:`≈ ${wk(H.timeTyp)} weeks · range ${hrs(H.timeLow)}–${hrs(H.timeHigh)}`,h:1},
+    {l:'Value / cost reduction',v:money(H.expertH*R),s:`at $${R}/hr · range ${money(H.timeLow*R)}–${money(H.timeHigh*R)}`,h:1},
+    {l:'Team speed multiplier',v:teamSpeed.toFixed(1)+'×',s:`${hrs(H.assistedH)} hands-on compared to ${hrs(H.expertH)} without Cowork`,h:1},
     {l:'Contributors',v:mem.length,s:`posted this period`,h:1},
-    {l:'Sessions',v:H.sessions,s:`${H.runTasks} run tasks`},{l:'Deliverables',v:H.deliverables,s:'produced'},
+    {l:'Sessions',v:H.sessions,s:`${H.runTasks} run tasks across ${H.sessions} sessions`},{l:'Deliverables',v:H.deliverables,s:'produced'},
+    {l:'Hands-on time',v:hrs(H.assistedH),s:`vs ${hrs(H.expertH)} estimated without Cowork`},
     {l:'Active days',v:H.activeDays,s:`person-days · ${(H.activeDays?H.expertH/H.activeDays:0).toFixed(1)} h/day`},
-    {l:'Hands-on time',v:hrs(H.assistedH),s:`vs ${hrs(H.expertH)} expert-equivalent`},
-  ].map(k=>`<div class="kpi${k.h?' hero':''}"><div class="k-l">${k.l}</div><div class="k-v">${k.v}</div><div class="k-s">${k.s}</div></div>`).join('');
+  ].map(k=>`<div class="kpi${k.h?' hero':''}"><div class="k-l">${glossLabel(k.l)}</div><div class="k-v">${k.v}</div><div class="k-s">${k.s}</div></div>`).join('');
 
-  const ins=[];
-  ins.push({i:'⏱️',t:`The team reclaimed <b>${hrs(H.timeTyp)}</b> (~${money(H.expertH*R)}) — about <b>${wk(H.timeTyp)} expert work-weeks</b> at <b>${teamSpeed.toFixed(1)}×</b> leverage over hands-on time.`});
-  if(catArr[0])ins.push({i:'🎯',t:`Most leverage is in <b>${catArr[0].name}</b> — <b>${pct(catArr[0].hours,totCatH)}%</b> of saved time.`});
-  if(procArr[0])ins.push({i:'🏭',t:`The biggest business process is <b>${procLabel(procArr[0].name)}</b> — <b>${pct(procArr[0].hours,totProcH)}%</b> of the work.`});
-  if(pilArr[0])ins.push({i:'💼',t:`<b>${pilArr[0].name}</b> is the dominant value pillar at <b>${pct(pilArr[0].hours,totPilH)}%</b> of saved hours.`});
-  el('ov-insights').innerHTML=ins.map(x=>`<div class="ins"><div class="ic">${x.i}</div><div class="tx">${x.t}</div></div>`).join('');
+  const headline=`<div class="ins" style="grid-column:1/-1"><div class="ic">⏱️</div><div class="tx">Cowork helped the team save about <b>${H.timeTyp.toFixed(1)} hours of total time</b> over this time period, enabling tasks to be completed <b>${teamSpeed.toFixed(1)}× faster,</b> with an estimated time savings value of <b>${money(H.expertH*R)}.</b></div></div>`;
+  const where=[];
+  if(catArr[0])where.push({i:'🎯',h:'Task Category',goto:'impact',scroll:'im-categories',name:catArr[0].name,val:`${hrs(catArr[0].hours)} · ${pct(catArr[0].hours,totCatH)}% of total time saved`});
+  if(procArr[0])where.push({i:'🏭',h:'Business Process',goto:'work',scroll:'wk-proc',name:procLabel(procArr[0].name),val:`${hrs(procArr[0].hours)} · ${pct(procArr[0].hours,totProcH)}% of total time saved`});
+  const group=where.length?`<div class="ins insgroup" style="grid-column:1/-1"><div class="ig-h">Where did we save the most time:</div><div class="ig-rows">${where.map(x=>`<div class="ig-row"><div class="ic">${x.i}</div><div class="tx"><button type="button" class="ig-cat navlink" data-goto="${x.goto}" data-scroll="${x.scroll}" title="Go to ${x.h}">${x.h}<span class="ig-arrow" aria-hidden="true">↗</span></button><div class="ig-name">${x.name}</div><div class="ig-val">${x.val}</div></div></div>`).join('')}</div></div>`:'';
+  el('ov-insights').innerHTML=headline+group;
 
   // Impact & Value
-  renderDonut('im-pillars',pilArr,totPilH,R);
-  (function(){const mx=Math.max(1,...catArr.map(a=>a.hours)),N=mem.length;el('im-categories').innerHTML=catArr.map(c=>{
-    const band=RAW.meta.categoryBands[c.name]?`band ${RAW.meta.categoryBands[c.name]} min/run &nbsp;·&nbsp; `:'';
+  (function(){const mx=Math.max(1,...catArr.map(a=>a.hours)),N=mem.length;const catRows=catArr.map(c=>{
+    const bandRaw=RAW.meta.categoryBands[c.name];const band=bandRaw?(function(){const p=bandRaw.split('/').map(x=>x.trim());const mid=p.length>=2?`<b>${p[1]}</b>`:'';const disp=p.length>=3?`${p[0]} / ${mid} / ${p[2]}`:bandRaw;return `Time range: ${disp} min/run &nbsp;·&nbsp; `;})():'';
     const sub=`<span style="font-size:11px;color:var(--faint)">${band}${reachLabel(catReach(mem,c.name),N)}</span>`;
-    return barRow(c.name,c.hours/mx*100,CAT_COLOR[c.name]||'var(--c0)',`<b>${hrs(c.hours)}</b> · ${money(c.hours*R)} · ${c.tasks} tasks · ${pct(c.hours,totCatH)}%`)+`<div style="margin:-4px 0 6px 191px">${sub}</div>`;}).join('');})();
+    return barRow(c.name,c.hours/mx*100,CAT_COLOR[c.name]||'var(--c0)',`<b>${hrs(c.hours)}</b> · ${money(c.hours*R)} · ${c.tasks} run tasks · ${pct(c.hours,totCatH)}%`)+`<div style="margin:-4px 0 6px 191px">${sub}</div>`;}).join('');
+    const totTasks=catArr.reduce((s,x)=>s+(x.tasks||0),0);
+    const totalRow=`<div class="row" style="border-top:2px solid var(--line);margin-top:6px;padding-top:9px"><div class="rl"><b>Total</b></div><div class="rbar" style="background:none"></div><div class="rv"><b>${hrs(totCatH)}</b> · ${money(totCatH*R)} · ${totTasks} run tasks</div></div>`;
+    el('im-categories').innerHTML=catRows+totalRow;})();
   (function(){const arr=sortH(toArr(A.role)),mx=Math.max(1,...arr.map(a=>a.hours));
     const roleHtml=arr.length?arr.map((x,i)=>barRow(x.name,x.hours/mx*100,PAL[i%PAL.length],`<b>${hrs(x.hours)}</b> · ${money(x.hours*R)}`)).join(''):'<div class="sec-note">No role data in these posts.</div>';
     const sk=sortH(toArr(A.skill));
@@ -259,6 +283,7 @@ function render(){
     let html=`<table class="dt"><thead><tr><th>Format</th><th class="r">Count</th><th class="r">Hours</th><th class="r">Value</th></tr></thead><tbody>`+
       arr.map(d=>`<tr><td><b>${d.name}</b></td><td class="r">${d.count}</td><td class="r">${hrs(d.hours)}</td><td class="r">${money(d.hours*R)}</td></tr>`).join('')+
       `<tr class="tot"><td>Total</td><td class="r">${tc}</td><td class="r">${hrs(th)}</td><td class="r">${money(th*R)}</td></tr></tbody></table>`;
+    html+=`<p class="sec-note" style="margin-top:10px">Hours and value here reflect only work tied to a produced output; the overall time saved may be higher due to additional time saved on analysis, research, and other work that didn&rsquo;t produce a distinct output.</p>`;
     el('im-deliv').innerHTML=html;})();
 
   // How Cowork is used — process leads
@@ -267,12 +292,12 @@ function render(){
     const head=`<div class="acct-h"><span>Business process</span><span class="r">Sessions</span><span class="r">Hours</span><span class="r">Value</span><span class="r">% time</span></div>`;
     const rows=procArr.map(p=>`<details class="acct-row"><summary><span class="ap">${procLabel(p.name)}</span><span class="r">${p.sessions}</span><span class="r">${hrs(p.hours)}</span><span class="r">${money(p.hours*R)}</span><span class="r">${pct(p.hours,totProcH)}%</span></summary><div class="acct-body">${procDetailHTML(byp[p.name]||[],R)}</div></details>`).join('');
     const tot=`<div class="acct-tot"><span>Total</span><span class="r">${procArr.reduce((s,x)=>s+x.sessions,0)}</span><span class="r">${hrs(totProcH)}</span><span class="r">${money(totProcH*R)}</span><span class="r">100%</span></div>`;
-    el('wk-proc').innerHTML=`<div class="acct">${head}${rows}${tot}</div><div class="sec-note" style="margin-top:10px">Click any business process to expand the deliverable formats it produced and the skills behind them.</div>`;})();
+    el('wk-proc').innerHTML=`<div class="acct">${head}${rows}${tot}</div>`;})();
   renderCatMix('wk-stack',mem,catArr.map(c=>c.name));
   (function(){const inA=Object.keys(A.inputs).map(k=>({t:k,c:A.inputs[k]})).sort((a,b)=>b.c-a.c),outP=Object.keys(A.outputs).map(k=>({t:k,c:A.outputs[k]})).sort((a,b)=>b.c-a.c);
     const mxi=Math.max(1,...inA.map(x=>x.c)),mxo=Math.max(1,...outP.map(x=>x.c));
     const col=(arr,mx,c)=>arr.map(x=>`<div class="row rc"><div class="rl">${x.t}</div><div class="rbar"><div class="rfill" style="width:${x.c/mx*100}%;background:${c}"></div></div><div class="rv"><b>${x.c}</b></div></div>`).join('')||'<div class="sec-note">—</div>';
-    el('wk-io').innerHTML=`<div class="io2"><div><h4>Analyzed · ${A.inA} inputs</h4>${col(inA,mxi,'var(--c4)')}</div><div><h4>Produced · ${A.outP} outputs</h4>${col(outP,mxo,'var(--c1)')}</div></div><div class="sec-note" style="margin-top:12px">${A.inA} sources analyzed → ${A.outP} deliverables produced · ~${(A.outP?A.inA/A.outP:0).toFixed(1)} sources per deliverable.</div>`;})();
+    el('wk-io').innerHTML=`<div class="io2"><div><h4>Analyzed · ${A.inA} inputs</h4>${col(inA,mxi,'var(--io-in)')}</div><div><h4>Produced · ${A.outP} outputs</h4>${col(outP,mxo,'var(--io-out)')}</div></div><div class="sec-note" style="margin-top:12px">${A.inA} sources analyzed → ${A.outP} outputs produced · ~${(A.outP?A.inA/A.outP:0).toFixed(1)} sources per output.</div>`;})();
 
   renderTrend('tr-trend',R);
 }
@@ -285,16 +310,14 @@ function renderCatMix(id,mem,cats){
   if(pooled.length)bars.push({label:bars.length?'Other contributors (combined)':'Team (combined)',members:pooled});
   const rows=bars.map(b=>{const cm={};b.members.forEach(m=>memberReports(m).forEach(r=>r.categories.forEach(k=>cm[k.name]=(cm[k.name]||0)+k.hours)));
     const tot=Object.values(cm).reduce((s,v)=>s+v,0)||1;
-    const segs=cats.filter(c=>cm[c]).map(c=>`<div class="stackseg" style="width:${cm[c]/tot*100}%;background:${CAT_COLOR[c]||'var(--c6)'}" title="${c}: ${hrs(cm[c])}"></div>`).join('');
+    const segs=cats.filter(c=>cm[c]).map(c=>{const sp=cm[c]/tot*100;return `<div class="stackseg" style="width:${sp}%;background:${CAT_COLOR[c]||'var(--c6)'}" title="${c}: ${hrs(cm[c])} · ${Math.round(sp)}%">${sp>=10?`<span class="segpct">${Math.round(sp)}%</span>`:''}</div>`;}).join('');
     return `<div class="stackrow"><div class="rl" style="font-size:12.5px">${b.label} · ${b.members.length}</div><div class="stackbar">${segs}</div></div>`;}).join('');
-  const leg=cats.map(c=>`<div class="li"><span class="sw" style="background:${CAT_COLOR[c]||'var(--c6)'}"></span><span class="lt" style="font-size:12px">${c}</span></div>`).join('');
+  const overall={};mem.forEach(m=>memberReports(m).forEach(r=>r.categories.forEach(k=>overall[k.name]=(overall[k.name]||0)+k.hours)));
+  const oTot=Object.values(overall).reduce((s,v)=>s+v,0)||1;
+  const leg=cats.map(c=>`<div class="li"><span class="sw" style="background:${CAT_COLOR[c]||'var(--c6)'}"></span><span class="lt" style="font-size:12px">${c} <span style="color:var(--muted)">(${pct(overall[c]||0,oTot)}% · ${hrs(overall[c]||0)})</span></span></div>`).join('');
   el(id).innerHTML=rows+`<div class="legend" style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px">${leg}</div>`+
-    `<div class="sec-note" style="margin-top:10px">Privacy rule: a role breaks out only when <b>${KMIN}+</b> contributors share it; otherwise contributors are combined into one bar. Never shown individually.</div>`;
+    `<div class="sec-note" style="margin-top:10px">Individual roles are shown only when <b>${KMIN}+</b> people share it — otherwise contributors are combined.</div>`;
 }
-function renderDonut(id,arr,tot,R){const r=58,c=2*Math.PI*r;let off=0;
-  const segs=arr.map((p,i)=>{const f=tot>0?p.hours/tot:0,col=PILL_COLOR[p.name]||PAL[i%PAL.length];const s=`<circle r="${r}" cx="80" cy="80" fill="none" stroke="${col}" stroke-width="22" stroke-dasharray="${(f*c).toFixed(2)} ${(c-f*c).toFixed(2)}" stroke-dashoffset="${(-off*c).toFixed(2)}" transform="rotate(-90 80 80)"></circle>`;off+=f;return s;}).join('');
-  const leg=arr.map((p,i)=>{const col=PILL_COLOR[p.name]||PAL[i%PAL.length];return `<div class="li"><span class="sw" style="background:${col}"></span><span class="lt">${p.name}</span><span class="lv">${hrs(p.hours)} · ${money(p.hours*R)} · ${pct(p.hours,tot)}%</span></div>`;}).join('');
-  el(id).innerHTML=`<div class="donut-wrap"><svg width="160" height="160" viewBox="0 0 160 160"><circle r="${r}" cx="80" cy="80" fill="none" stroke="var(--line)" stroke-width="22"></circle>${segs}<text x="80" y="74" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">${hrs(tot)}</text><text x="80" y="92" text-anchor="middle" font-size="10" fill="var(--muted)">total</text></svg><div class="legend">${leg}</div></div>`;}
 function renderTrend(id,R){
   const series=RAW.snapshots.map(s=>{const ms=posted.filter(m=>m.reports[s.id]);const h=ms.reduce((t,m)=>t+(m.reports[s.id].headline.timeTyp||0),0);return {label:s.periodEnd||s.id,hours:h,value:h*R,n:ms.length};});
   if(series.length<=1){const s=series[0]||{hours:0,value:0,n:0,label:''};
@@ -304,6 +327,12 @@ function renderTrend(id,R){
   const dots=series.map((s,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(s.hours).toFixed(1)}" r="4" fill="var(--brand)"></circle><text x="${x(i).toFixed(1)}" y="${Hh-8}" text-anchor="middle" font-size="10" fill="var(--muted)">${s.label}</text>`).join('');
   el(id).innerHTML=`<svg class="svgtrend" viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--brand)" stroke-width="2.5"></polyline>${dots}</svg><div class="sec-note">Total time saved per fortnight. Cowork is used for specific tasks — this is a cycle-over-cycle trend, not daily activity.</div>`;}
 
+function showTab(name,scrollId){
+  state.tab=name;
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('on',x.getAttribute('data-tab')===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('on',p.id==='tab-'+name));
+  if(scrollId){requestAnimationFrame(()=>{const t=el(scrollId);if(!t)return;const d=(t.tagName==='DETAILS')?t:(t.closest&&t.closest('details.meth'));if(d)d.open=true;const tgt=(t.tagName==='DETAILS')?t:((t.closest&&t.closest('.block'))||t);tgt.scrollIntoView({behavior:'smooth',block:'start'});});}
+}
 function build(){
   const ss=el('snapSel');RAW.snapshots.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.label+(s.periodEnd?' · '+s.periodEnd:'');ss.appendChild(o);});
   if(RAW.snapshots.length>1){const o=document.createElement('option');o.value='ALL';o.textContent='All snapshots';ss.appendChild(o);}
@@ -311,7 +340,9 @@ function build(){
   const ri=el('rateInput');ri.value=state.rate;ri.addEventListener('input',()=>{const v=parseFloat(ri.value);state.rate=(isFinite(v)&&v>0)?v:0;render();});
   el('resetBtn').addEventListener('click',()=>{state.rate=RATE0;state.snapshot=RAW.snapshots[RAW.snapshots.length-1].id;ss.value=state.snapshot;ri.value=RATE0;render();});
   el('printBtn').addEventListener('click',()=>window.print());
-  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{state.tab=b.getAttribute('data-tab');document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('on',p.id==='tab-'+state.tab));}));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>showTab(b.getAttribute('data-tab'))));
+  // Deep-link: clicking a labeled header in the Overview 'Where did we save' card jumps to that tab + section.
+  document.addEventListener('click',e=>{const nav=e.target.closest&&e.target.closest('[data-goto]');if(nav){e.preventDefault();showTab(nav.getAttribute('data-goto'),nav.getAttribute('data-scroll')||'');}});
   // "?" section helpers: click toggles the adjacent popover; clicking elsewhere closes any open one.
   document.querySelectorAll('.help').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();const pop=b.nextElementSibling;const on=pop&&pop.classList.contains('on');
@@ -326,16 +357,18 @@ TEMPLATE = """<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark">
-<title>Cowork Team Report — Team Dashboard</title>
+<title>Cowork Team Dashboard</title>
 <style>__CSS__</style>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <div class="brand"><svg width="22" height="22" viewBox="0 0 23 23" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="#F25022"></rect><rect x="12" y="1" width="10" height="10" fill="#7FBA00"></rect><rect x="1" y="12" width="10" height="10" fill="#00A4EF"></rect><rect x="12" y="12" width="10" height="10" fill="#FFB900"></rect></svg><span class="nm">Microsoft Copilot Cowork</span></div>
-  <h1>Cowork Team Report — Team Dashboard</h1>
-  <p class="sub">__TEAM__ — team impact &amp; how Cowork is used</p>
+  <h1>Cowork Team Dashboard</h1>
+  <p class="sub">__TEAM__ Impact &amp; how Cowork is used</p>
   <p class="gen">Generated __GENERATED__ · <span id="ctxline"></span></p>
-  <p class="disc"><b>Read as modeled tool-impact, not performance scores</b> — directional estimates of tool-assisted time savings, read with team context (project phase, seasonality), not individual performance. Anonymized &amp; team-level only: de-identified posts (no names, files, or prompts); nothing shown per person; a Role breaks out only when __KTHRESH__+ contributors share it.</p>
+  <p class="disc">Use the information in this report to gauge the impact of Cowork on your team, <b>not as individual or team performance scores</b>. Treat these as directional estimates of tool-assisted time savings, and read them with team context in mind (e.g., project phase, seasonality). Anonymized &amp; team-level only: nothing is shown per person.</p>
+  <p class="disc" style="margin-top:7px">New to this report? The <button type="button" class="xref" data-goto="method"><i>How to read + Glossary</i></button> tab explains every number, tab and control &mdash; and every section title has a clickable <b>?</b> for a quick explanation.</p>
+  <p class="disc" style="margin-top:7px">Use the <b>Period selector and Hourly rate box</b> below to pick the reporting window and adjust the hourly rate (default $__RATE__/hr). All value / cost-reduction figures recompute instantly; hours and counts stay the same.</p>
 </div></header>
 <div class="wrap">
   <div class="controls">
@@ -350,94 +383,106 @@ TEMPLATE = """<!DOCTYPE html>
     <button class="tab-btn" type="button" data-tab="impact">Impact &amp; Value</button>
     <button class="tab-btn" type="button" data-tab="work">How Cowork is used</button>
     <button class="tab-btn" type="button" data-tab="trends">Trends</button>
-    <button class="tab-btn" type="button" data-tab="method">How to read</button>
+    <button class="tab-btn" type="button" data-tab="method" style="font-style:italic">How to read + Glossary</button>
   </div>
 
   <div class="tab-panel on" id="tab-overview">
-    <section class="block"><h2 class="sec"><span class="dot"></span>What the data says<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">A plain-language reading of the team's posts, generated automatically. It re-words itself when you change the hourly rate below.</span></h2><p class="sec-note">Auto-generated reading of the team's posts — updates with the rate control.</p><div class="insights" id="ov-insights"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Team impact at a glance<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The headline totals for the selected period. <b>Value</b> = expert-equivalent hours &times; the hourly rate in the control bar, so it recomputes whenever you change the rate.</span></h2><div class="kpis" id="ov-kpis"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>What the data says<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">A plain-language reading of the team's posts, generated automatically. It re-words itself when you change the hourly rate below.</span></h2><p class="sec-note">The four highlights below summarize the team's Cowork impact at a glance: the total time reclaimed and its dollar value, the task category driving the most savings, the business process where Cowork is applied most, and the type of business value it advances most — so you can quickly see where the impact is concentrated.</p><div class="insights" id="ov-insights"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Team impact at a glance<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The headline totals for the selected period. <b>Value</b> = manual hours &times; the hourly rate in the control bar, so it recomputes whenever you change the rate.</span></h2><div class="kpis" id="ov-kpis"></div><p class="sec-note" style="margin-top:12px"><b>About the ranges:</b> under <b>Time saved</b> and <b>Value / cost reduction</b> the headline is the typical (mid-point) estimate; the low&ndash;high range beside it is the conservative-to-optimistic span from the research time bands (each task category carries a low / typical / high band &mdash; see <button type="button" class="xref" data-goto="method" data-scroll="sec-bands"><i>How to read</i></button>).</p></section>
   </div>
 
   <div class="tab-panel" id="tab-impact">
-    <section class="block"><h2 class="sec"><span class="dot"></span>Business value pillars<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Which kind of business value the saved hours advanced — <b>Revenue Growth</b>, <b>Cost Reduction</b>, <b>Risk Mitigation</b>, or <b>Transformation</b> (new ways of working / AI adoption).</span></h2><p class="sec-note">Where the saved hours land. Value = hours × the rate above.</p><div class="card" id="im-pillars"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Where the time went — by task category<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The <b>method</b> used, task by task. Each task is sorted by its output file type and goal keywords (e.g. spreadsheets &rarr; Analysis; code / HTML &rarr; Write or debug code). Each category carries a research time band (minutes saved per run); time saved = tasks &times; band. The <b>reach</b> line shows how many contributors used it. Full mapping is on the <b>How to read</b> tab.</span></h2><p class="sec-note">With the research-anchored time bands (minutes saved per run), and how many contributors used each.</p><div class="card" id="im-categories"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Where the time went — by task category<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The <b>method</b> used, task by task. Each task is sorted by its output file type and goal keywords (e.g., spreadsheets &rarr; Analysis; code / HTML &rarr; Write or debug code). Each category carries a research time band (minutes saved per run); time saved = run tasks &times; band. The <b>reach</b> line shows how many contributors used it. Full mapping is on the <b>How to read</b> tab.</span></h2><p class="sec-note">Understand how much time is saved by the team across each task category. Refer to the <button type="button" class="xref" data-goto="method" data-scroll="sec-bands"><i>How to read</i></button> section to understand the research-based time ranges for each category.</p><p class="sec-note" style="margin-top:8px">Each task category row shows <b>how many contributors</b> used it — e.g., &ldquo;used by 4 of 5 contributors&rdquo; — so you can see where usage is concentrated vs. spread, not just the volume of hours. This is an aggregate count and never names anyone. To protect a small team, when <b>fewer than __KTHRESH__</b> people used a category the exact number is withheld and shown as &ldquo;used by &lt;__KTHRESH__ contributors&rdquo;.</p><div class="card" id="im-categories"></div></section>
     <section class="block"><div class="grid2">
       <div class="card"><h3>Roles Cowork stood in for</h3><p class="hint">Roles a services firm would have billed — expand for the specific skills behind them.</p><div id="im-roles"></div></div>
-      <div class="card"><h3>Deliverables produced — by format</h3><p class="hint">What the team shipped, as real file formats. Per-item detail sits under <i>Work by business process</i>.</p><div id="im-deliv"></div></div>
+      <div class="card"><h3>Outputs produced — by format</h3><p class="hint">Every output the team produced with Cowork, by file type. Note that outputs count each file and version, so this may be higher than the &ldquo;Deliverables&rdquo; count on the <button type="button" class="xref" data-goto="overview"><i>Overview</i></button> tab, which counts distinct deliverables. Per-item detail sits under &ldquo;<button type="button" class="xref" data-goto="work" data-scroll="wk-proc">Work by business process</button>&rdquo; on the <button type="button" class="xref" data-goto="work"><i>How Cowork is used</i></button> tab.</p><div id="im-deliv"></div></div>
     </div></section>
   </div>
 
   <div class="tab-panel" id="tab-work">
-    <section class="block"><h2 class="sec"><span class="dot"></span>Work by business process<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">What the team actually does with Cowork, grouped into the shared canonical process set. <b>Click any row</b> to expand its deliverables and the skills behind them. Deliverables with a de-identified name list individually; ones a post carried only by file type collapse into a single row (e.g. &ldquo;HTML &middot; 5 deliverables&rdquo;).</span></h2><p class="sec-note">Grouped into the shared canonical set (mirrors the Member skill). This is the spine of the tab — what the team actually does with Cowork. <b>Each row expands</b> — click a process to see the deliverables it produced and the skills behind them.</p><div class="card" id="wk-proc"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Work by business process<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">What the team actually does with Cowork, grouped into the shared canonical process set. <b>Click any row</b> to expand its deliverables and the skills behind them. Deliverables with a de-identified name list individually; ones a post carried only by file type collapse into a single row (e.g., &ldquo;HTML &middot; 5 deliverables&rdquo;).</span></h2><p class="sec-note">The business processes the team used Cowork for, ranked by time saved. <b>Click any process to expand it</b> and see the deliverables it produced and the skills behind them.</p><p class="sec-note" style="margin-top:8px">Named deliverables (e.g., &ldquo;Team ROI dashboard&rdquo;) list on their own row. A row that shows only a format (e.g., &ldquo;HTML&rdquo;) is a deliverable whose name wasn't included in that teammate's post. All type-only deliverables of one format collapse into a single row — e.g., &ldquo;HTML &middot; 5 deliverables&rdquo; — with their hours and value summed.</p><div class="card" id="wk-proc"></div></section>
     <section class="block"><h2 class="sec"><span class="dot"></span>Category mix<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">How each contributor group splits its time across categories. A role only breaks out when <b>__KTHRESH__+</b> people share it; otherwise everyone is combined into one bar — no individual is ever shown.</span></h2><p class="sec-note">How saved time splits across task categories — grouped by Role where privacy allows.</p><div class="card" id="wk-stack"></div></section>
     <section class="block"><h2 class="sec"><span class="dot"></span>Analyzed → Produced<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">How many source items the team fed in versus how many deliverables it produced, by type — a rough read on input effort vs. output.</span></h2><p class="sec-note">Inputs the team analyzed vs. deliverables produced, by type.</p><div class="card" id="wk-io"></div></section>
   </div>
 
   <div class="tab-panel" id="tab-trends">
-    <section class="block"><h2 class="sec"><span class="dot"></span>Time saved over time<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">One point per posting cycle, so you can see whether the team's total impact is trending up over fortnights. Cowork is used for specific tasks, so this is a cycle-over-cycle total, not daily activity.</span></h2><p class="sec-note">Minimal by design — one point per posting cycle. Is team impact growing?</p><div class="card" id="tr-trend"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Time saved over time<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">One point per posting cycle, so you can see whether the team's total impact is trending up over fortnights. Cowork is used for specific tasks, so this is a cycle-over-cycle total, not daily activity.</span></h2><p class="sec-note">Each posting cycle is represented by one point below. Use this to track whether the impact your team is achieving through Cowork is growing over time.</p><div class="card" id="tr-trend"></div></section>
   </div>
 
   <div class="tab-panel" id="tab-method">
-    <details class="meth" open><summary>How to read this dashboard</summary><div class="mbody">
-      <p>This tab explains every number, tab and control — it folds in the old one-page PDF, so the whole guide now lives inside the dashboard. It's built by aggregating the de-identified Cowork Team Report posts teammates publish to the team channel. Metric &amp; section titles match the <b>Copilot ROI Report</b> and <b>Copilot ROI Member</b> skills. Treat numbers as <b>directional</b> — Cowork isn't the only factor behind any change, so read them with team context (project phase, seasonality), not as performance scores. This is a small, homogeneous-team (v1) view.</p>
-      <p style="margin-top:8px">Tip: every section title has a <b>?</b> next to it — click it for a quick explanation right where you're looking.</p>
+    <details class="meth" open><summary>Glossary of terms</summary><div class="mbody" id="gloss-body">
+      <p><b>Active days</b> — Person-days with at least one Cowork task in the window.</p>
+      <p><b>Anonymity</b> — A role or attribute is shown separately only when at least __KTHRESH__ contributors share it; otherwise contributors are combined. Nothing is ever shown per person.</p>
+      <p><b>Business process</b> — The business need served by the work &mdash; e.g., Business Value &amp; ROI Analytics.</p>
+      <p><b>Contributors</b> — The number of teammates who posted their de-identified stats this period. Never named.</p>
+      <p><b>Deliverables</b> — The count of <i>distinct</i> pieces of work produced.</p>
+      <p><b>Hands-on time</b> — The actual time the team spent working with Cowork.</p>
+      <p><b>Outputs</b> — Every output file and version created. May be higher than deliverables because it counts each file and version.</p>
+      <p><b>Reach</b> — How many contributors used a given task category. Withheld as &ldquo;&lt;__KTHRESH__&rdquo; when fewer than __KTHRESH__ share it.</p>
+      <p><b>Research time band</b> — The low / typical / high minutes of manual time saved per run for a task category, drawn from published studies (see &ldquo;<button type="button" class="xref" data-goto="method" data-scroll="sec-bands">Research bands &amp; sources</button>&rdquo; below).</p>
+      <p><b>Run tasks</b> — A single unit of work run with Cowork — one discrete request or action (e.g., analyzing a file, drafting a document). Run tasks are grouped into sessions.</p>
+      <p><b>Sessions</b> — Distinct Cowork chats run across the team. A session may contain one or multiple run tasks.</p>
+      <p><b>Skills</b> — The specific capabilities behind roles (e.g., Data Visualization, Python).</p>
+      <p><b>Task category</b> — How the work was done (the method) &mdash; e.g., Analysis &amp; Research, Write or debug code. Each carries a research time band (see &ldquo;<button type="button" class="xref" data-goto="method" data-scroll="sec-bands">Research bands &amp; sources</button>&rdquo; below).</p>
+      <p><b>Team speed multiplier</b> — How much faster the work went: estimated hours without Cowork &divide; actual hands-on with Cowork hours.</p>
+      <p><b>Time saved</b> — Manual hours Cowork saved this period: for each task, run tasks &times; the research time band for its category. The headline is the typical estimate, with a low&ndash;high range alongside.</p>
+      <p><b>Value / cost reduction</b> — Time saved priced out: manual hours &times; the hourly rate in the control bar. Recomputes whenever you change the rate.</p>
     </div></details>
 
-    <details class="meth"><summary>The five tabs — where to look for what</summary><div class="mbody">
-      <h4>Overview</h4><p>Auto-insights + the KPI band. Start here.</p>
-      <h4>Impact &amp; Value</h4><p>Value by pillar and task category ($), the roles Cowork stood in for, and deliverables by file format.</p>
-      <h4>How Cowork is used</h4><p>The business processes the team runs (each row expands to its deliverables + skills), the category mix by contributor group, and analyzed &rarr; produced.</p>
-      <h4>Trends</h4><p>Fortnight-over-fortnight movement — one point per posting cycle.</p>
-      <h4>How to read</h4><p>This tab: plain-language definitions and the methodology.</p>
-    </div></details>
-
-    <details class="meth"><summary>The KPI band — what each headline number means</summary><div class="mbody">
-      <p><b>Time saved</b> — expert-equivalent hours Cowork saved the team this period.<br>
-      <b>Value / cost reduction</b> — those saved hours priced out (hours &times; hourly rate).<br>
-      <b>Team speed multiplier</b> — how much faster: expert hours &divide; hands-on hours.<br>
-      <b>Contributors</b> — how many teammates posted their stats this period.<br>
-      <b>Sessions</b> — distinct Cowork chats run across the whole team.<br>
-      <b>Deliverables</b> — files, decks, docs, web pages and other outputs made.<br>
-      <b>Active days</b> — person-days with at least one Cowork task in the window.<br>
-      <b>Hands-on time</b> — real time at the keyboard (the assisted clock).</p>
-    </div></details>
-
-    <details class="meth"><summary>The two controls</summary><div class="mbody">
-      <p><b>Period</b> — pick the reporting window; every number on the page updates to match.<br>
-      <b>Hourly rate</b> — change $/hr and all value / cost-reduction figures recompute instantly (default $__RATE__/hr). Only the pricing changes; hours and counts stay the same.</p>
-    </div></details>
 
     <details class="meth"><summary>How task categories are derived</summary><div class="mbody">
-      <p>Two different questions are answered by two different fields. <b>Business process</b> = <i>what</i> business need the work served. <b>Task category</b> = <i>how</i> the work was done (the method). Each task is sorted into up to two categories from three signals:</p>
-      <p><b>1 · Output file type</b> — spreadsheets (.xlsx / .csv / .json) &rarr; Analysis &amp; Research · code &amp; web (.py / .html / .sql / .js) &rarr; Write or debug code · documents (.docx / .pdf / .pptx / images) &rarr; Document &amp; content creation · packaged skills (.zip / .skill) &rarr; Specialized workflows.<br>
-      <b>2 · Goal keywords</b> — &ldquo;analyze / research / ROI / benchmark&rdquo; &rarr; Analysis · &ldquo;debug / refactor / script / API / automation&rdquo; &rarr; Write or debug code · &ldquo;email / inbox / reply&rdquo; &rarr; Email · &ldquo;meeting / transcript / standup / agenda&rdquo; &rarr; Meeting.<br>
-      <b>3 · Input signal</b> — if the sources are data files, or there are 3 or more of them &rarr; Analysis.</p>
-      <p>When more than one matches, they rank (code &rsaquo; analysis &rsaquo; specialized &rsaquo; document &rsaquo; communication &rsaquo; meeting &rsaquo; email &rsaquo; general) and the top two are kept. A task with no saved file and no signal falls to <b>General assistance / Other</b>. Each category then carries a research time band (below); time saved = tasks &times; band.</p>
+      <p>Each task is sorted into up to two categories from three signals:</p>
+      <p style="margin-bottom:3px"><b>1 · Output file type</b></p>
+      <ul>
+        <li>spreadsheets (.xlsx / .csv / .json) &rarr; Analysis &amp; Research</li>
+        <li>code &amp; web (.py / .html / .sql / .js) &rarr; Write or debug code</li>
+        <li>documents (.docx / .pdf / .pptx / images) &rarr; Document &amp; content creation</li>
+        <li>packaged skills (.zip / .skill) &rarr; Specialized workflows</li>
+      </ul>
+      <p style="margin-bottom:3px"><b>2 · Goal keywords</b></p>
+      <ul>
+        <li>&ldquo;analyze / research / ROI / benchmark&rdquo; &rarr; Analysis</li>
+        <li>&ldquo;debug / refactor / script / API / automation&rdquo; &rarr; Write or debug code</li>
+        <li>&ldquo;email / inbox / reply&rdquo; &rarr; Email</li>
+        <li>&ldquo;meeting / transcript / standup / agenda&rdquo; &rarr; Meeting</li>
+      </ul>
+      <p style="margin-bottom:3px"><b>3 · Input signal</b></p>
+      <ul>
+        <li>if the sources are data files, or there are 3 or more of them &rarr; Analysis</li>
+      </ul>
+      <p>A task with no saved file and no signal falls to General assistance / Other. When more than one matches, they rank (code &rsaquo; analysis &rsaquo; specialized &rsaquo; document &rsaquo; communication &rsaquo; meeting &rsaquo; email &rsaquo; general) and the top two are kept.</p>
     </div></details>
 
-    <details class="meth"><summary>Deliverables — and why some show only a file format</summary><div class="mbody">
-      <p>Under <b>Work by business process</b>, a deliverable with a de-identified name (e.g. &ldquo;Team ROI dashboard&rdquo;) lists on its own row. A row that shows only a format (e.g. &ldquo;HTML&rdquo;) is a deliverable whose <b>name wasn't included in that teammate's post</b> — the Member skill can post either a named line or a compact type-only line. It does <b>not</b> mean Cowork failed to recognize the work. To keep the list readable, all type-only deliverables of one format collapse into a single row — e.g. <b>&ldquo;HTML &middot; 5 deliverables&rdquo;</b> — with their hours and value summed.</p>
-    </div></details>
-
-    <details class="meth"><summary>How widespread is a category (reach)</summary><div class="mbody">
-      <p>Each task-category row shows <b>how many contributors</b> used it — e.g. &ldquo;used by 4 of 5 contributors&rdquo; — so you can see where usage is concentrated vs. spread, not just the volume of hours. This is an aggregate count and never names anyone. To protect a small team, when <b>fewer than __KTHRESH__</b> people used a category the exact number is withheld and shown as &ldquo;used by &lt;__KTHRESH__ contributors&rdquo;.</p>
-    </div></details>
 
     <details class="meth"><summary>Privacy &amp; anonymity</summary><div class="mbody">
       <p><b>Nothing is shown at an individual level.</b> Members appear only as counts. The one per-attribute view (category mix) breaks a Role out only when <b>__KTHRESH__+</b> contributors share it; otherwise they collapse into a single combined bar. The only attribute used is the directory <b>Role</b> (job title) that a teammate's post carries — never names, never country, never file names or prompts.</p>
     </div></details>
 
     <details class="meth"><summary>Value model</summary><div class="mbody">
-      <p>Time saved = Σ run tasks × the research band per task category (minutes saved/run). <b>Value = expert-equivalent hours × hourly rate</b> (default $__RATE__/hr; adjust live). <b>Speed multiplier</b> = expert ÷ modeled hands-on hours. All figures come from the posts; the dashboard only re-totals and re-prices them.</p>
+      <ul>
+        <li><b>Time saved</b> = Count of run tasks × the research band (minutes saved/run).</li>
+        <li><b>Value =</b> manual hours × hourly rate (default $__RATE__/hr).</li>
+        <li><b>Speed multiplier</b> = manual hours ÷ modeled hands-on hours.</li>
+      </ul>
+      <p>All figures come from the posts; the dashboard only re-totals and re-prices them.</p>
     </div></details>
 
-    <details class="meth"><summary>Value pillars</summary><div class="mbody">
-      <p><b>Revenue Growth</b> (top-line), <b>Cost Reduction</b> (cost base), <b>Risk Mitigation</b> (protect value), <b>Transformation</b> (new ways of working / AI adoption). Shared crosswalk across all three ROI skills.</p>
-    </div></details>
-
-    <details class="meth"><summary>Research bands &amp; sources</summary><div class="mbody">
-      <p>Minutes saved per run (low / typical / high): Analysis &amp; Research 30/67/92 · Write or debug code 30/56/96 · Document &amp; content 12/24/42 · Meeting 12/31/43 · Email 3/7/12 · Communication 2/4/6 · Specialized 10/25/40 · General 2/5/8.</p>
-      <p>Sources: Stanford-WB (SSRN 5136877), Microsoft Research 2026 (DiD n=72,186), Noy &amp; Zhang (Science 2023), Cambon et al. (MSR 2024), Cui et al. (CACM 2024), Brynjolfsson, Li &amp; Raymond (QJE 2025), Forrester TEI 2024.</p>
+    <details class="meth" id="sec-bands"><summary>Research bands &amp; sources</summary><div class="mbody">
+      <p>Each task category carries a research-anchored time band — the minutes of manual time saved per run, at a low / typical / high estimate.<sup>†</sup> Time saved = run tasks &times; the band for that category.</p>
+      <table class="dt" style="margin-top:11px">
+        <thead><tr><th>Task category</th><th class="r">Low</th><th class="r">Typical</th><th class="r">High</th></tr></thead>
+        <tbody>
+          <tr><td><span class="catsw" style="background:var(--c0)"></span>Analysis &amp; Research</td><td class="r">30</td><td class="r">67</td><td class="r">92</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c1)"></span>Write or debug code</td><td class="r">30</td><td class="r">56</td><td class="r">96</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c2)"></span>Document &amp; content creation</td><td class="r">12</td><td class="r">24</td><td class="r">42</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c3)"></span>Meeting workflows</td><td class="r">12</td><td class="r">31</td><td class="r">43</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c5)"></span>Email workflows</td><td class="r">3</td><td class="r">7</td><td class="r">12</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c7)"></span>Communication workflows</td><td class="r">2</td><td class="r">4</td><td class="r">6</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c4)"></span>Specialized workflows</td><td class="r">10</td><td class="r">25</td><td class="r">40</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c6)"></span>General assistance / Other</td><td class="r">2</td><td class="r">5</td><td class="r">8</td></tr>
+        </tbody>
+      </table>
+      <p class="footnote"><sup>†</sup> Minutes of manual time saved per run (low / typical / high). <b>Sources:</b> Stanford-WB (SSRN 5136877), Microsoft Research 2026 (DiD n=72,186), Noy &amp; Zhang (Science 2023), Cambon et al. (MSR 2024), Cui et al. (CACM 2024), Brynjolfsson, Li &amp; Raymond (QJE 2025), Forrester TEI 2024.</p>
     </div></details>
   </div>
 
@@ -449,9 +494,23 @@ TEMPLATE = """<!DOCTYPE html>
 </html>
 """
 
+def extract_glossary(template):
+    m = re.search(r'id="gloss-body">(.*?)</div></details>', template, re.S)
+    if not m:
+        return {}
+    g = {}
+    for pm in re.finditer(r"<p><b>(.*?)</b>\s*\u2014\s*(.*?)</p>", m.group(1), re.S):
+        term = re.sub(r"<[^>]+>", "", pm.group(1)).strip()
+        definition = re.sub(r"</?i>", "", pm.group(2)).strip()
+        if term:
+            g[term.lower()] = definition
+    return g
+
 def main(a):
     data = json.load(open(a.inp, encoding="utf-8"))
+    glossary = extract_glossary(TEMPLATE)
     html = (TEMPLATE.replace("__CSS__", CSS).replace("__JS__", JS)
+            .replace("__GLOSSARY__", json.dumps(glossary, ensure_ascii=False))
             .replace("__DATA__", json.dumps(data, ensure_ascii=False))
             .replace("__TEAM__", data["meta"].get("team", "Team"))
             .replace("__GENERATED__", str(data["meta"].get("generated", "")))
