@@ -3,6 +3,108 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.7.0] — 2026-08-03
+
+Fifth review pass — made the dashboard interactive and finished the guide-tab cleanup (no
+parser/taxonomy or cross-skill contract changes; dashboard render layer only).
+
+### Added
+- **Glossary hover tooltips.** Every KPI label in *Team impact at a glance* shows its definition on
+  hover/focus, generated from the Glossary at build time (single source of truth — edit the glossary
+  and the tooltip updates).
+- **Click-to-navigate deep links.** The labeled headers in the Overview "Where did we save the most
+  time" card jump to the relevant tab and scroll to the section (Task Category → *Impact & Value*;
+  Business Process → *How Cowork is used*).
+- **Cross-reference links throughout.** Every place the body text names another tab or section is now a
+  link that switches tabs, auto-expands the target guide section, and scrolls to it. Consistent
+  formatting: referenced **tabs** are italic (no quotes), referenced **sections** are quoted (no
+  italics); links use a muted gray dotted underline rather than bright blue.
+- **Category total row.** *Where the time went — by task category* now ends with a Total row (hours ·
+  value · run tasks) summed across categories.
+- **Outputs-produced clarifier footer.** A note explaining that its hours/value cover only work tied to
+  a produced output, so overall time saved may be higher (analysis/research/etc. that produced no
+  distinct output).
+
+### Removed
+- **Guide-tab consolidation (continued).** Removed the *How to read this dashboard*, *The five tabs*,
+  and *The KPI band* sections (content lives in the header and Glossary now). *Value model* converted to
+  a bulleted list.
+
+## [1.6.0] — 2026-07-31
+
+Fourth review pass — removed the Business Value Pillar dimension entirely from the dashboard, and a
+further copy/structure cleanup of the guide tab and header (no parser/taxonomy or cross-skill contract
+changes).
+
+### Removed
+- **Business Value Pillar dimension.** Dropped the value-pillar donut section (Impact & Value), the
+  Business Value Pillar column from the Overview "Where did we save the most time" card (now two
+  columns), the pillar glossary entry and the "Value pillars" guide section, plus the supporting code
+  (`renderDonut`, `PILL_COLOR`, the pillar color CSS vars, the pillar aggregation). The data pipeline
+  still reads pillar data from posts (unused now) to keep the mirrored taxonomy/contract intact.
+- **Guide-tab consolidation.** Removed four now-redundant "How to read" sections — *How to read this
+  dashboard*, *The KPI band*, *Deliverables — and why some show only a file format*, and *The two
+  controls* — folding their reader-useful content into the page header (orientation + controls notes)
+  and the *Work by business process* subheader. The KPI definitions already live in the Glossary.
+
+### Changed
+- **Glossary edits.** Removed "Roles Cowork stood in for"; renamed "Run tasks" → "Tasks" then back to
+  "Run tasks" for the metric label; added a real definition of a task; tightened Sessions, Team speed
+  multiplier, Skills, Business process, Business value pillar (since removed), Deliverables, Time saved,
+  and Task category. "Expert-equivalent" wording replaced with "manual" throughout the visible copy.
+- **Header.** Retitled earlier to "Cowork Team Dashboard"; header now also carries the reader
+  orientation and the Period/Hourly-rate controls guidance.
+- **Copy cleanup.** "task-category" → "task category"; every "e.g." → "e.g.,"; the *How task categories
+  are derived* signals converted to bulleted lists; assorted subheader rewrites (Where the time went
+  reach note, Outputs-produced clarifier, Trends).
+
+## [1.5.0] — 2026-07-30
+
+Third review pass — a copy-and-visual polish of the dashboard (no parser/taxonomy or cross-skill
+contract changes). Wording made plainer and more customer-facing, the value-pillar donut recolored,
+category-mix and research-band data made more legible, the Overview auto-insights restructured into a
+labeled summary, and a full alphabetized glossary added.
+
+### Added
+- **Glossary of terms** on the guide tab. A new alphabetized glossary (Active days … Value / cost
+  reduction) defining every metric and label the dashboard uses, consistent with the reworded copy
+  (e.g. Deliverables = distinct vs Outputs = every file/version). It leads the tab and opens expanded.
+- The guide tab is renamed **"How to read + Glossary"** (label italicized so it stands out).
+
+### Changed
+- **Value-pillar donut recolored + hardened.** Pillars now use a sequential **slate-blue → periwinkle**
+  ramp (`#3d4a68 · #6f7c9c · #a6afc7 · #dde2ee`) instead of four category-like hues, so the section
+  reads as one coordinated family and no longer collides with any task-category color. Slices gained a
+  theme-aware **hairline border** (`--donut-edge`, translucent in light/dark) and the legend swatches a
+  matching outline, so the pale light end stays legible on the white card.
+- **Analyzed → Produced recolored** off the task-category palette — inputs **amber-gold** (`#d99c1e`),
+  outputs **magenta** (`#b4009e`); its under-chart note reworded to reference "outputs," not deliverables.
+- **Research bands are now a table.** The guide's run-on band list became a visual table (one row per
+  task category, color-swatched to match the charts, low / typical / high columns) with the citations
+  moved into a footnote. Each category's per-bar band line now reads "Time range: low / **typical** / high".
+- **Category mix** now shows each category's share as a **% label inside wide bar segments** and, in the
+  legend, an adjacent **(% · hours)** per category; the privacy note was simplified.
+- **Overview auto-insights restructured.** The headline (reworded to a plain "Cowork helped the team
+  save … enabling tasks to be completed N× faster, with an estimated value of $X") stays its own
+  full-width card; the top task category, business process, and value pillar are combined under a
+  **"Where did we save the most time:"** card as three labeled columns (**Task Category / Business
+  Process / Business Value Pillar**), each showing the area name and its time saved (hours · % of total).
+- **Impact & Value** table relabeled **"Outputs produced — by format"** with a note that it counts each
+  file and version, so it can exceed the Overview "Deliverables" KPI (distinct deliverables).
+- **KPI band** reworded: "expert work-weeks" → "weeks"; the speed tile subtitle reads "hands-on compared
+  to … without Cowork"; Sessions reads "N tasks were run across M sessions"; Hands-on time and Active
+  days swapped, and "expert-equivalent" → "estimated without Cowork".
+- **Title & header.** Report retitled **"Cowork Team Dashboard"** (browser tab too); subtitle now
+  "Team Impact & how Cowork is used"; the header disclaimer rewritten to plainer, customer-facing copy.
+- **Plainer section copy throughout** — new customer-facing subheaders on *What the data says*,
+  *Business value pillars*, *Where the time went — by task category*, and *Time saved over time*; the
+  *Work by business process* intro simplified and its redundant under-table note removed.
+
+### Verified
+- Offline sample pipeline (`parse_posts.py` → `build_outputs.py`) runs clean; the embedded dashboard
+  JavaScript executes with no runtime errors under a DOM shim. No change to `parse_posts.py`, the
+  taxonomy mirrors, or the `cowork-dashboard-member` contract.
+
 ## [1.4.0] — 2026-07-13
 
 Second manager-review pass on the team dashboard. The interpretation guide moves *inside* the
