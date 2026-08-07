@@ -1,13 +1,16 @@
 # Cowork Team Report — Member skill (self-contained)
 
 Posts a **de-identified, table-formatted** Cowork Team Report summary to your team's Teams channel, with a
-**privacy opt-out** so you can exclude any chat/task before it posts. It harvests your own Copilot
+**privacy opt-out** so you can remove any chat/task from the pending report before it posts. Removing a
+session from the report also removes its work artifacts; it does not delete the original Cowork session.
+It harvests your own Copilot
 Cowork sessions from OneDrive, computes research-anchored time-saved / value / speed metrics, and
 renders them as HTML tables (headline KPIs, time-by-category, value pillars, jobs-to-be-done,
 work-by-business-process, roles, skills, analyzed→produced, deliverables, activity-by-day). The post
 header shows your **directory Role** (job title — no country, no name); the **business processes are
 grouped** into a short canonical set; each **deliverable is shown and labelled with the business
-process it supported** (no file names); and metric/section titles match the **Copilot ROI Report** skill.
+process it supported** using a de-identified descriptive name rather than its raw filename; and
+metric/section titles match the **Copilot ROI Report** skill.
 
 > **Setting this up for a team?** This skill is one half of a two-part solution. See the
 > [repository guide](../../README.md) for the full picture and the easiest way to roll it out — a page
@@ -80,11 +83,17 @@ ready and asks you to open the task chat to exclude sessions and post — it nev
   populated overrides. **Never** add any of those before sharing/zipping.
 
 ## Privacy
-Person names, raw file names, prompts, and **country** never leave the machine. The post carries only
-aggregates — totals, categories, value pillars, roles, skills, deliverable/IO counts, and the process /
-jobs-to-be-done tables (which may carry customer/account names) — plus your directory **Role** (job
-title, a de-identified attribute) — and only the sessions you kept. When listing sessions to exclude,
-the tool reminds you to leave out anything personal or non-work you're not comfortable sharing.
+Before publishing, you can remove any session you do not want included. That session and all of its work
+artifacts are removed from the pending report before metrics are computed or anything is posted. This does
+not delete the original session from Cowork.
+
+Your individual identity, person name, raw filenames, prompts, and **country** never leave the machine.
+The post carries aggregates — totals, categories, value pillars, roles, skills, deliverable/IO counts, and
+the process / jobs-to-be-done tables (which may carry customer/account names) — plus your directory **Role**
+(job title, a de-identified attribute) and only the sessions you kept. Retained work artifacts can appear
+under de-identified descriptive names rather than raw filenames. When listing sessions to remove, the tool
+reminds you to leave out anything personal or non-work, including artifact descriptions, that you are not
+comfortable sharing with the channel.
 
 ## Version history
 
