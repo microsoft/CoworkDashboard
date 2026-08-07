@@ -8,7 +8,10 @@ Teams channel**:
 - **Cowork Team Report — Team Member skill**. Every teammate runs it on their own work. It turns
   their Copilot Cowork activity into a clear, de-identified summary — hours saved, the value of that time,
   the kinds of work Copilot helped with, and what they produced — and posts it as easy-to-read tables into
-  the shared channel. Names, file names, and prompts are never shared; only totals and categories.
+   the shared channel. Before publishing, each person reviews the sessions included and can remove any they
+   do not want in the report; removed sessions and their work artifacts are never computed or posted. The
+   post does not reveal the person's name or raw filenames, but retained work artifacts may be shown under
+   de-identified descriptive names so the team can understand what was produced.
 - **Cowork Team Report — Team Dashboard skill** (the manager skill). The manager/lead runs it. It reads the shared
   channel, combines everyone's summaries into one anonymized HTML dashboard, and **emails the team a
   newsletter** (the dashboard, with the how-to-read guide built in) on a schedule the manager chooses. It only ever reads
@@ -62,6 +65,17 @@ You only do this **once** for your team.
 
 That's the whole setup. From here on, teammates post their summaries and your manager skill rolls them up
 into the emailed newsletter — refreshing on its schedule with nothing more for you to do.
+
+### What teammates control before publishing
+
+Every teammate gets a privacy review before a report is posted to the channel. They can remove any session
+they do not want included; removing a session also removes all work artifacts associated with it. This only
+removes the session from the pending report — it does not delete the original Cowork session.
+
+Published reports do not reveal the contributor's individual identity, prompts, or raw filenames. They can
+name retained work artifacts using de-identified descriptive labels, along with details such as artifact type,
+business process, skills, hours, and value. Teammates should remove any session whose artifact descriptions
+they are not comfortable sharing with the channel.
 
 > **Want your own Copilot work counted too?** As the manager you can *also* install the team-member skill on
 > your own Copilot — that's optional, and only needed if you want your own stats in the team totals.

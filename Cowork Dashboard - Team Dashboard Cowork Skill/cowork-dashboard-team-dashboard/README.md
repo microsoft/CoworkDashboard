@@ -8,8 +8,10 @@ reading it is **built into the dashboard** — a **How to read** tab plus a clic
 section — so there's no separate file to open. On first run it **asks for the Teams channel link** and
 remembers it; every run reads the **latest 15 days** of posts, keeping the latest post per person.
 
-> **Team-safe by design.** Numbers only — no names, no file names, no country. Nothing is shown at an
-> individual level; a Role breaks out only when at least **3** contributors share it.
+> **Team-safe by design.** Individual identity, raw filenames, prompts, and country are not revealed.
+> Retained work artifacts may appear under de-identified descriptive names. Before publishing, each
+> teammate can remove any session from the pending report, which also removes that session's artifacts;
+> a Role breaks out only when at least **3** contributors share it.
 
 ## The three-skill family
 
@@ -96,7 +98,12 @@ python scripts/build_outputs.py --in working/team_data.json --config config/team
 ## Privacy model
 
 - Members are **counts + a number**, never named.
-- The only attribute is the directory **Role** a post carries — never country, files, or prompts.
+- Before publishing to the channel, each member can remove any session they do not want included. Its
+   artifacts are removed with it before metrics are computed; the original Cowork session is not deleted.
+- The only personal attribute is the directory **Role** a post carries — never identity, country, raw
+   filenames, or prompts.
+- Retained work artifacts may be shown under de-identified descriptive names so the team can understand
+   what was produced.
 - **k-anonymity:** per-Role breakdowns require ≥ `privacy_k_threshold` contributors; otherwise they
   collapse into one combined bar. Small teams typically show a single combined bar.
 

@@ -5,7 +5,31 @@ _temp/
 __pycache__/
 *.pyc
 
+# Generated reports and outputs
+output/
+outputs/
+*.html
+!docs/index.html
+!docs/demo-report.html
+
 # Per-run and per-user artifacts that must never be committed
 working/
 cowork-process-registry*.json
 cowork-dashboard-member-channel.*.json
+
+# Local team/channel configuration (may contain email addresses, Teams IDs, or links)
+team_config.local.json
+team_channel.local.json
+*.private.json
+*.local.json
+
+# Environment files, credentials, and private keys
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+secrets*.json
