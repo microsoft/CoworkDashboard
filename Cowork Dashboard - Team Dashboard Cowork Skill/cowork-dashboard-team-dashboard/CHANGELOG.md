@@ -3,6 +3,50 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.9.0] — 2026-09-11
+
+Adds a **Cowork-fit** view and an **Overview measure toggle**, plus two impact-table display
+refinements. All changes are dashboard render + de-identified member-post additions; the parser
+contract keys off table-header cells and is unchanged for existing tables.
+
+### Added
+- **Cowork-fit composition waterfall** (How Cowork is used → *Cowork fit*). Every graded task is
+  rated High / Medium / Low on how well it suited Cowork's agentic, cross-app strengths and shown as
+  a stepped waterfall where the three bands add up to all graded hours (consistent with the value
+  math — no separate "realizable" number). Click a band to expand its de-identified tasks (business
+  process + method + hours only; never a person, file, or prompt).
+- **"Assisted Time / Assisted Value" toggle** on the Overview tab. Switches the headline narrative
+  and highlights the matching KPI between hours saved and dollar value; defaults to Assisted Time and
+  is restored by Reset.
+
+### Changed
+- **Cowork fit** now renders **above Category mix** on the *How Cowork is used* tab.
+- **"Roles Cowork stood in for"** lists the **top 10** roles with a "showing top 10 of N" note.
+- **"Outputs produced — by format"** shows **counts only** (dollar/hours columns removed; per-item
+  value still available under *Work by business process*).
+
+
+
+Adds a **productivity recapture rate** — the share of modeled time savings a team can realistically
+harvest into productive output — as a first-class, viewer-adjustable input alongside the hourly rate.
+No parser/taxonomy or cross-skill contract changes (dashboard render + config layer only).
+
+### Added
+- **`recapture_rate` in `config/team_config.json`** (default `0.70`). Seeds the dashboard; every
+  value / cost-reduction figure is now `time saved × recapture rate × hourly rate`.
+- **Live "Recapture rate" control** in the dashboard control bar (0–100%), next to the hourly-rate
+  box, with Reset support. Adjusting it re-prices every dollar figure instantly; time-saved hours and
+  counts are unchanged.
+- **"Effective time recaptured" KPI** = time saved × recapture rate — the productive hours the team
+  actually reclaims, which is what the value figure prices.
+- Glossary + value-model entries for **Recapture rate**, **Effective time recaptured**, and the
+  updated **Value / cost reduction** formula.
+
+### Changed
+- The Overview headline, KPI value, category / role / skill / process / deliverable tables, and the
+  fortnightly trend all price value at the recaptured rate.
+- `parse_posts.py` passes `defaultRecapture` through to `team_data.json` meta (read from config).
+
 ## [1.7.0] — 2026-08-03
 
 Fifth review pass — made the dashboard interactive and finished the guide-tab cleanup (no

@@ -88,7 +88,8 @@ python scripts/build_outputs.py --in working/team_data.json --config config/team
 |---|---|
 | `team_id`, `channel_id` | Where to read (authoritative). **Blank until first run**, then filled by `resolve_channel.py` from the pasted link. |
 | `channel_link` | The Teams channel URL the user pasted on first run (kept for reference). |
-| `hourly_rate` | Default $/hr for the value = hours × rate model (adjust live in the UI). |
+| `hourly_rate` | Default $/hr for the value model (adjust live in the UI). |
+| `recapture_rate` | Productivity recapture rate `0–1` (default **0.70**): the share of time saved the team realistically harvests. Value = time saved × recapture rate × hourly rate. Adjustable live in the UI. |
 | `cadence_days` | Posting/refresh cadence (default 14). |
 | `message_lookback_days` | Window each run reads — **default 15** (the latest cycle). Enforced by `--window-days`. |
 | `privacy_k_threshold` | Minimum contributors sharing an attribute before it breaks out (default 3). |

@@ -122,7 +122,7 @@ class TableGrab(HTMLParser):
             self._cell.append(data)
 
 def detag(s):
-    return html.unescape(re.sub(r"<[^>]+>", " ", s or ""))
+    return html.unescape(re.sub(r"<[^>]+>", "\n", s or ""))
 
 def fnum(s):
     m = re.search(r"-?\d[\d,]*\.?\d*", str(s).replace(",", ""))
@@ -138,7 +138,8 @@ def rng(s):
 
 # First-header-cell signatures of the parser-stable stats tables a genuine Member post carries.
 STATS_HEADER_KEYS = {"metric", "category", "pillar", "process", "role", "skill", "measure",
-                     "input type", "output type", "deliverable type", "deliverable", "type", "date"}
+                     "input type", "output type", "deliverable type", "deliverable", "type", "date",
+                     "fit"}
 
 def has_stats_tables(body):
     """True only when the message carries the de-identified stats tables (≥2 recognized ones).
@@ -170,7 +171,7 @@ def parse_body(body, pg, vocab, aliases, rate):
     g = TableGrab(); g.feed(body)
     rec = {"headline": {}, "categories": [], "pillars": [], "processes": [], "roles": [],
            "skills": [], "io": {"inputs": [], "outputs": [], "inputsAnalyzed": 0, "outputsProduced": 0},
-           "deliverables": [], "deliverablesDetail": [], "daily": []}
+           "deliverables": [], "deliverablesDetail": [], "daily": [], "coworkFit": []}
     hl = {"timeTyp": 0.0, "timeLow": None, "timeHigh": None, "expertH": 0.0, "assistedH": 0.0,
           "speed": 0.0, "sessions": 0, "runTasks": 0, "deliverables": 0, "activeDays": 0}
 
@@ -268,6 +269,18 @@ def parse_body(body, pg, vocab, aliases, rate):
             for r in rows:
                 if len(r) < 2: continue
                 rec["daily"].append({"date": r[0], "runTasks": inum(r[1])})
+        elif key == "fit":                                     # Cowork-fit per-task detail (H/M/L)
+            # Member layout: Fit | Business process | Method | Hours | Value.
+            # De-identified per-task rows — no names, no goal text. Powers the dashboard waterfall.
+            for r in rows:
+                if len(r) < 2: continue
+                gl = r[0].strip()
+                grade = {"high": "H", "medium": "M", "low": "L"}.get(gl.lower().split(" ")[0], "")
+                if not grade: continue
+                proc = group_process(r[1], pg) if len(r) > 1 and r[1] not in ("", "—") else ""
+                rec["coworkFit"].append({"grade": grade, "gradeLabel": gl, "process": proc,
+                                         "category": (r[2] if len(r) > 2 and r[2] not in ("", "—") else ""),
+                                         "hours": fnum(r[3]) if len(r) > 3 else 0.0})
 
     # normalize: canonical merges (skills/processes may collide after mapping)
     def merge(items, keyf, addf):
@@ -307,6 +320,7 @@ def normalize_messages(raw):
 def main(a):
     cfg = _load(os.path.relpath(a.config, HERE)) if os.path.isabs(a.config) is False and os.path.exists(os.path.join(HERE, a.config)) else json.load(open(a.config, encoding="utf-8"))
     rate = cfg.get("hourly_rate", 72)
+    recapture = cfg.get("recapture_rate", 0.70)
     pg, vocab, aliases = load_taxonomies()
     raw = json.load(open(a.inp, encoding="utf-8"))
     all_msgs = [m for m in normalize_messages(raw) if not m["deleted"] and "Cowork Team Report" in (m["body"] or "")]
@@ -364,6 +378,7 @@ def main(a):
         "meta": {
             "team": cfg.get("team_name") or "Team", "channel": cfg.get("channel_name") or "",
             "generated": a.generated or posted_date, "defaultRate": rate,
+            "defaultRecapture": recapture,
             "cadenceDays": cfg.get("cadence_days", 14), "kThreshold": cfg.get("privacy_k_threshold", 3),
             "teamSize": cfg.get("team_size"), "categoryBands": CATEGORY_BANDS,
         },

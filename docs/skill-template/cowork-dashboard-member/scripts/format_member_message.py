@@ -116,6 +116,51 @@ def build_message(d):
     H.append(hdr("⏱️ Headline"))
     H.append(table(["Metric", "Value"], head_rows))
 
+    # 1b) Cowork fit — de-identified opportunity signal --------------------------
+    # Aggregate H/M/L only (no per-session detail), so nothing identifies a person
+    # or a specific task. First header cell "Cowork fit" is intentionally NOT a
+    # recognized STATS_HEADER_KEYS value, so the downstream parser ignores this
+    # table and the data contract is unaffected.
+    GRADE_LABEL = {"H": "High fit", "M": "Medium fit", "L": "Low fit"}
+    fit_min = collections.defaultdict(float)
+    fit_sess = collections.Counter()
+    for g in goals:
+        grade = ((g.get("cowork_fit") or {}).get("grade") or "").upper()
+        if grade not in GRADE_LABEL:
+            continue
+        fit_sess[grade] += 1
+        mt = g.get("minutes_typical", 0)
+        if mt > 0:
+            fit_min[grade] += mt
+    fit_total_sess = sum(fit_sess.values()) or 1
+    fit_rows = []
+    for grade in ("H", "M", "L"):
+        if fit_sess[grade] == 0:
+            continue
+        mins = fit_min[grade]
+        fit_rows.append((GRADE_LABEL[grade], fit_sess[grade], f"{round(mins/60,1)} h",
+                         money(mins/60*rate), f"{round(100*fit_sess[grade]/fit_total_sess)}%"))
+    if fit_rows:
+        H.append(hdr("🎯 Cowork fit — how well the work suited Cowork"))
+        H.append(table(["Cowork fit", "Sessions", "Hours", "Value", "% sessions"], fit_rows))
+
+    # 1c) Cowork fit — PER-TASK detail (drives the dashboard waterfall + drill-down) ----
+    # De-identified: one row per graded task carrying only its fit grade, business
+    # process, method (task category) and hours/value — NO goal title, NO free-text
+    # rationale, NO file names. First header cell "Fit" is a recognized parser key.
+    fit_detail_rows = []
+    for g in sorted(goals, key=lambda x: -x.get("minutes_typical", 0)):
+        grade = ((g.get("cowork_fit") or {}).get("grade") or "").upper()
+        if grade not in GRADE_LABEL:
+            continue
+        cat = (g.get("categories") or ["—"])[0] or "—"
+        hrs_v = g.get("hours_typical", 0)
+        fit_detail_rows.append((GRADE_LABEL[grade], g.get("process", "—"), cat,
+                                f"{hrs_v} h", money(hrs_v * rate)))
+    if fit_detail_rows:
+        H.append(hdr("🎯 Cowork fit — by task"))
+        H.append(table(["Fit", "Business process", "Method", "Hours", "Value"], fit_detail_rows))
+
     # 2) Where the time went — by task category ------------------------------
     cat_total_min = sum(c.get("minutes_typical", 0) for c in cats) or 1
     cat_rows = []

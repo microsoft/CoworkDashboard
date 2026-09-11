@@ -7,6 +7,8 @@
   "channel_link": "",
   "_channel_note": "channel_link is the Teams channel URL the user pasted on first run; team_id + channel_id are resolved from it. If all three are blank, the skill asks for the link before reading anything.",
   "hourly_rate": 72,
+  "recapture_rate": 0.7,
+  "_recapture_note": "Productivity recapture rate (0-1): the share of modeled time savings the team can realistically harvest into productive output. Effective time recaptured = time saved x recapture_rate, and every dollar / value figure = effective recaptured hours x hourly_rate. Flexible like hourly_rate — it seeds the dashboard's live 'Recapture rate' control, which the viewer can adjust. Default 0.70 (70%).",
   "cadence_days": 14,
   "message_lookback_days": 15,
   "_lookback_note": "Every run reads only messages posted in the last message_lookback_days (default 15) — the latest cycle — and then keeps the latest post per person. parse_posts.py enforces this with --window-days.",

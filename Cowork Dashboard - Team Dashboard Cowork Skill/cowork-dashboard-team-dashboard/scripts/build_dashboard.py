@@ -15,7 +15,6 @@ Tabs (each small, one clear purpose):
   How Cowork is used— business process accordion: each row EXPANDS to its deliverable formats + skills
                       (skills nest in a sub-expand when long); category mix (k-anon), analyzed->produced.
   Disclaimer        — "modeled tool-impact, not performance" note lives in the blue header (small print).
-  Trends            — minimal fortnight-over-fortnight time-saved line.
   Glossary & method — definitions, the value model, privacy rule, sources.
 
 Every $ figure = hours x rate, computed live in the browser (live rate control).
@@ -108,6 +107,32 @@ table.dt tr.tot td{font-weight:700;border-top:2px solid var(--line);background:v
 .legend .sw{width:12px;height:12px;border-radius:3px;flex:none;box-shadow:inset 0 0 0 1px var(--donut-edge)}.legend .lt{flex:1}.legend .lv{color:var(--muted);font-variant-numeric:tabular-nums}
 .stackrow{display:grid;grid-template-columns:200px 1fr;align-items:center;gap:11px;padding:6px 0}
 .stackbar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--bg)}.stackseg{height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}.segpct{font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.45);white-space:nowrap;line-height:1}
+/* Cowork-fit waterfall: one part-to-whole bar of graded tasks (High/Medium/Low), each an expandable row below. */
+.wf-cap{font-size:13px;color:var(--muted);margin:0 0 8px}.wf-cap b{color:var(--ink);font-size:16px;font-weight:750}
+.wf-bar{display:flex;height:34px;border-radius:8px;overflow:hidden;background:var(--bg)}
+.wf-seg{height:100%;display:flex;align-items:center;justify-content:center}.wf-seg span{font-size:12.5px;font-weight:700;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.4)}
+.wf-leg{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:12px;color:var(--muted)}
+.wf-li{display:inline-flex;align-items:center;gap:6px}
+.wf-dot{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.wf-svg{width:100%;height:auto;display:block;overflow:visible;margin:2px 0 4px}
+.wf-svg .wfv{font-size:13px;font-weight:750;fill:var(--ink)}
+.wf-svg .wfl{font-size:12.5px;font-weight:650;fill:var(--ink)}
+.wf-svg .wfs{font-size:11px;fill:var(--muted)}
+.wf-svg .wfc{stroke:var(--faint);stroke-width:1;stroke-dasharray:3 3;opacity:.7}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--bg)}
+.seg-btn{appearance:none;-webkit-appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:650;padding:7px 15px;cursor:pointer}
+.seg-btn+.seg-btn{border-inline-start:1px solid var(--line)}
+.seg-btn.on{background:var(--c1);color:#fff}
+.ov-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+.ov-tl{font-size:13px;color:var(--muted);font-weight:650}
+.kpi.metric-sel{outline:2px solid var(--c1);outline-offset:1px}
+.ranklist{list-style:none;margin:0;padding:0}
+.rk-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:13px;padding:11px 4px;border-bottom:1px solid var(--line)}
+.rk-row:last-child{border-bottom:none}
+.rk-badge{width:25px;height:25px;border-radius:50%;background:var(--bg);border:1px solid var(--line);color:var(--c0);font-weight:750;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex:none}
+.rk-nm{font-weight:600;font-size:14px}
+.rk-v{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rk-v b{color:var(--ink)}
 .io2{display:grid;grid-template-columns:1fr 1fr;gap:26px}.io2 h4{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--faint);margin:0 0 10px}
 .svgtrend{width:100%;height:150px}.trend-empty{font-size:12.5px;color:var(--muted);margin-top:8px}
 details.meth{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin-bottom:12px;scroll-margin-top:120px}
@@ -126,7 +151,7 @@ details.drill .dbody{padding-top:11px}
 .dgrp{margin:0 0 15px}.dgrp .dgrp-h{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin:0 0 5px}
 /* Expandable business-process accordion (each row opens to its deliverable formats + skills). */
 .acct{border:1px solid var(--line);border-radius:11px;overflow:hidden}
-.acct-h,.acct-tot,.acct-row>summary{display:grid;grid-template-columns:1fr 92px 78px 92px 66px;gap:10px;align-items:center;padding:10px 14px;font-size:13px}
+.acct-h,.acct-tot,.acct-row>summary{display:grid;grid-template-columns:1fr 96px 92px 72px;gap:10px;align-items:center;padding:10px 14px;font-size:13px}
 .acct-h{background:var(--bg);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--faint);font-weight:700}
 .acct-h .r,.acct-row>summary .r,.acct-tot .r{text-align:right;font-variant-numeric:tabular-nums}
 .acct-row{border-top:1px solid var(--line)}
@@ -147,7 +172,7 @@ details.drill.sub{margin-top:11px;border-top:1px dashed var(--line);padding-top:
 .dlv-nm{font-size:13px;overflow:hidden;text-overflow:ellipsis}
 .fmt-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--brand-d);background:var(--soft);border-radius:6px;padding:2px 8px;white-space:nowrap}
 .dlv-v{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-@media (max-width:860px){.acct-h,.acct-tot,.acct-row>summary{grid-template-columns:1fr 50px 56px 66px 44px;gap:6px;font-size:12px}}
+@media (max-width:860px){.acct-h,.acct-tot,.acct-row>summary{grid-template-columns:1fr 56px 66px 52px;gap:6px;font-size:12px}}
 footer.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint)}
 @media (max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.io2,.insights{grid-template-columns:1fr}.insgroup .ig-rows{grid-template-columns:1fr}.row{grid-template-columns:118px 1fr 132px}.row.rc{grid-template-columns:118px 1fr 46px}.row .rv{white-space:normal}.stackrow{grid-template-columns:120px 1fr}.helppop{max-width:78vw}}
 @media print{body{background:#fff}.controls,.banner,.tabs{display:none}.tab-panel{display:block!important}
@@ -159,8 +184,11 @@ header.top{background:var(--brand)!important}*{-webkit-print-color-adjust:exact;
 JS = r"""
 const RAW=JSON.parse(document.getElementById('cw-data').textContent);
 const RATE0=RAW.meta.defaultRate, KMIN=RAW.meta.kThreshold||3;
+const RECAP0=(RAW.meta.defaultRecapture!=null?RAW.meta.defaultRecapture:0.70);
 const CAT_COLOR={'Analysis & Research':'var(--c0)','Write or debug code':'var(--c1)','Document & content creation':'var(--c2)','Meeting workflows':'var(--c3)','Specialized workflows':'var(--c4)','General assistance / Other':'var(--c6)','Email workflows':'var(--c5)','Communication workflows':'var(--c7)'};
 const PAL=['var(--c0)','var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)','var(--c7)'];
+// Cowork-fit grade palette: High = green, Medium = gold, Low = neutral grey.
+const FIT_META={H:{label:'High fit',color:'var(--c1)'},M:{label:'Medium fit',color:'var(--c2)'},L:{label:'Low fit',color:'var(--c5)'}};
 // Deliverable types → concrete file formats (types like Text/File/Deck/Document overlap; formats don't).
 const FMT={'Deck':'PPTX','Slides':'PPTX','Presentation':'PPTX','Slide deck':'PPTX','Document':'Word','Doc':'Word','Word':'Word','Spreadsheet':'Excel / CSV','Excel':'Excel / CSV','CSV':'Excel / CSV','Web page':'HTML','Webpage':'HTML','Web':'HTML','HTML':'HTML','Text':'Text / MD','Markdown':'Text / MD','Image':'Image','PDF':'PDF','File':'File (other)'};
 const fmtLabel=t=>FMT[t]||t;
@@ -171,13 +199,16 @@ function glossLabel(t){const d=GLOSSARY[String(t).toLowerCase()];return d?`<span
 const PROC_LABEL={'Skill Development':'Cowork Skill Development'};
 const procLabel=n=>PROC_LABEL[n]||n;
 const posted=RAW.members.filter(m=>m.posted);
-const state={snapshot:RAW.snapshots[RAW.snapshots.length-1].id,rate:RATE0,tab:'overview'};
+const state={snapshot:RAW.snapshots[RAW.snapshots.length-1].id,rate:RATE0,recap:RECAP0,tab:'overview',metric:'time'};
 const el=id=>document.getElementById(id);
 const money=v=>'$'+Math.round(v).toLocaleString('en-US');
 const hrs=h=>h.toFixed(1)+' h';
 const pct=(n,d)=>d>0?Math.round(n/d*100):0;
 const wk=h=>(h/40).toFixed(1);
 const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+// Global measure: honors the Assisted Time / Assisted Value toggle so every chart shows one basis.
+const measure=(h,RE)=>state.metric==='value'?money(h*RE):hrs(h);
+const measLabel=()=>state.metric==='value'?'Value':'Hours';
 function snapIds(){return state.snapshot==='ALL'?RAW.snapshots.map(s=>s.id):[state.snapshot];}
 function snapLabel(){if(state.snapshot==='ALL')return 'All snapshots';const s=RAW.snapshots.find(x=>x.id===state.snapshot);return s.label+(s.periodStart?' ('+s.periodStart+' → '+s.periodEnd+')':'');}
 function activeMembers(){const ids=snapIds();return posted.filter(m=>ids.some(id=>m.reports[id]));}
@@ -185,7 +216,7 @@ function memberReports(m){return snapIds().map(id=>m.reports[id]).filter(Boolean
 
 function aggregate(members){
   const a={n:members.length,head:{timeTyp:0,timeLow:0,timeHigh:0,expertH:0,assistedH:0,sessions:0,runTasks:0,deliverables:0,activeDays:0},
-    cat:{},proc:{},role:{},skill:{},deliv:{},delivDetail:[],inputs:{},outputs:{},inA:0,outP:0};
+    cat:{},proc:{},role:{},skill:{},deliv:{},delivDetail:[],fit:[],inputs:{},outputs:{},inA:0,outP:0};
   let lowN=0,highN=0;
   members.forEach(m=>memberReports(m).forEach(r=>{
     const h=r.headline;for(const k in a.head){if(k!=='timeLow'&&k!=='timeHigh')a.head[k]+=(h[k]||0);}
@@ -196,6 +227,7 @@ function aggregate(members){
     r.skills.forEach(x=>{const o=a.skill[x.name]||(a.skill[x.name]={deliverables:0,sessions:0,hours:0});o.deliverables+=x.deliverables;o.sessions+=x.sessions;o.hours+=x.hours;});
     r.deliverables.forEach(d=>{const o=a.deliv[d.type]||(a.deliv[d.type]={count:0,hours:0,skills:new Set()});o.count+=d.count;o.hours+=d.hours;(d.skills||[]).forEach(s=>o.skills.add(s));});
     (r.deliverablesDetail||[]).forEach(d=>a.delivDetail.push(d));
+    (r.coworkFit||[]).forEach(f=>a.fit.push(f));
     (r.io.inputs||[]).forEach(i=>a.inputs[i.type]=(a.inputs[i.type]||0)+i.count);
     (r.io.outputs||[]).forEach(i=>a.outputs[i.type]=(a.outputs[i.type]||0)+i.count);
     a.inA+=r.io.inputsAnalyzed||0;a.outP+=r.io.outputsProduced||0;
@@ -227,7 +259,7 @@ function procDetailHTML(items,R){
   const rows=named.concat(Object.keys(byfmt).map(k=>{const o=byfmt[k];
       return {nm:o.fmt,tag:o.count+' deliverable'+(o.count!==1?'s':''),hours:o.hours};}))
     .sort((a,b)=>(b.hours||0)-(a.hours||0));
-  const list=rows.map(d=>`<div class="dlv"><span class="dlv-nm" title="${esc(d.nm)}">${esc(d.nm)}</span><span class="fmt-tag">${esc(d.tag)}</span><span class="dlv-v">${hrs(d.hours||0)} · ${money((d.hours||0)*R)}</span></div>`).join('');
+  const list=rows.map(d=>`<div class="dlv"><span class="dlv-nm" title="${esc(d.nm)}">${esc(d.nm)}</span><span class="fmt-tag">${esc(d.tag)}</span><span class="dlv-v">${measure(d.hours||0,R)}</span></div>`).join('');
   const sk={};items.forEach(d=>(d.skills||[]).forEach(s=>sk[s]=(sk[s]||0)+1));
   const skArr=Object.keys(sk).map(k=>({name:k,n:sk[k]})).sort((a,b)=>b.n-a.n);
   const skPills=skArr.map(s=>`<span class="pill">${esc(s.name)}${s.n>1?' ·'+s.n:''}</span>`).join('');
@@ -239,94 +271,123 @@ function procDetailHTML(items,R){
 
 function render(){
   const R=state.rate,mem=activeMembers(),A=aggregate(mem),H=A.head;
+  const RC=(state.recap!=null?state.recap:1),RE=R*RC;
   const teamSpeed=H.assistedH>0?H.expertH/H.assistedH:0;
   const catArr=sortH(toArr(A.cat)),totCatH=catArr.reduce((s,x)=>s+x.hours,0);
   const procArr=sortH(toArr(A.proc)),totProcH=procArr.reduce((s,x)=>s+x.hours,0);
-  el('ctxline').textContent=`${snapLabel()} · ${mem.length} contributor${mem.length===1?'':'s'} · $${R}/hr`;
+  el('ctxline').textContent=`${snapLabel()} · ${mem.length} contributor${mem.length===1?'':'s'} · $${R}/hr · ${Math.round(RC*100)}% recapture`;
 
   // Overview KPIs
   el('ov-kpis').innerHTML=[
-    {l:'Time saved',v:hrs(H.timeTyp),s:`≈ ${wk(H.timeTyp)} weeks · range ${hrs(H.timeLow)}–${hrs(H.timeHigh)}`,h:1},
-    {l:'Value / cost reduction',v:money(H.expertH*R),s:`at $${R}/hr · range ${money(H.timeLow*R)}–${money(H.timeHigh*R)}`,h:1},
+    {l:'Time saved',v:hrs(H.timeTyp),s:`≈ ${wk(H.timeTyp)} weeks · range ${hrs(H.timeLow)}–${hrs(H.timeHigh)}`,h:1,sel:state.metric==='time'},
+    {l:'Effective time recaptured',v:hrs(H.timeTyp*RC),s:`${Math.round(RC*100)}% recapture of time saved · drives value`,h:1},
+    {l:'Value / cost reduction',v:money(H.expertH*RE),s:`${Math.round(RC*100)}% recapture × $${R}/hr · range ${money(H.timeLow*RE)}–${money(H.timeHigh*RE)}`,h:1,sel:state.metric==='value'},
     {l:'Team speed multiplier',v:teamSpeed.toFixed(1)+'×',s:`${hrs(H.assistedH)} hands-on compared to ${hrs(H.expertH)} without Cowork`,h:1},
     {l:'Contributors',v:mem.length,s:`posted this period`,h:1},
     {l:'Sessions',v:H.sessions,s:`${H.runTasks} run tasks across ${H.sessions} sessions`},{l:'Deliverables',v:H.deliverables,s:'produced'},
-    {l:'Hands-on time',v:hrs(H.assistedH),s:`vs ${hrs(H.expertH)} estimated without Cowork`},
     {l:'Active days',v:H.activeDays,s:`person-days · ${(H.activeDays?H.expertH/H.activeDays:0).toFixed(1)} h/day`},
-  ].map(k=>`<div class="kpi${k.h?' hero':''}"><div class="k-l">${glossLabel(k.l)}</div><div class="k-v">${k.v}</div><div class="k-s">${k.s}</div></div>`).join('');
+  ].map(k=>`<div class="kpi${k.h?' hero':''}${k.sel?' metric-sel':''}"><div class="k-l">${glossLabel(k.l)}</div><div class="k-v">${k.v}</div><div class="k-s">${k.s}</div></div>`).join('');
 
-  const headline=`<div class="ins" style="grid-column:1/-1"><div class="ic">⏱️</div><div class="tx">Cowork helped the team save about <b>${H.timeTyp.toFixed(1)} hours of total time</b> over this time period, enabling tasks to be completed <b>${teamSpeed.toFixed(1)}× faster,</b> with an estimated time savings value of <b>${money(H.expertH*R)}.</b></div></div>`;
+  const ovVal=state.metric==='value';
+  const headTime=`Cowork helped the team save about <b>${H.timeTyp.toFixed(1)} hours of total time</b> over this time period, enabling tasks to be completed <b>${teamSpeed.toFixed(1)}× faster.</b> At a <b>${Math.round(RC*100)}% recapture rate</b>, that is <b>${hrs(H.timeTyp*RC)}</b> of effective time recaptured, worth an estimated <b>${money(H.expertH*RE)}.</b>`;
+  const headVal=`Cowork delivered an estimated <b>${money(H.expertH*RE)}</b> in value / cost reduction over this time period — from <b>${hrs(H.timeTyp*RC)}</b> of effective time recaptured (a <b>${Math.round(RC*100)}% recapture rate</b> on ${hrs(H.timeTyp)} saved) priced at <b>$${R}/hr</b>, with work completed <b>${teamSpeed.toFixed(1)}× faster.</b>`;
+  const headline=`<div class="ins" style="grid-column:1/-1"><div class="ic">${ovVal?'💰':'⏱️'}</div><div class="tx">${ovVal?headVal:headTime}</div></div>`;
   const where=[];
-  if(catArr[0])where.push({i:'🎯',h:'Task Category',goto:'impact',scroll:'im-categories',name:catArr[0].name,val:`${hrs(catArr[0].hours)} · ${pct(catArr[0].hours,totCatH)}% of total time saved`});
-  if(procArr[0])where.push({i:'🏭',h:'Business Process',goto:'work',scroll:'wk-proc',name:procLabel(procArr[0].name),val:`${hrs(procArr[0].hours)} · ${pct(procArr[0].hours,totProcH)}% of total time saved`});
-  const group=where.length?`<div class="ins insgroup" style="grid-column:1/-1"><div class="ig-h">Where did we save the most time:</div><div class="ig-rows">${where.map(x=>`<div class="ig-row"><div class="ic">${x.i}</div><div class="tx"><button type="button" class="ig-cat navlink" data-goto="${x.goto}" data-scroll="${x.scroll}" title="Go to ${x.h}">${x.h}<span class="ig-arrow" aria-hidden="true">↗</span></button><div class="ig-name">${x.name}</div><div class="ig-val">${x.val}</div></div></div>`).join('')}</div></div>`:'';
+  if(catArr[0])where.push({i:'🎯',h:'Task Category',goto:'impact',scroll:'im-categories',name:catArr[0].name,val:`${measure(catArr[0].hours,RE)} · ${pct(catArr[0].hours,totCatH)}% of total`});
+  if(procArr[0])where.push({i:'🏭',h:'Business Process',goto:'work',scroll:'wk-proc',name:procLabel(procArr[0].name),val:`${measure(procArr[0].hours,RE)} · ${pct(procArr[0].hours,totProcH)}% of total`});
+  const group=where.length?`<div class="ins insgroup" style="grid-column:1/-1"><div class="ig-h">Where did we ${ovVal?'drive the most value':'save the most time'}:</div><div class="ig-rows">${where.map(x=>`<div class="ig-row"><div class="ic">${x.i}</div><div class="tx"><button type="button" class="ig-cat navlink" data-goto="${x.goto}" data-scroll="${x.scroll}" title="Go to ${x.h}">${x.h}<span class="ig-arrow" aria-hidden="true">↗</span></button><div class="ig-name">${x.name}</div><div class="ig-val">${x.val}</div></div></div>`).join('')}</div></div>`:'';
   el('ov-insights').innerHTML=headline+group;
+
+  // Overview — top business processes (attention-grabbing preview of the full "How Cowork is used" tab).
+  (function(){const el0=el('ov-proc');if(!el0)return;
+    const arr=procArr.slice(0,5);
+    if(!arr.length){el0.innerHTML='<div class="sec-note">No business-process data in these posts yet.</div>';return;}
+    const rows=arr.map((p,i)=>`<li class="rk-row"><span class="rk-badge">${i+1}</span><span class="rk-nm">${procLabel(p.name)}</span><span class="rk-v"><b>${measure(p.hours,RE)}</b> · ${pct(p.hours,totProcH)}% of total</span></li>`).join('');
+    const more=`<div class="sec-note" style="margin-top:10px">${procArr.length>5?`Top 5 of ${procArr.length} business processes — `:''}<button type="button" class="xref" data-goto="work" data-scroll="wk-proc">open the full breakdown</button> to expand each process into its deliverables and the skills behind them.</div>`;
+    el0.innerHTML=`<ol class="ranklist">${rows}</ol>`+more;})();
 
   // Impact & Value
   (function(){const mx=Math.max(1,...catArr.map(a=>a.hours)),N=mem.length;const catRows=catArr.map(c=>{
-    const bandRaw=RAW.meta.categoryBands[c.name];const band=bandRaw?(function(){const p=bandRaw.split('/').map(x=>x.trim());const mid=p.length>=2?`<b>${p[1]}</b>`:'';const disp=p.length>=3?`${p[0]} / ${mid} / ${p[2]}`:bandRaw;return `Time range: ${disp} min/run &nbsp;·&nbsp; `;})():'';
-    const sub=`<span style="font-size:11px;color:var(--faint)">${band}${reachLabel(catReach(mem,c.name),N)}</span>`;
-    return barRow(c.name,c.hours/mx*100,CAT_COLOR[c.name]||'var(--c0)',`<b>${hrs(c.hours)}</b> · ${money(c.hours*R)} · ${c.tasks} run tasks · ${pct(c.hours,totCatH)}%`)+`<div style="margin:-4px 0 6px 191px">${sub}</div>`;}).join('');
+    const sub=`<span style="font-size:11px;color:var(--faint)">${reachLabel(catReach(mem,c.name),N)}</span>`;
+    return barRow(c.name,c.hours/mx*100,'var(--c0)',`<b>${measure(c.hours,RE)}</b> · ${c.tasks} run tasks · ${pct(c.hours,totCatH)}%`)+`<div style="margin:-4px 0 6px 191px">${sub}</div>`;}).join('');
     const totTasks=catArr.reduce((s,x)=>s+(x.tasks||0),0);
-    const totalRow=`<div class="row" style="border-top:2px solid var(--line);margin-top:6px;padding-top:9px"><div class="rl"><b>Total</b></div><div class="rbar" style="background:none"></div><div class="rv"><b>${hrs(totCatH)}</b> · ${money(totCatH*R)} · ${totTasks} run tasks</div></div>`;
+    const totalRow=`<div class="row" style="border-top:2px solid var(--line);margin-top:6px;padding-top:9px"><div class="rl"><b>Total</b></div><div class="rbar" style="background:none"></div><div class="rv"><b>${measure(totCatH,RE)}</b> · ${totTasks} run tasks</div></div>`;
     el('im-categories').innerHTML=catRows+totalRow;})();
-  (function(){const arr=sortH(toArr(A.role)),mx=Math.max(1,...arr.map(a=>a.hours));
-    const roleHtml=arr.length?arr.map((x,i)=>barRow(x.name,x.hours/mx*100,PAL[i%PAL.length],`<b>${hrs(x.hours)}</b> · ${money(x.hours*R)}`)).join(''):'<div class="sec-note">No role data in these posts.</div>';
+  (function(){const arrAll=sortH(toArr(A.role)),arr=arrAll.slice(0,10),mx=Math.max(1,...arr.map(a=>a.hours));
+    const roleHtml=arr.length?arr.map((x,i)=>barRow(x.name,x.hours/mx*100,'var(--c0)',`<b>${measure(x.hours,RE)}</b>`)).join(''):'<div class="sec-note">No role data in these posts.</div>';
+    const moreNote=arrAll.length>10?`<div class="sec-note" style="margin-top:8px">Showing the top 10 of ${arrAll.length} roles by hours.</div>`:'';
     const sk=sortH(toArr(A.skill));
-    const skHtml=sk.length?`<details class="drill"><summary>Skills behind these roles — ${sk.length}</summary><div class="dbody"><table class="dt"><thead><tr><th>Skill</th><th class="r">Deliverables</th><th class="r">Sessions</th><th class="r">Hours</th><th class="r">Value</th></tr></thead><tbody>`+
-      sk.map(s=>`<tr><td>${s.name}</td><td class="r">${s.deliverables}</td><td class="r">${s.sessions}</td><td class="r">${hrs(s.hours)}</td><td class="r">${money(s.hours*R)}</td></tr>`).join('')+
+    const skHtml=sk.length?`<details class="drill"><summary>Skills behind these roles — ${sk.length}</summary><div class="dbody"><table class="dt"><thead><tr><th>Skill</th><th class="r">Deliverables</th><th class="r">Sessions</th><th class="r">${measLabel()}</th></tr></thead><tbody>`+
+      sk.map(s=>`<tr><td>${s.name}</td><td class="r">${s.deliverables}</td><td class="r">${s.sessions}</td><td class="r">${measure(s.hours,RE)}</td></tr>`).join('')+
       `</tbody></table><div class="sec-note" style="margin-top:6px">The specific skills that make up the roles above — the same expertise, one level of detail down.</div></div></details>`:'';
-    el('im-roles').innerHTML=roleHtml+skHtml;})();
+    el('im-roles').innerHTML=roleHtml+moreNote+skHtml;})();
   (function(){
-    const bym={};sortH(toArr(A.deliv)).forEach(d=>{const f=fmtLabel(d.name);const o=bym[f]||(bym[f]={name:f,count:0,hours:0});o.count+=d.count;o.hours+=d.hours;});
-    const arr=sortH(Object.keys(bym).map(k=>bym[k])),tc=arr.reduce((s,x)=>s+x.count,0),th=arr.reduce((s,x)=>s+x.hours,0);
-    let html=`<table class="dt"><thead><tr><th>Format</th><th class="r">Count</th><th class="r">Hours</th><th class="r">Value</th></tr></thead><tbody>`+
-      arr.map(d=>`<tr><td><b>${d.name}</b></td><td class="r">${d.count}</td><td class="r">${hrs(d.hours)}</td><td class="r">${money(d.hours*R)}</td></tr>`).join('')+
-      `<tr class="tot"><td>Total</td><td class="r">${tc}</td><td class="r">${hrs(th)}</td><td class="r">${money(th*R)}</td></tr></tbody></table>`;
-    html+=`<p class="sec-note" style="margin-top:10px">Hours and value here reflect only work tied to a produced output; the overall time saved may be higher due to additional time saved on analysis, research, and other work that didn&rsquo;t produce a distinct output.</p>`;
+    const bym={};toArr(A.deliv).forEach(d=>{const f=fmtLabel(d.name);const o=bym[f]||(bym[f]={name:f,count:0});o.count+=d.count;});
+    const arr=Object.keys(bym).map(k=>bym[k]).sort((a,b)=>b.count-a.count),tc=arr.reduce((s,x)=>s+x.count,0);
+    let html=`<table class="dt"><thead><tr><th>Format</th><th class="r">Count</th></tr></thead><tbody>`+
+      arr.map(d=>`<tr><td><b>${d.name}</b></td><td class="r">${d.count}</td></tr>`).join('')+
+      `<tr class="tot"><td>Total</td><td class="r">${tc}</td></tr></tbody></table>`;
+    html+=`<p class="sec-note" style="margin-top:10px">Counts every output file and version the team produced with Cowork, by file format.</p>`;
     el('im-deliv').innerHTML=html;})();
 
   // How Cowork is used — process leads
   (function(){
     const byp={};(A.delivDetail||[]).forEach(d=>{const p=d.process||'Other';(byp[p]=byp[p]||[]).push(d);});
-    const head=`<div class="acct-h"><span>Business process</span><span class="r">Sessions</span><span class="r">Hours</span><span class="r">Value</span><span class="r">% time</span></div>`;
-    const rows=procArr.map(p=>`<details class="acct-row"><summary><span class="ap">${procLabel(p.name)}</span><span class="r">${p.sessions}</span><span class="r">${hrs(p.hours)}</span><span class="r">${money(p.hours*R)}</span><span class="r">${pct(p.hours,totProcH)}%</span></summary><div class="acct-body">${procDetailHTML(byp[p.name]||[],R)}</div></details>`).join('');
-    const tot=`<div class="acct-tot"><span>Total</span><span class="r">${procArr.reduce((s,x)=>s+x.sessions,0)}</span><span class="r">${hrs(totProcH)}</span><span class="r">${money(totProcH*R)}</span><span class="r">100%</span></div>`;
+    const head=`<div class="acct-h"><span>Business process</span><span class="r">Sessions</span><span class="r">${measLabel()}</span><span class="r">% time</span></div>`;
+    const rows=procArr.map(p=>`<details class="acct-row"><summary><span class="ap">${procLabel(p.name)}</span><span class="r">${p.sessions}</span><span class="r">${measure(p.hours,RE)}</span><span class="r">${pct(p.hours,totProcH)}%</span></summary><div class="acct-body">${procDetailHTML(byp[p.name]||[],RE)}</div></details>`).join('');
+    const tot=`<div class="acct-tot"><span>Total</span><span class="r">${procArr.reduce((s,x)=>s+x.sessions,0)}</span><span class="r">${measure(totProcH,RE)}</span><span class="r">100%</span></div>`;
     el('wk-proc').innerHTML=`<div class="acct">${head}${rows}${tot}</div>`;})();
-  renderCatMix('wk-stack',mem,catArr.map(c=>c.name));
-  (function(){const inA=Object.keys(A.inputs).map(k=>({t:k,c:A.inputs[k]})).sort((a,b)=>b.c-a.c),outP=Object.keys(A.outputs).map(k=>({t:k,c:A.outputs[k]})).sort((a,b)=>b.c-a.c);
-    const mxi=Math.max(1,...inA.map(x=>x.c)),mxo=Math.max(1,...outP.map(x=>x.c));
-    const col=(arr,mx,c)=>arr.map(x=>`<div class="row rc"><div class="rl">${x.t}</div><div class="rbar"><div class="rfill" style="width:${x.c/mx*100}%;background:${c}"></div></div><div class="rv"><b>${x.c}</b></div></div>`).join('')||'<div class="sec-note">—</div>';
-    el('wk-io').innerHTML=`<div class="io2"><div><h4>Analyzed · ${A.inA} inputs</h4>${col(inA,mxi,'var(--io-in)')}</div><div><h4>Produced · ${A.outP} outputs</h4>${col(outP,mxo,'var(--io-out)')}</div></div><div class="sec-note" style="margin-top:12px">${A.inA} sources analyzed → ${A.outP} outputs produced · ~${(A.outP?A.inA/A.outP:0).toFixed(1)} sources per output.</div>`;})();
-
-  renderTrend('tr-trend',R);
+  renderCatMix('wk-stack',mem,catArr.map(c=>c.name),RE);
+  // Cowork fit — quantified waterfall (Total → High / Medium / Low) with click-to-expand task lists.
+  (function(){
+    const fit=A.fit||[];const sec=el('wk-fit');if(!sec)return;
+    if(!fit.length){sec.innerHTML='<div class="sec-note">No Cowork-fit data in these posts yet. Once contributors post from the latest member skill, graded tasks appear here.</div>';return;}
+    const gradedMembers=mem.filter(m=>memberReports(m).some(r=>(r.coworkFit||[]).length)).length;
+    const order=['H','M','L'],grp={H:[],M:[],L:[]};
+    fit.forEach(f=>{if(grp[f.grade])grp[f.grade].push(f);});
+    const total=fit.length,totH=fit.reduce((s,x)=>s+(x.hours||0),0);
+    // Composition waterfall (task counts): All graded → High → Medium → Low; bands sum to the task total, so
+    // bar heights and the shown percentages both read off task counts (measure = hours or value per the toggle).
+    const gH={H:0,M:0,L:0};fit.forEach(f=>{if(gH[f.grade]!=null)gH[f.grade]+=(f.hours||0);});
+    const gN={H:grp.H.length,M:grp.M.length,L:grp.L.length};
+    const mx=total||1;
+    const steps=[{lab:'All graded',cnt:total,val:totH,top:total,bot:0,color:'var(--c0)',sub:'100% · '+measure(totH,RE)}];
+    let run=total;
+    order.forEach(g=>{const c=gN[g];if(c<=0)return;steps.push({lab:FIT_META[g].label,cnt:c,val:gH[g],top:run,bot:run-c,color:FIT_META[g].color,sub:pct(c,mx)+'% · '+measure(gH[g],RE)});run-=c;});
+    const W=900,Hh=300,padT=30,padB=54,padL=8,padR=8,nS=steps.length,slot=(W-padL-padR)/nS,bw=Math.min(130,slot*0.6),yOf=v=>padT+(1-v/mx)*(Hh-padT-padB);
+    let svg='';
+    steps.forEach((s,i)=>{const cx=padL+slot*i+slot/2,x=cx-bw/2,yT=yOf(s.top),yB=yOf(s.bot),hh=Math.max(2,yB-yT);
+      if(i<nS-1){const ny=yOf(steps[i+1].top);svg+=`<line class="wfc" x1="${(x+bw).toFixed(1)}" y1="${ny.toFixed(1)}" x2="${(padL+slot*(i+1)+slot/2-bw/2).toFixed(1)}" y2="${ny.toFixed(1)}"/>`;}
+      svg+=`<rect x="${x.toFixed(1)}" y="${yT.toFixed(1)}" width="${bw.toFixed(1)}" height="${hh.toFixed(1)}" rx="4" fill="${s.color}"><title>${esc(s.lab)}: ${s.cnt} task${s.cnt===1?'':'s'} · ${hrs(s.val)} · ${money(s.val*RE)}</title></rect>`;
+      svg+=`<text class="wfv" x="${cx.toFixed(1)}" y="${(yT-8).toFixed(1)}" text-anchor="middle">${s.cnt}</text>`;
+      svg+=`<text class="wfl" x="${cx.toFixed(1)}" y="${(Hh-padB+20).toFixed(1)}" text-anchor="middle">${esc(s.lab)}</text>`;
+      svg+=`<text class="wfs" x="${cx.toFixed(1)}" y="${(Hh-padB+37).toFixed(1)}" text-anchor="middle">${s.sub}</text>`;});
+    const bar=`<div class="wf-cap"><b>${total}</b> graded task${total===1?'':'s'} · ${measure(totH,RE)} — composition by task count</div><svg class="wf-svg" viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cowork fit composition waterfall">${svg}</svg>`;
+    const head=`<div class="acct-h"><span>Cowork fit</span><span class="r">Tasks</span><span class="r">% tasks</span><span class="r">${measLabel()}</span></div>`;
+    const rows=order.map(g=>{const items=grp[g];if(!items.length)return '';const n=items.length,h=items.reduce((s,x)=>s+(x.hours||0),0);
+      const list=items.slice().sort((a,b)=>(b.hours||0)-(a.hours||0)).map(x=>`<div class="dlv"><span class="dlv-nm" title="${esc(procLabel(x.process||'—'))}">${esc(procLabel(x.process||'—'))}</span><span class="fmt-tag">${esc(x.category||'—')}</span><span class="dlv-v">${measure(x.hours||0,RE)}</span></div>`).join('');
+      return `<details class="acct-row"><summary><span class="ap"><span class="wf-dot" style="background:${FIT_META[g].color};margin-inline-end:7px"></span>${FIT_META[g].label}</span><span class="r">${n}</span><span class="r">${pct(n,total)}%</span><span class="r">${measure(h,RE)}</span></summary><div class="acct-body"><div class="dlv-list">${list}</div></div></details>`;}).join('');
+    const tot=`<div class="acct-tot"><span>Total</span><span class="r">${total}</span><span class="r">100%</span><span class="r">${measure(totH,RE)}</span></div>`;
+    const cov=gradedMembers<mem.length?`<p class="sec-note" style="margin-top:8px">Cowork-fit graded on ${gradedMembers} of ${mem.length} contributors&rsquo; posts; ungraded tasks from older posts aren&rsquo;t shown here.</p>`:'';
+    sec.innerHTML=bar+`<div class="acct" style="margin-top:14px">${head}${rows}${tot}</div>`+cov;})();
 }
 
 // k-anonymity: a Role breaks out only when >= KMIN members share it; else combine.
-function renderCatMix(id,mem,cats){
+function renderCatMix(id,mem,cats,RE){
   const groups={};mem.forEach(m=>{const r=m.role||'Unspecified';(groups[r]=groups[r]||[]).push(m);});
   let bars=[],pooled=[];
   Object.keys(groups).forEach(r=>{groups[r].length>=KMIN?bars.push({label:r,members:groups[r]}):pooled=pooled.concat(groups[r]);});
   if(pooled.length)bars.push({label:bars.length?'Other contributors (combined)':'Team (combined)',members:pooled});
   const rows=bars.map(b=>{const cm={};b.members.forEach(m=>memberReports(m).forEach(r=>r.categories.forEach(k=>cm[k.name]=(cm[k.name]||0)+k.hours)));
     const tot=Object.values(cm).reduce((s,v)=>s+v,0)||1;
-    const segs=cats.filter(c=>cm[c]).map(c=>{const sp=cm[c]/tot*100;return `<div class="stackseg" style="width:${sp}%;background:${CAT_COLOR[c]||'var(--c6)'}" title="${c}: ${hrs(cm[c])} · ${Math.round(sp)}%">${sp>=10?`<span class="segpct">${Math.round(sp)}%</span>`:''}</div>`;}).join('');
+    const segs=cats.filter(c=>cm[c]).map(c=>{const sp=cm[c]/tot*100;return `<div class="stackseg" style="width:${sp}%;background:${CAT_COLOR[c]||'var(--c6)'}" title="${c}: ${measure(cm[c],RE)} · ${Math.round(sp)}%">${sp>=10?`<span class="segpct">${Math.round(sp)}%</span>`:''}</div>`;}).join('');
     return `<div class="stackrow"><div class="rl" style="font-size:12.5px">${b.label} · ${b.members.length}</div><div class="stackbar">${segs}</div></div>`;}).join('');
   const overall={};mem.forEach(m=>memberReports(m).forEach(r=>r.categories.forEach(k=>overall[k.name]=(overall[k.name]||0)+k.hours)));
   const oTot=Object.values(overall).reduce((s,v)=>s+v,0)||1;
-  const leg=cats.map(c=>`<div class="li"><span class="sw" style="background:${CAT_COLOR[c]||'var(--c6)'}"></span><span class="lt" style="font-size:12px">${c} <span style="color:var(--muted)">(${pct(overall[c]||0,oTot)}% · ${hrs(overall[c]||0)})</span></span></div>`).join('');
+  const leg=cats.map(c=>`<div class="li"><span class="sw" style="background:${CAT_COLOR[c]||'var(--c6)'}"></span><span class="lt" style="font-size:12px">${c} <span style="color:var(--muted)">(${pct(overall[c]||0,oTot)}% · ${measure(overall[c]||0,RE)})</span></span></div>`).join('');
   el(id).innerHTML=rows+`<div class="legend" style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px">${leg}</div>`+
     `<div class="sec-note" style="margin-top:10px">Individual roles are shown only when <b>${KMIN}+</b> people share it — otherwise contributors are combined.</div>`;
 }
-function renderTrend(id,R){
-  const series=RAW.snapshots.map(s=>{const ms=posted.filter(m=>m.reports[s.id]);const h=ms.reduce((t,m)=>t+(m.reports[s.id].headline.timeTyp||0),0);return {label:s.periodEnd||s.id,hours:h,value:h*R,n:ms.length};});
-  if(series.length<=1){const s=series[0]||{hours:0,value:0,n:0,label:''};
-    el(id).innerHTML=`<div style="display:flex;gap:30px;align-items:baseline;flex-wrap:wrap"><div><div class="k-v" style="font-size:30px">${hrs(s.hours)}</div><div class="k-s">time saved · ${money(s.value)} · ${s.n} contributors · ${s.label}</div></div></div><div class="trend-empty">📈 First snapshot. Each ${RAW.meta.cadenceDays}-day cycle adds one point here so you can see whether team impact is growing. Cowork is used for specific tasks, so this tracks fortnight-over-fortnight totals — not daily usage.</div>`;return;}
-  const W=1080,Hh=140,pad=32,mx=Math.max(1,...series.map(s=>s.hours)),x=i=>pad+i*(W-2*pad)/(series.length-1),y=v=>Hh-pad-(v/mx)*(Hh-2*pad);
-  const pts=series.map((s,i)=>`${x(i).toFixed(1)},${y(s.hours).toFixed(1)}`).join(' ');
-  const dots=series.map((s,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(s.hours).toFixed(1)}" r="4" fill="var(--brand)"></circle><text x="${x(i).toFixed(1)}" y="${Hh-8}" text-anchor="middle" font-size="10" fill="var(--muted)">${s.label}</text>`).join('');
-  el(id).innerHTML=`<svg class="svgtrend" viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--brand)" stroke-width="2.5"></polyline>${dots}</svg><div class="sec-note">Total time saved per fortnight. Cowork is used for specific tasks — this is a cycle-over-cycle trend, not daily activity.</div>`;}
-
 function showTab(name,scrollId){
   state.tab=name;
   document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('on',x.getAttribute('data-tab')===name));
@@ -338,7 +399,10 @@ function build(){
   if(RAW.snapshots.length>1){const o=document.createElement('option');o.value='ALL';o.textContent='All snapshots';ss.appendChild(o);}
   ss.value=state.snapshot;ss.addEventListener('change',()=>{state.snapshot=ss.value;render();});
   const ri=el('rateInput');ri.value=state.rate;ri.addEventListener('input',()=>{const v=parseFloat(ri.value);state.rate=(isFinite(v)&&v>0)?v:0;render();});
-  el('resetBtn').addEventListener('click',()=>{state.rate=RATE0;state.snapshot=RAW.snapshots[RAW.snapshots.length-1].id;ss.value=state.snapshot;ri.value=RATE0;render();});
+  const rc=el('recapInput');rc.value=Math.round(state.recap*100);rc.addEventListener('input',()=>{const v=parseFloat(rc.value);state.recap=(isFinite(v)&&v>=0)?v/100:0;render();});
+  el('resetBtn').addEventListener('click',()=>{state.rate=RATE0;state.recap=RECAP0;state.snapshot=RAW.snapshots[RAW.snapshots.length-1].id;state.metric='time';ss.value=state.snapshot;ri.value=RATE0;rc.value=Math.round(RECAP0*100);syncOvSeg();render();});
+  const ovBtns=document.querySelectorAll('#ovSeg .seg-btn');function syncOvSeg(){ovBtns.forEach(b=>b.classList.toggle('on',b.getAttribute('data-metric')===state.metric));}
+  ovBtns.forEach(b=>b.addEventListener('click',()=>{state.metric=b.getAttribute('data-metric');syncOvSeg();render();}));
   el('printBtn').addEventListener('click',()=>window.print());
   document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>showTab(b.getAttribute('data-tab'))));
   // Deep-link: clicking a labeled header in the Overview 'Where did we save' card jumps to that tab + section.
@@ -368,12 +432,14 @@ TEMPLATE = """<!DOCTYPE html>
   <p class="gen">Generated __GENERATED__ · <span id="ctxline"></span></p>
   <p class="disc">Use the information in this report to gauge the impact of Cowork on your team, <b>not as individual or team performance scores</b>. Treat these as directional estimates of tool-assisted time savings, and read them with team context in mind (e.g., project phase, seasonality). Anonymized &amp; team-level only: nothing is shown per person.</p>
   <p class="disc" style="margin-top:7px">New to this report? The <button type="button" class="xref" data-goto="method"><i>How to read + Glossary</i></button> tab explains every number, tab and control &mdash; and every section title has a clickable <b>?</b> for a quick explanation.</p>
-  <p class="disc" style="margin-top:7px">Use the <b>Period selector and Hourly rate box</b> below to pick the reporting window and adjust the hourly rate (default $__RATE__/hr). All value / cost-reduction figures recompute instantly; hours and counts stay the same.</p>
+  <p class="disc" style="margin-top:7px">Use the <b>Period selector, Hourly rate box, and Recapture rate box</b> below to pick the reporting window, the hourly rate (default $__RATE__/hr), and the productivity recapture rate (default __RECAP__%). Value / cost-reduction figures = effective recaptured hours × hourly rate and recompute instantly; time-saved hours and counts stay the same.</p>
 </div></header>
 <div class="wrap">
   <div class="controls">
     <div class="ctl"><label for="snapSel">Period</label><select id="snapSel"></select></div>
     <div class="ctl"><label for="rateInput">Hourly rate</label><div class="rate-in"><span>$</span><input id="rateInput" type="number" min="1" step="1" inputmode="numeric"><span>/hr</span></div></div>
+    <div class="ctl"><label for="recapInput">Recapture rate</label><div class="rate-in"><input id="recapInput" type="number" min="0" max="100" step="5" inputmode="numeric"><span>%</span></div></div>
+    <div class="ctl"><label>Show impact as</label><div class="seg" id="ovSeg" role="group" aria-label="Show impact as Assisted Time or Assisted Value"><button type="button" class="seg-btn on" data-metric="time">Assisted Time</button><button type="button" class="seg-btn" data-metric="value">Assisted Value</button></div></div>
     <div class="spacer"></div>
     <button class="btn" id="resetBtn" type="button">Reset</button>
     <button class="btn primary" id="printBtn" type="button">Save / Print PDF</button>
@@ -382,13 +448,13 @@ TEMPLATE = """<!DOCTYPE html>
     <button class="tab-btn on" type="button" data-tab="overview">Overview</button>
     <button class="tab-btn" type="button" data-tab="impact">Impact &amp; Value</button>
     <button class="tab-btn" type="button" data-tab="work">How Cowork is used</button>
-    <button class="tab-btn" type="button" data-tab="trends">Trends</button>
     <button class="tab-btn" type="button" data-tab="method" style="font-style:italic">How to read + Glossary</button>
   </div>
 
   <div class="tab-panel on" id="tab-overview">
     <section class="block"><h2 class="sec"><span class="dot"></span>What the data says<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">A plain-language reading of the team's posts, generated automatically. It re-words itself when you change the hourly rate below.</span></h2><p class="sec-note">The four highlights below summarize the team's Cowork impact at a glance: the total time reclaimed and its dollar value, the task category driving the most savings, the business process where Cowork is applied most, and the type of business value it advances most — so you can quickly see where the impact is concentrated.</p><div class="insights" id="ov-insights"></div></section>
     <section class="block"><h2 class="sec"><span class="dot"></span>Team impact at a glance<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The headline totals for the selected period. <b>Value</b> = manual hours &times; the hourly rate in the control bar, so it recomputes whenever you change the rate.</span></h2><div class="kpis" id="ov-kpis"></div><p class="sec-note" style="margin-top:12px"><b>About the ranges:</b> under <b>Time saved</b> and <b>Value / cost reduction</b> the headline is the typical (mid-point) estimate; the low&ndash;high range beside it is the conservative-to-optimistic span from the research time bands (each task category carries a low / typical / high band &mdash; see <button type="button" class="xref" data-goto="method" data-scroll="sec-bands"><i>How to read</i></button>).</p></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Where Cowork is applied — top business processes<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The business processes the team uses Cowork for most, ranked by the selected measure (time saved or value). This is a preview — the full <b>How Cowork is used</b> tab expands every process into its deliverables and the skills behind them.</span></h2><p class="sec-note">The business processes where Cowork does the most work for the team — the clearest signal of how it's actually being used. Open the full breakdown to drill into each one.</p><div class="card" id="ov-proc"></div></section>
   </div>
 
   <div class="tab-panel" id="tab-impact">
@@ -401,12 +467,8 @@ TEMPLATE = """<!DOCTYPE html>
 
   <div class="tab-panel" id="tab-work">
     <section class="block"><h2 class="sec"><span class="dot"></span>Work by business process<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">What the team actually does with Cowork, grouped into the shared canonical process set. <b>Click any row</b> to expand its deliverables and the skills behind them. Deliverables with a de-identified name list individually; ones a post carried only by file type collapse into a single row (e.g., &ldquo;HTML &middot; 5 deliverables&rdquo;).</span></h2><p class="sec-note">The business processes the team used Cowork for, ranked by time saved. <b>Click any process to expand it</b> and see the deliverables it produced and the skills behind them.</p><p class="sec-note" style="margin-top:8px">Named deliverables (e.g., &ldquo;Team ROI dashboard&rdquo;) list on their own row. A row that shows only a format (e.g., &ldquo;HTML&rdquo;) is a deliverable whose name wasn't included in that teammate's post. All type-only deliverables of one format collapse into a single row — e.g., &ldquo;HTML &middot; 5 deliverables&rdquo; — with their hours and value summed.</p><div class="card" id="wk-proc"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Cowork fit — how well the work suited Cowork<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Every task is graded <b>High / Medium / Low</b> on how well it fit Cowork's agentic, cross-app strengths. <b>High</b> = work only Cowork can do (builds &amp; packaged skills, executed automations/connectors, many-source synthesis); <b>Low</b> = a single-app Copilot could have done it. <b>Click a fit level</b> to see the tasks in it — de-identified to business process &amp; method, never a person or file.</span></h2><p class="sec-note">A composition of graded hours by how well the work fit Cowork, shown as a waterfall — the bands add up to all graded time. <b>Click High, Medium or Low</b> below to expand the tasks in that band.</p><div class="card" id="wk-fit"></div></section>
     <section class="block"><h2 class="sec"><span class="dot"></span>Category mix<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">How each contributor group splits its time across categories. A role only breaks out when <b>__KTHRESH__+</b> people share it; otherwise everyone is combined into one bar — no individual is ever shown.</span></h2><p class="sec-note">How saved time splits across task categories — grouped by Role where privacy allows.</p><div class="card" id="wk-stack"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Analyzed → Produced<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">How many source items the team fed in versus how many deliverables it produced, by type — a rough read on input effort vs. output.</span></h2><p class="sec-note">Inputs the team analyzed vs. deliverables produced, by type.</p><div class="card" id="wk-io"></div></section>
-  </div>
-
-  <div class="tab-panel" id="tab-trends">
-    <section class="block"><h2 class="sec"><span class="dot"></span>Time saved over time<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">One point per posting cycle, so you can see whether the team's total impact is trending up over fortnights. Cowork is used for specific tasks, so this is a cycle-over-cycle total, not daily activity.</span></h2><p class="sec-note">Each posting cycle is represented by one point below. Use this to track whether the impact your team is achieving through Cowork is growing over time.</p><div class="card" id="tr-trend"></div></section>
   </div>
 
   <div class="tab-panel" id="tab-method">
@@ -415,6 +477,7 @@ TEMPLATE = """<!DOCTYPE html>
       <p><b>Anonymity</b> — A role or attribute is shown separately only when at least __KTHRESH__ contributors share it; otherwise contributors are combined. Nothing is ever shown per person.</p>
       <p><b>Business process</b> — The business need served by the work &mdash; e.g., Business Value &amp; ROI Analytics.</p>
       <p><b>Contributors</b> — The number of teammates who posted their de-identified stats this period. Never named.</p>
+      <p><b>Cowork fit</b> — How well a task suited Cowork's agentic, cross-app strengths, graded High / Medium / Low. High = work only Cowork can do (builds &amp; packaged skills, executed automations, many-source synthesis); Low = a single-app Copilot could have done it. Shown as a quantified waterfall on the <i>How Cowork is used</i> tab.</p>
       <p><b>Deliverables</b> — The count of <i>distinct</i> pieces of work produced.</p>
       <p><b>Hands-on time</b> — The actual time the team spent working with Cowork.</p>
       <p><b>Outputs</b> — Every output file and version created. May be higher than deliverables because it counts each file and version.</p>
@@ -426,7 +489,9 @@ TEMPLATE = """<!DOCTYPE html>
       <p><b>Task category</b> — How the work was done (the method) &mdash; e.g., Analysis &amp; Research, Write or debug code. Each carries a research time band (see &ldquo;<button type="button" class="xref" data-goto="method" data-scroll="sec-bands">Research bands &amp; sources</button>&rdquo; below).</p>
       <p><b>Team speed multiplier</b> — How much faster the work went: estimated hours without Cowork &divide; actual hands-on with Cowork hours.</p>
       <p><b>Time saved</b> — Manual hours Cowork saved this period: for each task, run tasks &times; the research time band for its category. The headline is the typical estimate, with a low&ndash;high range alongside.</p>
-      <p><b>Value / cost reduction</b> — Time saved priced out: manual hours &times; the hourly rate in the control bar. Recomputes whenever you change the rate.</p>
+      <p><b>Recapture rate</b> — The share of time saved the team can realistically harvest into productive output. Set in the control bar (default __RECAP__%). It scales every value figure but leaves time-saved hours and counts unchanged.</p>
+      <p><b>Effective time recaptured</b> — Time saved &times; the recapture rate — the productive hours the team actually reclaims. This is what the value figure prices.</p>
+      <p><b>Value / cost reduction</b> — Effective time recaptured priced out: time saved &times; recapture rate &times; the hourly rate in the control bar. Recomputes whenever you change the rate or the recapture rate.</p>
     </div></details>
 
 
@@ -461,7 +526,9 @@ TEMPLATE = """<!DOCTYPE html>
     <details class="meth"><summary>Value model</summary><div class="mbody">
       <ul>
         <li><b>Time saved</b> = Count of run tasks × the research band (minutes saved/run).</li>
-        <li><b>Value =</b> manual hours × hourly rate (default $__RATE__/hr).</li>
+        <li><b>Recapture rate</b> = the share of time saved the team realistically converts into productive output (default __RECAP__%; adjustable in the control bar).</li>
+        <li><b>Effective time recaptured</b> = time saved × recapture rate.</li>
+        <li><b>Value / cost reduction</b> = effective recaptured hours × hourly rate (default $__RATE__/hr) = time saved × recapture rate × rate.</li>
         <li><b>Speed multiplier</b> = manual hours ÷ modeled hands-on hours.</li>
       </ul>
       <p>All figures come from the posts; the dashboard only re-totals and re-prices them.</p>
@@ -515,6 +582,7 @@ def main(a):
             .replace("__TEAM__", data["meta"].get("team", "Team"))
             .replace("__GENERATED__", str(data["meta"].get("generated", "")))
             .replace("__RATE__", str(data["meta"].get("defaultRate", 72)))
+            .replace("__RECAP__", str(int(round(float(data["meta"].get("defaultRecapture", 0.70)) * 100))))
             .replace("__KTHRESH__", str(data["meta"].get("kThreshold", 3))))
     with open(a.out, "w", encoding="utf-8") as f:
         f.write(html)
