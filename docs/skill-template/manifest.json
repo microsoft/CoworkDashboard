@@ -8,6 +8,7 @@
   "cowork-dashboard-member/scripts/classify.py",
   "cowork-dashboard-member/scripts/compute.py",
   "cowork-dashboard-member/scripts/format_member_message.py",
+  "cowork-dashboard-member/scripts/mine_session.py",
   "cowork-dashboard-member/scripts/process_groups.json",
   "cowork-dashboard-member/scripts/process_overrides.example.json",
   "cowork-dashboard-member/scripts/process_overrides.json",
