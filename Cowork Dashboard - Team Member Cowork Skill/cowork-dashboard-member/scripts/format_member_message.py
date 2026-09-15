@@ -121,7 +121,8 @@ def build_message(d):
     # or a specific task. First header cell "Cowork fit" is intentionally NOT a
     # recognized STATS_HEADER_KEYS value, so the downstream parser ignores this
     # table and the data contract is unaffected.
-    GRADE_LABEL = {"H": "High fit", "M": "Medium fit", "L": "Low fit"}
+    GRADE_LABEL = {"H": "High fit", "M": "Moderate fit", "L": "Low fit",
+                   "?": "Ungraded (insufficient evidence)"}
     fit_min = collections.defaultdict(float)
     fit_sess = collections.Counter()
     for g in goals:
@@ -134,7 +135,7 @@ def build_message(d):
             fit_min[grade] += mt
     fit_total_sess = sum(fit_sess.values()) or 1
     fit_rows = []
-    for grade in ("H", "M", "L"):
+    for grade in ("H", "M", "L", "?"):
         if fit_sess[grade] == 0:
             continue
         mins = fit_min[grade]

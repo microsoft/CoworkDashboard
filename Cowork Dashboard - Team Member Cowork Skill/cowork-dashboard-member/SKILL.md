@@ -129,10 +129,18 @@ ALL session folders in the window:
                    "skills":["Data Analysis"], "professional_roles":["Data Analyst"],
                    "has_folder":true, "exec_min":null},
                   {"id":"<telemetry-8char>","date":"YYYY-MM-DD","hour":9,"goal":"triage and prioritize inbox",
-                   "inputs":[],"outputs":[],"has_folder":false,"runs":{"email":2},"exec_min":8.0} ] }
+                   "inputs":[],"outputs":[],"has_folder":false,"runs":{"email":2},"exec_min":8.0,
+                   "request":"triage and prioritize inbox","actions":["mcp__outlook__ListMessages","mcp__outlook__MarkRead"],
+                   "apps_accessed":["Outlook"],"sources_reviewed":0} ] }
   ```
   (`runs` is carried straight through by `classify.py` and consumed by `compute.py`; a folder-less
   session with no `runs` and no category signals still classifies as `general`.)
+  **Evidence fields** (`request` / `actions` / `apps_accessed` / `sources_reviewed`) come from the
+  transcript action trace (`mine_session.py`) and let `compute.py` grade Cowork-fit from *what the
+  session actually touched* — e.g. ≥2 distinct apps ⇒ High fit. Emit them **only when a transcript was
+  parsed**: their *absence* on a session is the signal that grading falls back to **Ungraded
+  (insufficient evidence)** rather than a confident Low. Never fabricate them as `[]` for a
+  folder-only session that had no trace — ABSENT and `[]` mean different things to the grader.
 Do **not** classify/compute yet — the user prunes first.
 
 ### 4. Privacy opt-out — let the user remove any chat/task BEFORE anything is computed

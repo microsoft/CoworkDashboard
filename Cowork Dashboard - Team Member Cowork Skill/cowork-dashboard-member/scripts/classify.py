@@ -546,6 +546,12 @@ def main(inp: str, out: str, overrides_path: str = _OVERRIDES_PATH) -> None:
             rec["runs"] = s["runs"]
         if s.get("cowork_fit_review") is not None:
             rec["cowork_fit_review"] = s["cowork_fit_review"]
+        # Evidence passthrough (v40): carry the action-trace fields straight from the raw
+        # harvest onto the grader's record. Copy ONLY when present so ABSENT (no trace) is
+        # preserved distinctly from [] (a trace that touched nothing) — the grader keys on it.
+        for _k in ("request", "actions", "apps_accessed", "sources_reviewed"):
+            if _k in s:
+                rec[_k] = s[_k]
         if note:
             rec["note"] = note
         classified.append(rec)

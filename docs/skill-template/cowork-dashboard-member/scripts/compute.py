@@ -244,11 +244,12 @@ def cf_surfaces(goal, outputs, cats):
 # A High label must justify the NEED for Cowork; Medium/Low state the lighter fit.
 CF_REVIEW_LABELS = {
     "H": "Needs Cowork",
-    "M": "Borderline fit",
+    "M": "Moderate fit",
     "L": "Single-app Copilot could do it",
+    "?": "Insufficient evidence",
 }
 
-def cowork_fit(goal, outputs, inputs, cats, roles, extra_surfaces=None, review=None):
+def cowork_fit(goal, outputs, inputs, cats, roles, extra_surfaces=None, review=None, evidence=None):
     g = " " + (goal or "").lower() + " "
     out_ext = [_ext(o).lower() for o in outputs]
     conversational = (len(outputs) == 0)
@@ -269,16 +270,37 @@ def cowork_fit(goal, outputs, inputs, cats, roles, extra_surfaces=None, review=N
                   and any(o in g for o in ("skill","prompt","workspace","automation","connector")) \
                   and conversational
 
-    # -- in-app surfaces the work would touch (this session + any sibling session that
-    #    produced the SAME deliverable, so a two-step effort split across sessions
-    #    still reads as cross-surface). --
-    surfaces = cf_surfaces(goal, outputs, cats) | set(extra_surfaces or [])
-
     # -- Specialized workflow = Cowork-native (automation, connectors, scheduled/recurring
     #    prompts, skill build/packaging). Per methodology, this is a High Cowork match. --
     is_special = ("Specialized workflows" in cats) or ("special" in cats)
 
     ood = [r for r in (roles or []) if r in CF_OUT_OF_DOMAIN_ROLES]
+
+    # -- multi-file / multi-format complexity: a single-surface task can still be a MODERATE
+    #    fit when it juggles many files, synthesizes across >=2 input formats, or generates
+    #    several outputs from multi-format inputs. --
+    in_fmts = set(_ext(i).lower() for i in (inputs or []) if _ext(i))
+    n_in, n_out = len(inputs or []), len(outputs)
+    multi_format_synth = len(in_fmts) >= 2
+    many_files         = (n_in >= 3) or (n_out >= 3)
+    multi_gen          = (n_out >= 2) and (len(in_fmts) >= 2)
+    moderate_complexity = multi_format_synth or many_files or multi_gen
+    # -- automation-style process -> can never grade Low (orchestrates work across items). --
+    AUTOMATION_SIGNALS = ("triage","scan","sweep","automat","workflow","monitor",
+        "recurring","batch","bulk","orchestrat","pipeline","auto-")
+    automation_kind = next((w for w in AUTOMATION_SIGNALS if w in g), None)
+
+    # -- multi-app EVIDENCE: apps PROVEN by the session's action trace, unioned onto the
+    #    surfaces merely INFERRED from goal text + output extensions. When NO trace exists
+    #    (evidence fields ABSENT, not []), a bare single-file guess is left ungraded ("?")
+    #    rather than assumed to be a confident single-app Low. --
+    ev = evidence or {}
+    verified_apps = set(a for a in (ev.get("apps") or []) if a)
+    ev_actions = ev.get("actions") or []
+    evidence_available = bool(verified_apps or ev_actions or ev.get("available"))
+    inferred_surfaces = cf_surfaces(goal, outputs, cats) | set(extra_surfaces or [])
+    surfaces = inferred_surfaces | verified_apps
+    verified_cross_app = (len(verified_apps) >= 2) or (len(verified_apps) >= 1 and len(surfaces) >= 2)
 
     # -- decide (order matters). `why` is a full, project-specific sentence shown on hover. --
     if build or executed or big_synth:
@@ -293,8 +315,13 @@ def cowork_fit(goal, outputs, inputs, cats, roles, extra_surfaces=None, review=N
     elif len(surfaces) >= 2:
         grade = "H"
         surf=" + ".join([x for x in CF_SURFACE_ORDER if x in surfaces])
+        prov = "verified from the action trace" if verified_cross_app else "inferred from the outputs"
         label = "Needs " + surf + " Copilot"
-        why = "This spans %s — no single Copilot works across apps, so it needs Cowork." % surf
+        why = "This spans %s (%s) — no single Copilot works across apps, so it needs Cowork." % (surf, prov)
+    elif not evidence_available:
+        grade, label = "?", "Insufficient evidence"
+        why = ("No action history for this session — a single saved file can't establish a "
+               "single-app workflow, so the fit is left ungraded.")
     elif len(surfaces) == 1:
         only = next(iter(surfaces))
         grade, label = "L", "%s Copilot could do it" % only
@@ -303,32 +330,65 @@ def cowork_fit(goal, outputs, inputs, cats, roles, extra_surfaces=None, review=N
         grade, label = "L", "Copilot chat could do it"
         why = "A quick conversational task with no build — Copilot chat would have covered it."
     else:
-        grade, label = "M", "Mostly one surface"
-        why = "Borderline — largely a single-surface task that Cowork made a bit easier."
+        grade, label = "M", "Moderate fit"
+        why = "A moderate fit — largely a single-surface task that Cowork made a bit easier."
 
+    # -- positive floors: only ever RAISE an L or an ungraded "?" to a MODERATE fit; they
+    #    never touch an H or an existing M. Automation is applied LAST so its reason wins. --
+    if grade in ("L", "?") and platform_op:
+        grade, label = "M", "Moderate fit"
+        why = "Managing the Cowork platform itself (install/share/schedule) — not an in-app Copilot task."
+    if grade in ("L", "?") and moderate_complexity:
+        grade, label = "M", "Moderate fit"
+        if multi_format_synth:
+            why = ("Synthesizes %d files across %d formats — multi-format assembly, more than a "
+                   "single-app task even on one surface." % (n_in, len(in_fmts)))
+        elif multi_gen:
+            why = ("Generates %d outputs from %d input formats — multi-file, multi-format "
+                   "production past a single-app task." % (n_out, len(in_fmts)))
+        else:
+            why = ("Juggles %d files at once — the volume alone makes it a moderate fit." % max(n_in, n_out))
+    if grade in ("L", "?") and automation_kind:
+        grade, label = "M", "Moderate fit"
+        why = ("Automation-style work (%s) — inbox/channel triage, scan or workflow run "
+               "orchestrated across items, beyond a one-shot single-app task." % automation_kind)
+
+    ev_status = "insufficient" if grade == "?" else ("verified" if verified_apps else "inferred")
     result = {"grade": grade, "label": label, "why": why, "method": "rule",
               "surfaces": [x for x in CF_SURFACE_ORDER if x in surfaces],
+              "apps": sorted(surfaces),
+              "verified_apps": sorted(verified_apps),
+              "verified_cross_app": bool(verified_cross_app),
+              "evidence": ev_status,
               "out_of_domain_roles": ood}
     # -- LLM-review layer -----------------------------------------------------
     # The deterministic grade above is a fast, reproducible PROXY for the real
-    # question ("could one in-app Copilot have done this?"). That question is a
-    # capability judgment, so the agent may review each project and pass a
-    # `review = {"grade": "H|M|L", "why": "..."}`. When present it OVERRIDES the
-    # rule grade and is flagged method="AI-reviewed"; the rule grade is kept as
-    # rule_grade for transparency. Absent a review, the rule grade stands.
-    if review and review.get("grade") in ("H", "M", "L"):
+    # question ("could one in-app Copilot have done this?"). The agent may review a
+    # project and pass a `review = {"grade": "H|M|L|?", "why": "..."}`. It OVERRIDES the
+    # rule grade (kept as rule_grade). EXCEPTION: a review may NOT silently overturn
+    # action-grounded evidence — it cannot downgrade a verified cross-app H, or an
+    # automation-floored M, to L/"?" unless it explicitly resolves the conflict
+    # (review.resolves_evidence / review.conflict). Blocked reviews are flagged.
+    if review and review.get("grade") in ("H", "M", "L", "?"):
         new_grade = review["grade"]
-        result["rule_grade"] = grade
-        result["grade"] = new_grade
-        if review.get("why"): result["why"] = review["why"]
-        if review.get("label"):
-            result["label"] = review["label"]
-        elif new_grade != grade:
-            # Grade moved — regenerate the label so it matches the NEW grade. An
-            # upgraded High must justify Cowork, never inherit the rule's
-            # "<app> Copilot could do it" single-app label.
-            result["label"] = CF_REVIEW_LABELS[new_grade]
-        result["method"] = "AI-reviewed" if new_grade != grade else "AI-confirmed"
+        blocked = ((grade == "H" and verified_cross_app and new_grade in ("L", "?")) or
+                   (grade == "M" and automation_kind and new_grade in ("L", "?")))
+        if blocked and not (review.get("resolves_evidence") or review.get("conflict")):
+            result["method"] = "AI-review-rejected"
+            result["review_grade"] = new_grade
+            result["review_why"] = review.get("why")
+        else:
+            result["rule_grade"] = grade
+            result["grade"] = new_grade
+            if review.get("why"): result["why"] = review["why"]
+            if review.get("label"):
+                result["label"] = review["label"]
+            elif new_grade != grade:
+                # Grade moved — regenerate the label so it matches the NEW grade. An
+                # upgraded High must justify Cowork, never inherit the rule's
+                # "<app> Copilot could do it" single-app label.
+                result["label"] = CF_REVIEW_LABELS[new_grade]
+            result["method"] = "AI-reviewed" if new_grade != grade else "AI-confirmed"
     return result
 
 
@@ -443,7 +503,10 @@ def main(inp,out):
                       "total_interactions":interactions_lookup.get(str(sid)) or interactions_lookup.get(str(sid)[:8]),
                       "cowork_fit":cowork_fit(goal,outputs,inputs,cats,prof_roles,
                           extra_surfaces=set().union(*[deliv_surfaces.get(art_base(_name(o)).lower(),set()) for o in outputs]) if outputs else set(),
-                          review=s.get("cowork_fit_review")),
+                          review=s.get("cowork_fit_review"),
+                          evidence={"apps":s.get("apps_accessed"),"actions":s.get("actions"),
+                                    "sources":s.get("sources_reviewed"),
+                                    "available":("apps_accessed" in s or "actions" in s)}),
                       "conversational":(len(outputs)==0)})
         if not outputs: conv+=1
 
