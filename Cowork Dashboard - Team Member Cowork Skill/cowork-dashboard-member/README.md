@@ -119,6 +119,7 @@ cowork-dashboard-member/
 ├── README.md
 ├── scripts/
 │   ├── prune_sessions.py          # privacy opt-out (list + drop sessions)
+│   ├── mine_session.py            # live-session telemetry hook (exec_min, tool intensity, per-category runs)
 │   ├── format_member_message.py   # renders the HTML table post
 │   ├── classify.py                # ext→category classifier + process overrides + grouping
 │   ├── compute.py                 # research-anchored two-clock model (+ pct_time, role, deliverable→process)

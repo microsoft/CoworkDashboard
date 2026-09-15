@@ -111,6 +111,14 @@ ALL session folders in the window:
   This `name` is shown verbatim in the **Deliverable** column of the posted table (§7.9), so it must
   carry NO personal or customer identifier and NO raw filename. (Keep the real `ext` — it drives
   classification.)
+- **Live-session telemetry (captures folder-less sessions).** Run
+  `python .../scripts/mine_session.py --out working/session_telemetry.json --log /mnt/user-config/.claude/cowork-session-telemetry.json`
+  to record the live session's `exec_min`, tool intensity, artifacts, and per-category `runs`
+  (Outlook-mail → `email`, Teams → `comms`, transcript/calendar → `meeting`, code → `code`,
+  research → `analysis`). **Merge into `sessions` any telemetry id NOT covered by a Cowork folder**
+  (`has_folder:false`, `outputs:[]`), carrying its `runs` and `exec_min`. This is what stops
+  artifact-free **email / Teams / meeting triage** sessions — which write no output file — from
+  dropping out of the artifact-based harvest. Forward-only; prefer telemetry `exec_min` where both exist.
 - Write `working/cowork_raw.json`:
   ```json
   { "meta": {"user":"<name>","email":"<mail>","role":"<jobTitle from step 2>","generated":"<YYYY-MM-DD>",
@@ -119,8 +127,12 @@ ALL session folders in the window:
                    "inputs":[{"name":"report.pdf","ext":"pdf"}],
                    "outputs":[{"name":"AI-in-One insights deck","ext":"pptx","skills":["Presentation Design"]}],
                    "skills":["Data Analysis"], "professional_roles":["Data Analyst"],
-                   "has_folder":true, "exec_min":null} ] }
+                   "has_folder":true, "exec_min":null},
+                  {"id":"<telemetry-8char>","date":"YYYY-MM-DD","hour":9,"goal":"triage and prioritize inbox",
+                   "inputs":[],"outputs":[],"has_folder":false,"runs":{"email":2},"exec_min":8.0} ] }
   ```
+  (`runs` is carried straight through by `classify.py` and consumed by `compute.py`; a folder-less
+  session with no `runs` and no category signals still classifies as `general`.)
 Do **not** classify/compute yet — the user prunes first.
 
 ### 4. Privacy opt-out — let the user remove any chat/task BEFORE anything is computed
@@ -252,6 +264,7 @@ final opt-out + post interactively in the task chat. Confirm setup in plain lang
 ## Bundled files (self-contained)
 - `config/team_channel.json` — per-team channel default (ships **empty**; filled per-team by the installer generator so members skip the first-run link prompt — see **Target channel** step 0). Never commit a populated copy.
 - `scripts/prune_sessions.py` — lists the session inventory + applies the privacy opt-out.
+- `scripts/mine_session.py` — live-session telemetry hook: mines the current transcript for real `exec_min`, tool intensity, artifacts, and per-category `runs` (Outlook-mail→email, Teams→comms, transcript/calendar→meeting, code→code, research→analysis); upserts a durable log so folder-less email/Teams/meeting triage sessions are still harvested.
 - `scripts/format_member_message.py` — renders `cowork_roi_data.json` into the de-identified HTML table post.
 - `scripts/reconcile_taxonomy.py` — aligns each kept session to the invoking user's **owner-scoped** registry (align-first, create-if-novel; ignores any file that isn't theirs); writes `working/process_overrides.json` + persists the owner-stamped registry. Takes `--owner`. Reuses `classify.py`'s matcher.
 - `scripts/classify.py` — ext→category classifier; applies per-run overrides via `--overrides working/process_overrides.json`, then groups the process label via `process_groups.json`. Reads `apqc_taxonomy.json`, `roles_taxonomy.json`, `process_groups.json`.
