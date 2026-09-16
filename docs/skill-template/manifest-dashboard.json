@@ -7,6 +7,7 @@
   "cowork-dashboard-team-dashboard/scripts/build_dashboard.py",
   "cowork-dashboard-team-dashboard/scripts/build_guide_pdf.py",
   "cowork-dashboard-team-dashboard/scripts/build_outputs.py",
+  "cowork-dashboard-team-dashboard/scripts/make_invite.py",
   "cowork-dashboard-team-dashboard/scripts/parse_posts.py",
   "cowork-dashboard-team-dashboard/scripts/process_groups.json",
   "cowork-dashboard-team-dashboard/scripts/resolve_channel.py",
