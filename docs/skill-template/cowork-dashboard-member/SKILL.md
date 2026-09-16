@@ -137,10 +137,17 @@ ALL session folders in the window:
   session with no `runs` and no category signals still classifies as `general`.)
   **Evidence fields** (`request` / `actions` / `apps_accessed` / `sources_reviewed`) come from the
   transcript action trace (`mine_session.py`) and let `compute.py` grade Cowork-fit from *what the
-  session actually touched* — e.g. ≥2 distinct apps ⇒ High fit. Emit them **only when a transcript was
-  parsed**: their *absence* on a session is the signal that grading falls back to **Ungraded
-  (insufficient evidence)** rather than a confident Low. Never fabricate them as `[]` for a
-  folder-only session that had no trace — ABSENT and `[]` mean different things to the grader.
+  session actually touched*. Grading follows an evidence-first hierarchy: **≥2 apps in play**
+  (trace-verified ∪ inferred from outputs/goal), **code/build**, **automation/workflow** (triage,
+  scan, sweep, connector, recurring run — *never* graded below High), **multi-document synthesis**
+  (≥3 docs across ≥2 formats, or >5 sources), or **≥2 output formats** ⇒ **High**; a single surface
+  with ≥2 input formats / ≥3 files / a light platform op ⇒ **Moderate**; a purely conversational or
+  lone-app task ⇒ **Low**. Emit the evidence fields **only when a transcript was parsed**. Their
+  *absence* no longer forces a downgrade — **Ungraded (insufficient evidence)** is now reserved for
+  the rare case of a saved output of an *unrecognized* type with no code/automation/multi-format/
+  cross-app signal **and** no trace; a missing trace alone never forces it. Never fabricate the fields
+  as `[]` for a folder-only session that had no trace — ABSENT and `[]` mean different things to the
+  grader.
 Do **not** classify/compute yet — the user prunes first.
 
 ### 4. Privacy opt-out — let the user remove any chat/task BEFORE anything is computed
