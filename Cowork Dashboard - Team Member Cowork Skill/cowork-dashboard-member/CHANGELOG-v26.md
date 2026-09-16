@@ -21,9 +21,11 @@ an opt-in historical backfill; it does not run a harvest, report, post, or sched
   log path `/mnt/user-config/.claude/cowork-session-telemetry.json` unchanged.
 
 ## Added
-- SKILL.md §3b: ask once before enumerating the signed-in Cowork app's session list; read only
-  titles and dates, never conversations or prompts. Add unmatched historical sessions with
-  `has_folder:false`, `backfilled:true`, empty inputs/outputs, and no fabricated evidence or timing.
+- SKILL.md §3b: ask once (Yes/No) before backfilling, then open the Cowork web app directly at
+  `https://aka.ms/cowork` to enumerate the signed-in session list — no longer prompts for the web
+  address. Read only titles and dates, never conversations or prompts. Add unmatched historical
+  sessions with `has_folder:false`, `backfilled:true`, empty inputs/outputs, and no fabricated
+  evidence or timing.
 - All backfilled sessions pass through the existing §4 privacy picker before classification or
   computation. Declined/unavailable/incomplete browser access is disclosed in the post preview.
 - First-run hook-configuration check in SKILL.md and README. OneDrive artifact harvesting and the

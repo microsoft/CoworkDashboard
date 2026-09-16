@@ -181,10 +181,14 @@ source is the **Cowork web app's session list**.
    *"Backfill chat-only sessions from the Cowork web app? I'll read only session titles and dates,
    never chat contents or prompts."* Offer **Yes** / **No**. Proceed only on Yes; an unattended run
    must defer this choice to the interactive review rather than assume consent.
-2. On Yes, use the browser to open the **signed-in Cowork web app** and enumerate the **left-nav
-   session list** within the selected window, scrolling/loading the list as needed. Collect **title
-   + date only — never open conversations, read chat contents or prompts, or inspect `/cost`**.
+2. On Yes, open the Cowork web app directly at **`https://aka.ms/cowork`** — this is the canonical
+   entry point; **navigate there yourself and do NOT ask the user for the web address**. Enumerate the
+   **left-nav session list** within the selected window, scrolling/loading the list as needed. Collect
+   **title + date only — never open conversations, read chat contents or prompts, or inspect `/cost`**.
    If sign-in is needed, let the user complete it in the browser; do not request credentials in chat.
+   Only if `https://aka.ms/cowork` fails to resolve to the signed-in session list (e.g. the redirect
+   changed or the tenant uses a different host) ask the user **once** for their Cowork web address as a
+   fallback.
 3. Match against the folder inventory and telemetry ids already collected, using existing id
    mappings or an unambiguous title/date match. Add only unmatched sessions to `working/cowork_raw.json`:
    ```json
