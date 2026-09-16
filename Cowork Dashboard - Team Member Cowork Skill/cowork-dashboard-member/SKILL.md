@@ -154,15 +154,31 @@ Do **not** classify/compute yet — the user prunes first.
 **Mandatory, every run, before classify/compute.** Nothing about an excluded session is ever
 classified, costed, named, or posted.
 1. List the inventory: `python .../scripts/prune_sessions.py --in working/cowork_raw.json --list`
-   (one numbered line per session, between `<<<COWORK-SESSION-INVENTORY>>>` markers).
-2. **Interactive run:** ask which to leave out with an **`AskUserQuestion` card, `multiSelect: true`**
-   — each option is one session (label = short goal + date). When you show the picker, include a short
-   **reminder to exclude anything personal or non-work they're not comfortable sharing** with the team
-   before it posts (each session's deliverables go out with it). `prune_sessions.py --list` prints this
-   same reminder. `AskUserQuestion` allows 4 questions × 4 options (16 sessions) per call, so **page
-   through ALL sessions** across consecutive rounds of 16 (30 → 2 rounds; tell the user "1 of 2") —
-   every chat/task must be individually selectable; never show only a subset. Selecting nothing = keep
-   everything.
+   (one numbered line per session between `<<<COWORK-SESSION-INVENTORY>>>` markers, **plus a
+   ready-to-use options array between `<<<COWORK-SESSION-PICKER-JSON>>>` markers** — one object per
+   session: `{index, id, label}`).
+2. **Interactive run — a real multi-select checkbox picker, NEVER a free-text prompt.**
+   Ask with an **`AskUserQuestion` card using `multiSelect: true`**. Map the picker-JSON array
+   **1:1 onto checkbox options** — the first element is the sentinel **"Include ALL sessions (exclude
+   none)"** (`id: __INCLUDE_ALL__`); every following element is **one option per session**, `label` =
+   the session's `label`, value = its `id`. The user ticks the sessions to **exclude**.
+   - **Always offer the affirmative "Include ALL sessions (exclude none)" option as the first
+     checkbox** so keeping everything is a normal submit. **Never make "Skip" the include-all path** —
+     Skip pauses the flow and forces the user to re-prompt. If the user ticks `__INCLUDE_ALL__` (or
+     submits with nothing ticked), exclude none and continue; if they tick specific sessions, exclude
+     those (ignore the sentinel).
+   - **DO NOT** paste the session list into the question text, number them in prose, or ask the user to
+     "reply with session numbers / type which to exclude / say 'include all'". A typed/numbered reply
+     or a single free-text box is a **defect** — the user must be able to tick individual sessions.
+   - Keep the question text short (e.g. *"Select any sessions to EXCLUDE from the team report — or pick
+     'Include ALL sessions' to keep everything."*) and include the short **privacy reminder** to
+     exclude anything personal or non-work they're not comfortable sharing (each session's deliverables
+     go out with it). `prune_sessions.py --list` prints this same reminder.
+   - **Page through ALL sessions.** `AskUserQuestion` allows up to 4 questions × 4 options (16
+     sessions) per call, so split the sessions into groups of 4 (each group = one `multiSelect`
+     question of ≤4 checkbox options; put the include-all sentinel first in the first group) and, when
+     there are >16, ask across consecutive calls (30 → 2 rounds; tell the user "1 of 2"). Every
+     chat/task must be individually selectable across the rounds; never show only a subset.
 3. **Scheduled run (no interactive user):** do **not** show the picker (it would hang). Compute the
    draft and **email the user to review/exclude in the task chat** (see step 9) — never post without
    the user's opt-out.

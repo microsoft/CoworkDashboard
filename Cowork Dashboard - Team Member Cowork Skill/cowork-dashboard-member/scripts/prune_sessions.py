@@ -26,6 +26,8 @@ import json, argparse, sys
 
 LIST_B = "<<<COWORK-SESSION-INVENTORY>>>"
 LIST_E = "<<<END-INVENTORY>>>"
+PICK_B = "<<<COWORK-SESSION-PICKER-JSON>>>"
+PICK_E = "<<<END-PICKER-JSON>>>"
 
 
 def load(p):
@@ -43,6 +45,23 @@ def do_list(d):
         print(f"[{i:>2}] {date} · {goal}  ({kind})")
     print(LIST_E)
     print(f"\n[{len(sessions)} sessions total]")
+    # Machine-readable picker: ONE entry per session, ready to map 1:1 onto multiSelect
+    # checkbox options in the exclusion card. The agent must NOT re-format the sessions
+    # into a prose question — every session is an individually selectable option, keyed
+    # by `id` (fallback `index`). A leading sentinel option gives the user an AFFIRMATIVE
+    # "include everything" action so keeping all sessions is a normal submit, never a
+    # flow-pausing "Skip". Emitted between stable markers for exact extraction.
+    picker = [{"index": 0,
+               "id": "__INCLUDE_ALL__",
+               "label": "Include ALL sessions (exclude none)"}]
+    picker += [{"index": i,
+               "id": s.get("id") or str(i),
+               "label": (f"{s.get('date','?')} - {s.get('goal','(untitled session)')} "
+                         f"({(str(len(s.get('outputs', []) or [])) + ' deliverable' + ('s' if len(s.get('outputs', []) or []) != 1 else '')) if (s.get('outputs') or []) else 'chat only'})")}
+              for i, s in enumerate(sessions, 1)]
+    print("\n" + PICK_B)
+    print(json.dumps(picker, ensure_ascii=False))
+    print(PICK_E)
     # Privacy nudge — shown every time the inventory is listed, so it reaches the
     # user right where they choose what to leave out.
     print("\nReminder: this posts to your team channel. Exclude anything personal "
