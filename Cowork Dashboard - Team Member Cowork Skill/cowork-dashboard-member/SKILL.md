@@ -1,12 +1,13 @@
 ---
 name: cowork-dashboard-member
 description: |
-  Member step of the team Cowork Team Report rollup. Harvests the signed-in user's own Copilot Cowork session history from OneDrive, lets the user exclude any chat/task, computes impact metrics, and posts a de-identified, TABLE-FORMATTED stats message to your team's dedicated "Cowork report" Teams channel (the channel link is requested on first run and remembered). Tables cover KPIs, time-by-category, value pillars, jobs-to-be-done, business processes, roles, skills, and deliverable types. Person names, file names and prompts are excluded; process/JTBD and customer/account names are kept. Bundles its own pipeline. Runs once or on a biweekly schedule (every other Monday; scheduled runs email the user to review/exclude sessions before posting).
-  Use when the user asks to "post my Cowork Team Report stats", "send my Cowork stats to the team channel", "run the Cowork Team Report member step", or "share my Cowork impact with the team".
-  Do NOT use for: the full personal HTML report (use cowork-roi-report), the manager-side team dashboard, GitHub Copilot reports, or single-meeting summaries.
-cowork:
+  Member step of the Cowork Team Report: gathers the user's own Cowork sessions, supports exclusions, computes impact metrics, and posts aggregate tables to a chosen Teams channel. Excludes person names, file names and prompts; retains customer/account names. Supports one-time or biweekly runs with review before posting.
+  Use for "post my Cowork Team Report stats", "send my Cowork stats to the team channel", "run the Cowork Team Report member step", or "share my Cowork impact with the team".
+  Do NOT use for the full personal HTML report (use cowork-roi-report), the manager-side team dashboard, GitHub Copilot reports, or single-meeting summaries.
+metadata:
   category: productivity
   icon: PeopleTeam
+  version: "26"
 ---
 
 # Cowork Team Report — Member step (de-identified table post to the team channel)
@@ -66,7 +67,7 @@ to get the channel link from their team's admin/manager/lead (see the repo READM
 setup*).
 
 All script paths below are under this skill's own folder:
-`/mnt/user-config/.claude/skills/cowork-dashboard-member/scripts/`.
+`/mnt/user-config/skills/cowork-dashboard-member/scripts/`.
 
 ## Workflow
 
@@ -106,6 +107,10 @@ today 23:59 local, `window.label` = "Last N days", `window.months` = N/30.
 name, file name, or prompt.
 
 ### 3. Harvest the user's Cowork sessions (self-contained)
+**First-run telemetry hook check:** read `/mnt/user-config/settings.json`; if it is missing or lacks a
+Stop hook pointing to an existing `mine_session.py`, tell the user **the forward-capture hook is not
+active**. Installed scripts alone do not enable capture; do not silently repair or activate hooks.
+
 Cowork persists each session's workspace to OneDrive under a `Cowork` store (commonly
 `Documents/Cowork/`, but often localized/suffixed — `Documentos/Cowork`, `Cowork 1`, …). Harvest
 ALL session folders in the window:
@@ -166,6 +171,38 @@ ALL session folders in the window:
   cross-app signal **and** no trace; a missing trace alone never forces it. Never fabricate the fields
   as `[]` for a folder-only session that had no trace — ABSENT and `[]` mean different things to the
   grader.
+### 3b. Backfill chat-only sessions (no folder)
+**Historical coverage is separate from forward capture.** OneDrive holds only file artifacts, not
+the history of chats that saved no files. The telemetry log is **forward-only**: repairing the hook
+or parsing the live transcript cannot recover past chat-only sessions. The only known recovery
+source is the **Cowork web app's session list**.
+
+1. If browser automation is available, ask the user **once per run**, with **`AskUserQuestion`**:
+   *"Backfill chat-only sessions from the Cowork web app? I'll read only session titles and dates,
+   never chat contents or prompts."* Offer **Yes** / **No**. Proceed only on Yes; an unattended run
+   must defer this choice to the interactive review rather than assume consent.
+2. On Yes, use the browser to open the **signed-in Cowork web app** and enumerate the **left-nav
+   session list** within the selected window, scrolling/loading the list as needed. Collect **title
+   + date only — never open conversations, read chat contents or prompts, or inspect `/cost`**.
+   If sign-in is needed, let the user complete it in the browser; do not request credentials in chat.
+3. Match against the folder inventory and telemetry ids already collected, using existing id
+   mappings or an unambiguous title/date match. Add only unmatched sessions to `working/cowork_raw.json`:
+   ```json
+   {"id":"<slugified title+date>","date":"YYYY-MM-DD","hour":null,
+    "goal":"<title as a short verb-first phrase>","inputs":[],"outputs":[],
+    "has_folder":false,"backfilled":true}
+   ```
+   Slugify title plus the displayed date deterministically (lowercase, spaces/punctuation to
+   hyphens). Rephrase the title only; do not invent work. Do not guess hidden dates/times or merge
+   ambiguous same-title/same-date sessions: flag that uncertainty in the coverage note. Add **no
+   `request`, `actions`, `apps_accessed`, or `sources_reviewed` evidence fields** — those exist only
+   when a transcript was parsed. Do not invent measured `exec_min` or tool-derived `runs`.
+4. These backfilled sessions go through the **same mandatory §4 privacy picker before anything is
+   classified or computed**; excluding one removes it entirely from the pending report.
+5. If the browser is unavailable, access fails, the list is incomplete, or the user declines, say
+   so plainly. **Report the historical chat-only coverage gap in the post preview**, without
+   guessing the missing sessions, their work, or their metrics.
+
 Do **not** classify/compute yet — the user prunes first.
 
 ### 4. Privacy opt-out — let the user remove any chat/task BEFORE anything is computed
