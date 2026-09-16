@@ -50,10 +50,12 @@ def do_list(d):
     # into a prose question — every session is an individually selectable option, keyed
     # by `id` (fallback `index`). A leading sentinel option gives the user an AFFIRMATIVE
     # "include everything" action so keeping all sessions is a normal submit, never a
-    # flow-pausing "Skip". Emitted between stable markers for exact extraction.
+    # flow-pausing "Skip". The sentinel is worded "remaining" because the agent repeats it
+    # as the FIRST option on EVERY page of a multi-page picker (a global bail-out), not
+    # only the first page. Emitted between stable markers for exact extraction.
     picker = [{"index": 0,
                "id": "__INCLUDE_ALL__",
-               "label": "Include ALL sessions (exclude none)"}]
+               "label": f"Include ALL remaining sessions (exclude none) — stop reviewing"}]
     picker += [{"index": i,
                "id": s.get("id") or str(i),
                "label": (f"{s.get('date','?')} - {s.get('goal','(untitled session)')} "
