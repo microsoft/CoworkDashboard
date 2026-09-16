@@ -70,16 +70,23 @@ All script paths below are under this skill's own folder:
 
 ## Workflow
 
-### 0. Tell the user what will happen (one short preview, first)
-Before doing anything else, post a brief plain-language preview so the user knows the flow up front —
-keep it to ~3 lines, e.g.:
-> Here's what I'll do:
-> 1. **Look at your Cowork sessions and classify them** (what you worked on, time, deliverables).
+### 0. Welcome the user (inviting on first run, short preview after)
+**First run (no saved channel memory yet, or the user hasn't run this before):** open with a warm,
+plain-language welcome — what this is, why it helps, the privacy promise, and the 1-2-3 — before doing
+anything. Name the team from `config/team_channel.json` `channel_name` when it's set. Keep it friendly
+and brief, e.g.:
+> 👋 **Welcome!** This shares your **Copilot Cowork** impact with your team's private report channel so
+> everyone's wins add up — while keeping your details private.
+> **Your privacy:** no names, file names, or prompts leave your machine; you review every session and
+> can exclude any of it before anything posts. Only de-identified stats are shared.
+> **Here's the 1-2-3:**
+> 1. I **look at your Cowork sessions and classify them** (work, time, deliverables).
 > 2. **You review and can delete any sessions** before anything leaves your machine.
-> 3. **The confirmed sessions are posted — de-identified — to your team's private Teams channel**, so
+> 3. The confirmed sessions are **posted — de-identified — to your team's private Teams channel**, so
 >    your manager can roll them into an aggregate report.
 
-Then continue with the steps below.
+**Later runs:** just show the short 3-line preview (the numbered 1-2-3 above) so the user knows the
+flow without the full intro. Then continue with the steps below.
 
 ### 1. Choose run mode + period
 Ask once with **`AskUserQuestion`**: *"Run this once, or automate it every other Monday?"* — options

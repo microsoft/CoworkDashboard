@@ -60,6 +60,30 @@ The rollup reads ONE shared Teams channel that teammates post to. The channel is
 On later runs `team_id` + `channel_id` are already set, so skip straight to the workflow. Re-ask for a
 link only if the user wants to point at a **different** channel.
 
+### First run also — invite the team (so no one gets a bare .zip)
+Right after the channel is resolved on a **first run** (and any time the manager asks to "invite the
+team" / "onboard members"), **onboard members in-place instead of leaving the manager to hand-deliver
+a zip.** Members are already in this channel, so an inviting welcome posted here *is* the delivery.
+1. **Get the member download link.** Read `member_download_url` from `config/team_config.json`. If
+   blank, ask the manager once (with `AskUserQuestion`) to paste the link members should use to
+   download the `cowork-dashboard-member` skill (the same page the manager got it from, with this
+   channel pre-embedded), and save it back to the config. If they don't have one, proceed without it —
+   the invite will tell members to use the link the manager shares.
+2. **Render the invite:**
+   ```
+   python scripts/make_invite.py --team-name "<team_name>" \
+       --download-url "<member_download_url>" --cadence "every other Monday" --out-dir working
+   ```
+   It prints an inviting **channel post** (HTML), an **email** subject+body, and a **plaintext** blurb
+   between stable markers — each explains what the skill is, why it helps, the privacy promise, and the
+   1-2-3 to get started, with the download link baked in.
+3. **Post it to the channel and pin it.** Show the manager the draft, then
+   `PostChannelMessage(team_id, channel_id, body=<the CHANNEL-POST html>)`; suggest they **pin** the
+   message so newcomers always see how to join. This reaches every member without any manual sending.
+4. **Optionally email it too.** If the manager wants a nudge beyond the channel, email the channel
+   members the invite body (same recipients rule as step 5) — no attachment needed.
+Do this **once**; on later runs skip it unless the manager explicitly asks to re-invite.
+
 ## Workflow
 
 ### 1. Load config (+ first-run channel link)
@@ -194,6 +218,7 @@ aggregation breaks — **change them in both bundles together**:
 - `config/team_config.json` — rate + k-threshold + cadence + 15-day lookback + email toggle; the
   channel IDs are filled in on first run (not shipped hard-coded).
 - `scripts/resolve_channel.py` — parse a pasted Teams channel/message link → `team_id` + `channel_id`; persist to config (stdlib only).
+- `scripts/make_invite.py` — render the inviting member "get started" message (channel post + email + plaintext) with the download link baked in, so members are onboarded in-channel instead of hand-delivered a bare zip (stdlib only).
 - `scripts/parse_posts.py` — channel posts → anonymized `team_data.json` (stdlib only; 15-day window, latest-per-sender, groups processes, canonicalizes skills, k-anon-ready).
 - `scripts/build_dashboard.py` — `team_data.json` → self-contained HTML dashboard with the guide built in (stdlib only): the **How to read** tab, per-section **"?"** helpers, per-category **contributor reach** (with a `<k` privacy floor), and **type-only deliverables collapsed per format**.
 - `scripts/build_guide_pdf.py` — **legacy** one-page landscape interpretation PDF (uses `reportlab`). Retained but off by default; the guide now lives inside the dashboard.
