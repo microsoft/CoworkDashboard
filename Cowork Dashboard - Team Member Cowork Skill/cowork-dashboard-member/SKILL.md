@@ -70,6 +70,17 @@ All script paths below are under this skill's own folder:
 
 ## Workflow
 
+### 0. Tell the user what will happen (one short preview, first)
+Before doing anything else, post a brief plain-language preview so the user knows the flow up front —
+keep it to ~3 lines, e.g.:
+> Here's what I'll do:
+> 1. **Look at your Cowork sessions and classify them** (what you worked on, time, deliverables).
+> 2. **You review and can delete any sessions** before anything leaves your machine.
+> 3. **The confirmed sessions are posted — de-identified — to your team's private Teams channel**, so
+>    your manager can roll them into an aggregate report.
+
+Then continue with the steps below.
+
 ### 1. Choose run mode + period
 Ask once with **`AskUserQuestion`**: *"Run this once, or automate it every other Monday?"* — options
 **"Just once"** / **"Automate biweekly on Mondays (email me to review before each post)"**. The period
