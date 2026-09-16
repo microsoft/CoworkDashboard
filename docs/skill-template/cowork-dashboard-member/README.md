@@ -95,14 +95,33 @@ under de-identified descriptive names rather than raw filenames. When listing se
 reminds you to leave out anything personal or non-work, including artifact descriptions, that you are not
 comfortable sharing with the channel.
 
+## Optional hooks — capture chat-only sessions automatically
+
+The Stop hook runs `/mnt/user-config/skills/cowork-dashboard-member/scripts/mine_session.py`
+(or the identical `/mnt/user-config/skills/cowork-roi-report/scripts/mine_session.py` when that
+sibling is installed). Use **one** capture hook, not two; keep the durable log at
+`/mnt/user-config/.claude/cowork-session-telemetry.json`.
+
+**First-run telemetry hook check:** if `/mnt/user-config/settings.json` is missing or lacks a Stop
+hook pointing to an existing `mine_session.py`, the skill tells you **the forward-capture hook is
+not active**. Merely installing the script does not enable the hook.
+
+Capture reads the current Copilot `events.jsonl` (legacy Claude transcripts still work) and is
+**forward-only**. OneDrive holds only file artifacts: past chat-only sessions require a separate,
+optional backfill from the Cowork app's left-nav list. The skill asks once, reads **titles and dates
+only — never chat contents or prompts** — and sends the added sessions through the normal privacy
+picker before computing anything. Without browser access or consent, the post preview states the
+coverage gap rather than guessing. Hook execution itself depends on runtime support/activation.
+
 ## Version history
 
 Each release ships a `CHANGELOG-v<N>.md` document with the full notes. Newest first — the detailed
-notes for the current release are at the end of this README under **Updates in v25**.
+notes for the current release are below under **Updates in v26**.
 
 | Version | Highlights | Details |
 |---|---|---|
-| **v25** _(current)_ | Grouped business processes into a short canonical set · curated ~30-skill vocabulary · runner's **Role** shown in the header (no country/name) · every deliverable made visible and labelled by business process · verified that excluding a session removes its deliverables · privacy nudge at the exclude step · metric/section titles aligned to the **Copilot ROI Report** skill | [CHANGELOG-v25.md](CHANGELOG-v25.md) |
+| **v26** _(current)_ | Restored current-runtime chat-only capture · legacy parser retained · consent-based historical title/date backfill before the privacy picker · first-run hook check | [CHANGELOG-v26.md](CHANGELOG-v26.md) |
+| **v25** | Grouped business processes into a short canonical set · curated ~30-skill vocabulary · runner's **Role** shown in the header (no country/name) · every deliverable made visible and labelled by business process · verified that excluding a session removes its deliverables · privacy nudge at the exclude step · metric/section titles aligned to the **Copilot ROI Report** skill | [CHANGELOG-v25.md](CHANGELOG-v25.md) |
 | **v24** | Per-user, owner-scoped taxonomy memory — fixes cross-user leakage; no seed ships; per-run overrides moved out of the bundle (`process_overrides.json` ships empty `{}`) | [CHANGELOG-v24.md](CHANGELOG-v24.md) |
 | v1–v23 | Shared lineage with the sibling **`cowork-roi-report`** skill (harvest, classifier, research-anchored two-clock methodology, value pillars). See that skill's `CHANGELOG-v5…v22` documents. | — |
 
@@ -133,6 +152,17 @@ cowork-dashboard-member/
     ├── map-my-work-playbook.md    # derive process / pillar / JTBD per session
     └── value-pillars.md
 ```
+
+## Updates in v26
+
+_Full notes: [CHANGELOG-v26.md](CHANGELOG-v26.md). Shared capture fix: `cowork-roi-report` v42._
+
+- Discover the current `.copilot-state/*/session-state/*/events.jsonl` and parse its session id,
+  first-user-message title, wall-clock duration, turns, tool starts, and output artifact evidence.
+- Normalize current `server-Tool` names before applying the existing app/category rules.
+- Add the optional, title/date-only historical backfill (§3b), with no fabricated transcript evidence
+  and the same mandatory privacy picker. This release does **not** backfill history by itself.
+- Document current installed script paths and check that the forward-capture hook exists.
 
 ## Updates in v25
 
@@ -169,4 +199,3 @@ methodology changed — only the post's content and de-identification.
 labels, the curated **skills** list, and the **deliverable → process** link are shared with
 `cowork-roi-report` (byte-identical taxonomy files) and read downstream by
 `cowork-roi-report-aggregated` and the manager-side `cowork-dashboard-team-dashboard`.
-
