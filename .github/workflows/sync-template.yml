@@ -138,10 +138,15 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/skill-template docs/downloads \
+          # Templates + manifests are tracked normally.
+          git add docs/skill-template
+          # The download zips are gitignored (CI is their sole author — local and CI
+          # zip bytes differ and otherwise cause binary merge conflicts). Force-add so
+          # the Pages downloads and the per-folder copies stay published.
+          git add -f docs/downloads \
             "Cowork Dashboard - Team Member Cowork Skill/cowork-dashboard-member.zip" \
             "Cowork Dashboard - Team Dashboard Cowork Skill/cowork-dashboard-team-dashboard.zip"
-          if [ -n "$(git status --porcelain docs/skill-template docs/downloads 'Cowork Dashboard - Team Member Cowork Skill/cowork-dashboard-member.zip' 'Cowork Dashboard - Team Dashboard Cowork Skill/cowork-dashboard-team-dashboard.zip')" ]; then
+          if ! git diff --cached --quiet; then
             git commit -m "chore: sync skill templates + download zips from skill folders"
             git push
           else

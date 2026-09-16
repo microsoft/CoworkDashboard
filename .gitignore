@@ -5,6 +5,14 @@ _temp/
 __pycache__/
 *.pyc
 
+# Built skill download bundles — generated and committed ONLY by CI
+# (.github/workflows/sync-template.yml). Never build or commit these by hand:
+# local (Windows) zip bytes differ from CI (Ubuntu) bytes and cause binary
+# merge conflicts. CI force-adds them so the Pages downloads stay published.
+/docs/downloads/*.zip
+/Cowork Dashboard - Team Member Cowork Skill/cowork-dashboard-member.zip
+/Cowork Dashboard - Team Dashboard Cowork Skill/cowork-dashboard-team-dashboard.zip
+
 # Generated reports and outputs
 output/
 outputs/

@@ -1,0 +1,4 @@
+# Built skill download bundles are binary and are generated/committed by CI only
+# (see .github/workflows/sync-template.yml). Marking them binary keeps Git from ever
+# attempting a line-based merge on them.
+*.zip binary
