@@ -45,22 +45,23 @@ def do_list(d):
         print(f"[{i:>2}] {date} · {goal}  ({kind})")
     print(LIST_E)
     print(f"\n[{len(sessions)} sessions total]")
-    # Machine-readable picker: ONE entry per session, ready to map 1:1 onto multiSelect
-    # checkbox options in the exclusion card. The agent must NOT re-format the sessions
-    # into a prose question — every session is an individually selectable option, keyed
-    # by `id` (fallback `index`). A leading sentinel option gives the user an AFFIRMATIVE
-    # "include everything" action so keeping all sessions is a normal submit, never a
-    # flow-pausing "Skip". The sentinel is worded "remaining" because the agent repeats it
-    # as the FIRST option on EVERY page of a multi-page picker (a global bail-out), not
-    # only the first page. Emitted between stable markers for exact extraction.
-    picker = [{"index": 0,
-               "id": "__INCLUDE_ALL__",
-               "label": f"Include ALL remaining sessions (exclude none) — stop reviewing"}]
-    picker += [{"index": i,
-               "id": s.get("id") or str(i),
-               "label": (f"{s.get('date','?')} - {s.get('goal','(untitled session)')} "
-                         f"({(str(len(s.get('outputs', []) or [])) + ' deliverable' + ('s' if len(s.get('outputs', []) or []) != 1 else '')) if (s.get('outputs') or []) else 'chat only'})")}
-              for i, s in enumerate(sessions, 1)]
+    # Machine-readable picker: ONE entry per session, ready to map 1:1 onto the multiSelect
+    # checkbox options of the exclusion card. The agent must NOT re-format the sessions into
+    # a prose question, and must NOT add any extra options (no "include all / remaining", no
+    # "keep all", no "Next"/"Done"/"Skip") — the ONLY options are these per-session "Exclude —
+    # <name>" checkboxes. Page navigation is the card's OWN button (Next between pages, Submit
+    # on the final page). Each entry carries `label` (the checkbox title, "Exclude — <goal>")
+    # and `desc` (the date + deliverable detail). Emitted between stable markers.
+    picker = []
+    for i, s in enumerate(sessions, 1):
+        goal = s.get("goal", "(untitled session)")
+        date = s.get("date", "?")
+        n_out = len(s.get("outputs", []) or [])
+        kind = f"{n_out} deliverable{'s' if n_out != 1 else ''}" if n_out else "chat only"
+        picker.append({"index": i,
+                       "id": s.get("id") or str(i),
+                       "label": f"Exclude — {goal}",
+                       "desc": f"{date} · {kind}"})
     print("\n" + PICK_B)
     print(json.dumps(picker, ensure_ascii=False))
     print(PICK_E)

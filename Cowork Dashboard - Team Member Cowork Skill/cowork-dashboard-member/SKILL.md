@@ -174,46 +174,44 @@ classified, costed, named, or posted.
 1. List the inventory: `python .../scripts/prune_sessions.py --in working/cowork_raw.json --list`
    (one numbered line per session between `<<<COWORK-SESSION-INVENTORY>>>` markers, **plus a
    ready-to-use options array between `<<<COWORK-SESSION-PICKER-JSON>>>` markers** — one object per
-   session: `{index, id, label}`).
+   session: `{index, id, label, desc}`, where `label` is the `Exclude — <name>` checkbox title and
+   `desc` is the date/deliverable detail. The array holds **only sessions** — no navigation or
+   include-all entries).
 2. **Interactive run — a real multi-select checkbox picker, NEVER a free-text prompt.** Use a
    **two-stage** design so the common "keep everything" case is ONE click and no one ever has to type
    "include all" or hit Skip to advance.
 
    **Stage 1 — the include-all gate (always ask this first, single question).** Ask ONE
    `AskUserQuestion` (not multiSelect): *"Ready to share your Cowork stats. Include all N sessions, or
-   review and exclude some first?"* with two options:
+   exclude specific sessions first?"* with two options:
    - **"✅ Include all N sessions (nothing to exclude)"** — the default/first option.
-   - **"Review and pick sessions to exclude"**.
+   - **"Exclude specific sessions"**.
    Include the short **privacy reminder** (exclude anything personal or non-work you're not comfortable
    sharing — each session's deliverables go out with it). If the user picks **Include all**, exclude
-   nothing and continue immediately — **do NOT page through anything**. Only if they pick **Review** go
-   to Stage 2.
+   nothing and continue immediately — **do NOT page through anything**. Only if they pick **Exclude
+   specific sessions** go to Stage 2.
 
-   **Stage 2 — the per-session exclude picker (only when the user chose "Review").**
-   Ask with an **`AskUserQuestion` card using `multiSelect: true`**, mapping the picker-JSON sessions
-   **1:1 onto checkbox options** (`label` = the session's `label`, value = its `id`). The user ticks
-   the sessions to **exclude**. On **every** card/page, in addition to the session checkboxes:
-   - **Put a global bail-out option FIRST on every page (not just page 1):**
-     **"✅ Include all remaining — stop reviewing"** (`id: __INCLUDE_ALL__`). If ticked on ANY page,
-     stop paging immediately, exclude only what was already ticked on earlier pages, and continue. This
-     fixes the defect where include-all only worked on the first page.
-   - **Give every question an affirmative submit so Skip is never needed.** If a page holds more than
-     one `multiSelect` question (a group of sessions each), **every** question must carry a
-     **"Keep all of these (exclude none here)"** option, so the user can submit the card by ticking
-     that instead of leaving a question blank and hitting Skip. **Never rely on Skip to advance** —
-     Skip pauses the flow.
-   - **Advance with an explicit control, never Skip:** add **"Next — more sessions ▸"** as the last
-     option on non-final pages and **"Done — nothing more to exclude ✓"** on the final page.
+   **Stage 2 — the per-session exclude picker (only when the user chose "Exclude specific sessions").**
+   Ask with an **`AskUserQuestion` card using `multiSelect: true`**. The card's options are **ONLY the
+   per-session "Exclude — <name>" checkboxes** from the picker-JSON (`label` = the checkbox title,
+   `desc` = the date/deliverable detail, value = its `id`). Ticking an option **excludes** that session.
+   - **Do NOT add ANY non-session options.** No "Include all / include remaining / stop reviewing", no
+     "Keep all of these", and **no in-list "Next — review more sessions" / "Done" option**. The list is
+     nothing but `Exclude — <session>` rows. (The earlier include-all/next-in-list options were the
+     defect — remove them.)
+   - **Navigation is the card's OWN button below, not a list option.** Paginate by putting each page of
+     sessions as a **separate `multiSelect` question inside the SAME `AskUserQuestion` call** — the host
+     then shows **Next** to move between pages and shows the **Submit** button **only on the final
+     page**. Selecting checkboxes on a non-final page must NOT turn its button into Submit; it stays
+     **Next**. **Never use Skip** — there is no Skip in this flow.
+   - Each page/question is titled e.g. *"Select sessions to EXCLUDE (page X of Y)"* with the short
+     **privacy reminder**. Put ≤4 sessions per question (all four option slots are sessions now — no
+     slot is spent on navigation). A single `AskUserQuestion` call holds up to 4 questions × 4 options
+     (16 sessions); if there are more, continue in a follow-up call — but only the **very last page of
+     the last call** shows Submit; every earlier page shows Next.
    - **DO NOT** paste the session list into the question text, number them in prose, or ask the user to
-     "reply with session numbers / type which to exclude / say 'include all'". A typed/numbered reply
-     or a single free-text box is a **defect** — every session must be an individually tickable option,
-     and every page must be advanceable by ticking a control (Include-all / Keep-all / Next / Done),
-     never by typing or Skipping.
-   - **Page through ALL sessions.** `AskUserQuestion` allows up to 4 questions × 4 options per call;
-     since each question spends one option on its "Keep all of these" affordance, budget ≤3 sessions
-     per question (≤12 per card, plus the global Include-all-remaining and the Next/Done control).
-     When there are more, ask across consecutive calls and tell the user the page count ("1 of 2").
-     Every chat/task must be individually selectable across the rounds; never show only a subset.
+     "reply with session numbers / type which to exclude". Every session is an individually tickable
+     `Exclude — <name>` checkbox; advancing is the card's Next button; finishing is the final Submit.
 3. **Scheduled run (no interactive user):** do **not** show the picker (it would hang). Compute the
    draft and **email the user to review/exclude in the task chat** (see step 9) — never post without
    the user's opt-out.
