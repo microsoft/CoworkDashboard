@@ -185,11 +185,15 @@ classified, costed, named, or posted.
      'Include ALL sessions' to keep everything."*) and include the short **privacy reminder** to
      exclude anything personal or non-work they're not comfortable sharing (each session's deliverables
      go out with it). `prune_sessions.py --list` prints this same reminder.
-   - **Page through ALL sessions.** `AskUserQuestion` allows up to 4 questions × 4 options (16
-     sessions) per call, so split the sessions into groups of 4 (each group = one `multiSelect`
-     question of ≤4 checkbox options; put the include-all sentinel first in the first group) and, when
-     there are >16, ask across consecutive calls (30 → 2 rounds; tell the user "1 of 2"). Every
-     chat/task must be individually selectable across the rounds; never show only a subset.
+   - **Page through ALL sessions, and give every page an affirmative submit — never leave "Skip" as
+     the only action.** `AskUserQuestion` allows up to 4 questions × 4 options (16 sessions) per call,
+     so split the sessions into groups of 4 (each group = one `multiSelect` question of ≤4 checkbox
+     options; put the include-all sentinel first in the first group) and, when there are >16, ask
+     across consecutive calls (30 → 2 rounds; tell the user "1 of 2"). On **every** page/round add a
+     navigation option as the **last** checkbox so the user can move on without ticking anything:
+     **"Next — more sessions ▸"** on non-final pages, and **"Done — nothing more to exclude ✓"** on the
+     **final** page. The user should reach the end by clicking **Done**, not **Skip**. Every chat/task
+     must be individually selectable across the rounds; never show only a subset.
 3. **Scheduled run (no interactive user):** do **not** show the picker (it would hang). Compute the
    draft and **email the user to review/exclude in the task chat** (see step 9) — never post without
    the user's opt-out.
