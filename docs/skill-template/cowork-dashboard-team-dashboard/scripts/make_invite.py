@@ -35,51 +35,8 @@ DM_B, DM_E = "<<<MEMBER-INVITE-DM>>>", "<<<END-DM>>>"
 RUN_PHRASE = "run the Cowork Team Report member step"
 
 
-def _steps_html(url):
-    dl = html.escape(url) if url else ""
-    step1 = ('<b>Install it</b> — download the skill'
-             + (f' (<a href="{dl}">{dl}</a>)' if dl else ' from the link your manager shared')
-             + ' and drop the <code>cowork-dashboard-member</code> folder into your Copilot Cowork '
-               'skills folder.')
+def _invite_steps():
     return (
-        "<ol style='margin:6px 0 0 18px;padding:0'>"
-        f"<li style='margin:4px 0'>{step1}</li>"
-        f"<li style='margin:4px 0'><b>Run it</b> — in Copilot Cowork, say "
-        f"&ldquo;<i>{html.escape(RUN_PHRASE)}</i>&rdquo;.</li>"
-        "<li style='margin:4px 0'><b>Review &amp; confirm</b> — it lists your Cowork sessions; "
-        "untick anything you&rsquo;d rather not share, then it posts your <b>de-identified</b> "
-        "stats right here — aggregate numbers and de-identified descriptions only.</li>"
-        "</ol>")
-
-
-def render_post(team, url, cadence):
-    team_bit = f" for {html.escape(team)}" if team else ""
-    return (
-        "<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#242424;"
-        "max-width:640px'>"
-        f"<p style='font-size:16px;margin:0 0 6px'>👋 <b>Welcome to our Cowork impact channel"
-        f"{team_bit}</b></p>"
-        "<p style='margin:0 0 10px'>This channel adds up how <b>Copilot Cowork</b> is helping our "
-        "team — the hours it saves, the work it accelerates, the value it creates. You contribute in "
-        "about <b>two minutes</b> with a small skill that turns <i>your own</i> Cowork work into a "
-        "<b>privacy-safe</b> summary and posts it here.</p>"
-        "<p style='margin:0 0 4px'><b>Why bother?</b> Your wins get counted in the team story, and "
-        "leadership sees our <i>collective</i> ROI — never who did what.</p>"
-        "<p style='margin:0 0 4px'><b>Your privacy is protected.</b> Personal names, prompts, and raw "
-        "file names are stripped — your work is shared only as <b>de-identified descriptions</b> and "
-        "aggregate stats, never who did what. You see every session first and can exclude any of it "
-        "before anything posts.</p>"
-        "<p style='margin:10px 0 2px'><b>Get started (one time):</b></p>"
-        f"{_steps_html(url)}"
-        f"<p style='margin:10px 0 0;color:#616161;font-size:12.5px'>Takes ~2 min · runs on demand or "
-        f"automatically <b>{html.escape(cadence)}</b> · questions? just reply here.</p>"
-        "</div>")
-
-
-def render_email(team, url, cadence):
-    # A short, friendly email sent WITH the member .zip attached — its own copy (not the channel post).
-    team_bit = f" our {html.escape(team)} team&rsquo;s" if team else " our team&rsquo;s"
-    steps = (
         "<ol style='margin:6px 0 0 18px;padding:0'>"
         "<li style='margin:4px 0'>Save this skill locally (the attached <code>.zip</code>).</li>"
         "<li style='margin:4px 0'>Open a Copilot Cowork session, click the <b>+</b> icon, and upload "
@@ -87,54 +44,53 @@ def render_email(team, url, cadence):
         "<li style='margin:4px 0'>Install this skill.</li>"
         f"<li style='margin:4px 0'>Run this report — say &ldquo;<i>{html.escape(RUN_PHRASE)}</i>&rdquo;.</li>"
         "</ol>")
+
+
+def _team_bit(team):
+    return f" our {html.escape(team)} team&rsquo;s" if team else " our team&rsquo;s"
+
+
+def _invite_html(intro, width=620):
+    # Shared invite copy — the email, channel post, and 1:1 DM all read the same.
     return (
         "<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#242424;"
-        "max-width:620px'>"
-        f"<p style='margin:0 0 10px'>We&rsquo;re exploring how <b>Copilot Cowork</b> is assisting"
-        f"{team_bit} workflow with a skill. Please attach this skill:</p>"
-        f"{steps}"
+        f"max-width:{width}px'>"
+        f"{intro}"
+        f"{_invite_steps()}"
         "<p style='margin:12px 0 0'>The skill gathers your <b>last 15 days</b> of Cowork activity and "
         "lets you <b>exclude sessions before sharing</b>. Looking forward to seeing some aggregate stats "
         "on how our team is benefiting from Cowork!</p>"
         "</div>")
 
 
+def render_post(team, url, cadence):
+    intro = ("<p style='margin:0 0 10px'>We&rsquo;re exploring how <b>Copilot Cowork</b> is assisting"
+             f"{_team_bit(team)} workflow with a skill. Please attach this skill:</p>")
+    return _invite_html(intro)
+
+
+def render_email(team, url, cadence):
+    # Email uses the same copy as the channel post / DM.
+    return render_post(team, url, cadence)
+
+
 def render_text(team, url, cadence):
-    t = f" for {team}" if team else ""
-    dl = url or "(link your manager shared)"
+    tb = f" our {team} team's" if team else " our team's"
     return (
-        f"Welcome to our Copilot Cowork impact channel{t}!\n"
-        "In ~2 minutes you can add your own Cowork work to our team's privacy-safe ROI rollup — "
-        "personal names, prompts, and raw file names are stripped (work is shown as de-identified "
-        "descriptions and aggregate stats), and you review/exclude sessions first.\n"
-        "Get started (one time):\n"
-        f"  1. Install: download {dl} and drop the cowork-dashboard-member folder into your "
-        "Copilot Cowork skills folder.\n"
-        f"  2. Run: in Cowork, say \"{RUN_PHRASE}\".\n"
-        "  3. Review the session list, exclude anything private, and it posts your de-identified "
-        "stats here.\n"
-        f"Runs on demand or automatically {cadence}. Questions? Just reply here.")
+        f"We're exploring how Copilot Cowork is assisting{tb} workflow with a skill. Please attach this skill:\n"
+        "  1. Save this skill locally (the attached .zip).\n"
+        "  2. Open a Copilot Cowork session, click the + icon, and upload files and images.\n"
+        "  3. Install this skill.\n"
+        f"  4. Run this report — say \"{RUN_PHRASE}\".\n"
+        "The skill gathers your last 15 days of Cowork activity and lets you exclude sessions before "
+        "sharing. Looking forward to seeing some aggregate stats on how our team is benefiting from Cowork!")
 
 
 def render_dm(team, url, cadence, name):
-    # A warm, personal 1:1 chat message the manager DMs to each teammate.
-    greet = f"Hi {html.escape(name.strip())}" if name and name.strip() else "Hi there"
-    team_label = f" {html.escape(team)}" if team else ""
-    return (
-        "<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#242424;"
-        "max-width:600px'>"
-        f"<p style='margin:0 0 10px'>{greet} 👋 — I&rsquo;ve set up a quick way for our{team_label} "
-        "team to see how <b>Copilot Cowork</b> is helping us, and I&rsquo;d love for you to be "
-        "part of it.</p>"
-        "<p style='margin:0 0 10px'>It takes about <b>two minutes</b> and it&rsquo;s "
-        "<b>privacy-safe</b>: personal names, prompts, and raw file names are stripped — your work is "
-        "shared only as <b>de-identified descriptions</b> and aggregate stats, never who did what. You "
-        "review and exclude any of your sessions before anything posts.</p>"
-        "<p style='margin:10px 0 2px'><b>To join (one time):</b></p>"
-        f"{_steps_html(url)}"
-        f"<p style='margin:10px 0 0;color:#616161;font-size:12.5px'>Takes ~2 min · runs on demand or "
-        f"automatically <b>{html.escape(cadence)}</b> · any questions, just message me back!</p>"
-        "</div>")
+    greet = f"Hi {html.escape(name.strip())} 👋 — " if name and name.strip() else "Hi there 👋 — "
+    intro = (f"<p style='margin:0 0 10px'>{greet}we&rsquo;re exploring how <b>Copilot Cowork</b> is "
+             f"assisting{_team_bit(team)} workflow with a skill. Please attach this skill:</p>")
+    return _invite_html(intro, width=600)
 
 
 def main():
