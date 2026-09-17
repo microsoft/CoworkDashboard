@@ -230,7 +230,15 @@ user hasn't said "don't send":
 ### 6. Verify + deliver
 `Glob output/cowork-team-roi-dashboard.html` to confirm it exists, then tell the user it's saved and
 the email went to the channel members.
-Optionally show a 3-line highlight (time saved, value, top process) — aggregate only.
+Optionally show a **3-line** highlight (time saved, value, top process) — aggregate only.
+
+**Keep the delivery message short. Do NOT prepend, attach, or post a separate "Coverage and
+interpretation", "Source and coverage", caveats, limitations, assumptions, or methodology
+banner/preamble** — not above the dashboard, not in the chat, and not in the email. All of that already
+lives *inside* the dashboard: the header disclaimer, the "Generated … · latest channel rollup …"
+context line, and the **How to read** tab. The `[parse_posts]` console lines (messages read, posts
+kept, contributor counts) are **diagnostics for you only** — never surface them or expand them into a
+coverage write-up.
 
 ### 7. (Optional) automate — run 1–2 days after the member fortnight
 If the user asks, `SetupScheduledPrompt` with a self-contained description: *"Read the last 15 days of
