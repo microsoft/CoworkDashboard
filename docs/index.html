@@ -198,21 +198,6 @@
   .hero-cta:hover { text-decoration: none; transform: translateY(-1px); box-shadow: var(--shadow-lg); }
   .hero-cta svg { flex: 0 0 auto; }
   .hero-actions-note { font-size: 12.5px; color: var(--text-muted); }
-  /* Prominent in-flow demo card */
-  .demo-card { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, var(--surface)), var(--surface)); }
-  .demo-card-inner { display: flex; align-items: center; gap: 26px; }
-  .demo-card-copy { flex: 1 1 auto; }
-  .demo-eyebrow { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
-  .demo-card h2 { margin: 0 0 8px; }
-  .demo-card p { color: var(--text-soft); margin: 0 0 18px; }
-  .demo-btn { display: inline-flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 650; color: var(--on-accent) !important; background: var(--grad); border: 0; border-radius: 10px; padding: 12px 22px; box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .15s ease; }
-  .demo-btn:hover { text-decoration: none; transform: translateY(-1px); box-shadow: var(--shadow-lg); }
-  .demo-card-art { flex: 0 0 132px; height: 108px; position: relative; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
-  .demo-chip { position: absolute; border-radius: 5px; opacity: .9; }
-  .demo-chip-a { left: 14px; top: 16px; width: 104px; height: 14px; background: color-mix(in srgb, var(--accent) 55%, transparent); }
-  .demo-chip-b { left: 14px; top: 40px; width: 66px; height: 42px; background: color-mix(in srgb, var(--accent-2) 50%, transparent); }
-  .demo-chip-c { left: 90px; top: 40px; width: 28px; height: 42px; background: color-mix(in srgb, var(--accent-3) 55%, transparent); }
-  @media (max-width: 560px) { .demo-card-art { display: none; } }
 
   /* Cards */
   .card {
@@ -436,27 +421,6 @@
        <strong>first time it runs</strong>. Just follow the steps below.</p>
   </section>
 
-  <section class="card demo-card">
-    <div class="demo-card-inner">
-      <div class="demo-card-copy">
-        <div class="demo-eyebrow">See it before you install</div>
-        <h2>Preview a live sample of the team report</h2>
-        <p>Open a full, interactive dashboard filled with <strong>invented sample data</strong>. Explore every tab,
-           take the built-in <strong>guided tour</strong> that explains how to read each section, change the hourly
-           rate to re-price everything, and download it with <strong>Save / Print PDF</strong> — so you know exactly
-           what your team will get.</p>
-        <a class="demo-btn" href="demo-report.html" target="_blank" rel="noopener">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-          See a demo of the report
-        </a>
-      </div>
-      <div class="demo-card-art" aria-hidden="true">
-        <div class="demo-chip demo-chip-a"></div>
-        <div class="demo-chip demo-chip-b"></div>
-        <div class="demo-chip demo-chip-c"></div>
-      </div>
-    </div>
-  </section>
 
   <section class="card">
     <div class="step-head">
@@ -548,21 +512,18 @@
       <p class="dl-note baked hidden" id="bakeNoteMgr"></p>
       <div id="dlMgrStatus" class="status" role="status" aria-live="polite"></div>
     </div>
-    <p>Then open <strong>Copilot Cowork</strong> and upload the manager zip you just downloaded —
-       <strong>the <span class="mono">.zip</span> file itself, without unzipping it first</strong> — and ask it
-       to install <strong>and set it up in one step</strong>. This matters: the phrase below doesn't just
-       install the skill, it kicks off onboarding right away — <strong>starting with sending the member skill
-       to your team</strong>, the one step that actually makes the dashboard fill up:</p>
+    <p>Open <strong>Copilot Cowork</strong>, click the <strong>+</strong> icon to attach the manager
+       <span class="mono">.zip</span> you just downloaded (don't unzip it), then paste the command below.</p>
     <div class="copybox">
       <textarea id="installMgrText" readonly>Install this manager skill and walk me through setup.</textarea>
       <button id="copyMgrBtn" class="secondary" type="button">Copy</button>
     </div>
-    <p class="note privacy">💡 <strong>Why "and walk me through setup"?</strong> Installing a skill on its own
-       runs nothing — if you install and walk away, no member ever gets the skill and your dashboard stays
-       empty. Adding "walk me through setup" makes the skill immediately offer to send the member skill to
-       your teammates, so the rollup actually gets off the ground.</p>
-    <p class="note"><span id="mgrBakeState">It asks for your Teams channel link the first time you run it.</span> Once it's
-       installed, you can say “build the team Cowork Team Report” any time — or ask it to run on a schedule
+    <p class="note privacy">💡 <strong>Why "walk me through setup"?</strong> Installing alone runs nothing.
+       These words make the skill immediately offer to send the member skill to your team — the step that
+       actually starts filling your dashboard.</p>
+    <p class="note"><span id="mgrBakeState">It asks for your Teams channel link the first time you run it.</span>
+       During setup it helps you get the member skill to your team first. Once teammates have posted their
+       summaries, ask it to <strong>build the team Cowork Team Report</strong> — then let it run on a schedule
        and email your team automatically every couple of weeks.</p>
     <p class="note privacy">🗓️ <strong>When to run the manager / dashboard skill:</strong> schedule it
        <strong>1–2 days after</strong> the member cadence, so every member's post is in before it aggregates.
@@ -573,10 +534,13 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">4</span>
-      <h2>Share the team-member skill — “Cowork Team Report - Team Member Cowork Skill”</h2>
+      <h2>Optional — hand out the member skill yourself</h2>
     </div>
+    <p class="note">During setup (step 3) the manager skill offers to send the member skill to your teammates
+       for you — so most managers can skip this step. Use it only if you'd rather share the skill yourself, or
+       post it once for the whole channel.</p>
     <div class="dl-block">
-      <p class="dl-label"><span class="tag">Post to channel</span> Team-member skill —
+      <p class="dl-label"><span class="tag">Optional</span> Team-member skill —
          <strong>Cowork Team Report - Team Member Cowork Skill</strong></p>
       <div class="row">
         <button id="downloadBtn" type="button">⬇ Download the team-member skill (.zip)</button>
@@ -586,11 +550,9 @@
       <p class="dl-note baked hidden" id="bakeNote"></p>
       <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
     </div>
-    <p><strong>Post that <span class="mono">.zip</span> straight into the dedicated channel you created in step 1</strong>
-       and <strong>@tag every member</strong> so they each install it. No downloading-and-DMing — one post in the
-       shared channel reaches everyone at once. Each person uploads the zip in Copilot Cowork —
-       <strong>the <span class="mono">.zip</span> file itself, without unzipping it first</strong> — and asks it to
-       install the skill, the same simple step you just did:</p>
+    <p>Post that <span class="mono">.zip</span> into your dedicated channel and <strong>@tag every member</strong>
+       so they each install it. Each person uploads the <span class="mono">.zip</span> in Copilot Cowork
+       (don't unzip it) and asks it to install:</p>
     <p class="note privacy">📎 <strong>Safe to post the zip here:</strong> the manager / dashboard reader
        <strong>ignores zip files</strong> in the channel — it only reads the members' posted summaries — so
        dropping the package in the same channel won't affect your aggregation data.</p>
@@ -598,12 +560,11 @@
       <textarea id="installText" readonly>Install the attached Cowork Team Report - Team Member Cowork Skill into my Cowork skills.</textarea>
       <button id="copyBtn" class="secondary" type="button">Copy</button>
     </div>
-    <p class="note"><span id="memBakeState">Each teammate is asked for the Teams channel link the first time they run it.</span> <strong>Installing isn't enough —
-       each teammate must run the member skill once.</strong> The automate/schedule prompt (run once, or
-       <strong>automate biweekly — every other Monday</strong>) appears on that <strong>first run</strong>, not at install — so have
-       everyone kick it off once and choose to automate, and the system stays hands-off from there. Tell them to type:</p>
+    <p class="note"><span id="memBakeState">Each teammate is asked for the Teams channel link the first time they run it.</span>
+       <strong>Installing isn't enough — each teammate runs the member skill once</strong> to start it (and can
+       choose to automate biweekly — every other Monday — right then). Tell them to type:</p>
     <div class="copybox">
-      <textarea id="runMemberText" readonly>run the Cowork ROI member step</textarea>
+      <textarea id="runMemberText" readonly>run the Cowork Team Report member step</textarea>
       <button id="copyRunMemberBtn" class="secondary" type="button">Copy</button>
     </div>
     <p class="muted small">Running this yourself too? If you (the manager) also want your own Copilot Cowork work
