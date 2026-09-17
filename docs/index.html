@@ -550,11 +550,17 @@
     </div>
     <p>Then open <strong>Copilot Cowork</strong> and upload the manager zip you just downloaded —
        <strong>the <span class="mono">.zip</span> file itself, without unzipping it first</strong> — and ask it
-       to install the skill:</p>
+       to install <strong>and set it up in one step</strong>. This matters: the phrase below doesn't just
+       install the skill, it kicks off onboarding right away — <strong>starting with sending the member skill
+       to your team</strong>, the one step that actually makes the dashboard fill up:</p>
     <div class="copybox">
-      <textarea id="installMgrText" readonly>Install the attached Cowork Team Report - Team Dashboard Cowork Skill into my Cowork skills.</textarea>
+      <textarea id="installMgrText" readonly>Install the attached Cowork Team Report - Team Dashboard Cowork Skill into my Cowork skills, then walk me through setup — starting with sending the member skill to my team.</textarea>
       <button id="copyMgrBtn" class="secondary" type="button">Copy</button>
     </div>
+    <p class="note privacy">💡 <strong>Why "and walk me through setup"?</strong> Installing a skill on its own
+       runs nothing — if you install and walk away, no member ever gets the skill and your dashboard stays
+       empty. Adding "walk me through setup" makes the skill immediately offer to send the member skill to
+       your teammates, so the rollup actually gets off the ground.</p>
     <p class="note"><span id="mgrBakeState">It asks for your Teams channel link the first time you run it.</span> Once it's
        installed, you can say “build the team Cowork Team Report” any time — or ask it to run on a schedule
        and email your team automatically every couple of weeks.</p>

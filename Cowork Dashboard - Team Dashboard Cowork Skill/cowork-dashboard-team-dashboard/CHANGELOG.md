@@ -16,6 +16,11 @@ parser-contract changes.
   *First run — offer to send the member skill to teammates 1:1*.
 - `scripts/make_invite.py --recipient-name` renders a personalized 1:1 DM variant between
   `<<<MEMBER-INVITE-DM>>>` / `<<<END-DM>>>`.
+- **Install→setup bridge.** The Installer page and README now tell managers to say *"install … then
+  walk me through setup — starting with sending the member skill to my team,"* and the skill's
+  triggers + first-run ordering lead with the 1:1 share step. Installing alone runs nothing, so this
+  makes onboarding (and member distribution) start immediately instead of the manager installing and
+  walking away to an empty dashboard.
 
 ### Changed
 - Invite copy no longer claims "no file names ever leave your machine." It now states the actual

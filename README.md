@@ -52,11 +52,14 @@ You only do this **once** for your team.
    - **Download the manager skill (.zip)** — you install this one.
    - **Download the team-member skill (.zip)** — you send this one to your team.
 
-5. **Install the manager skill (that's you).** Open **Copilot Cowork**, upload the *manager* zip
-   **(upload the `.zip` file as-is — don't unzip it first)**, and ask it to install the skill (for example:
-   *“upload this zip file and ask it to install the skill”*). Because your channel is already built in, it
-   won't ask you for a link. Once installed, you can say *“build the team Cowork Team Report”* any time —
-   or ask it to run on a schedule and email the team automatically.
+5. **Install the manager skill (that's you) — and let it set you up.** Open **Copilot Cowork**, upload the
+   *manager* zip **(upload the `.zip` file as-is — don't unzip it first)**, and ask it to install **and walk
+   you through setup** (for example: *“install this manager skill, then walk me through setup — starting with
+   sending the member skill to my team”*). That second half matters: installing a skill on its own runs
+   nothing, so it makes the skill immediately offer to send the member skill to your teammates — the step
+   that actually makes the dashboard fill up. Because your channel is already built in, it won't ask you for a
+   link. Afterwards you can say *“build the team Cowork Team Report”* any time — or ask it to run on a
+   schedule and email the team automatically.
 
 6. **Share the team-member skill with your team.** Send the *team-member* zip to everyone whose Copilot work
    you'd like included. Each person uploads it in Copilot Cowork **(the `.zip` file as-is — don't unzip it
