@@ -110,7 +110,11 @@ and it is separate from actually running a report; it's in addition to the in-ch
 2. **Gather recipients** — ask how (`AskUserQuestion`):
    - **Type email addresses** — the manager pastes addresses (comma / space / newline separated); or
    - **Pick from the channel** — list the current channel members (host Teams member-list tool, e.g.
-     `ListChannelMembers`) and let the manager multi-select.
+     `ListChannelMembers`) and let the manager multi-select; **always include an "Include everyone in
+     the channel" choice at the top** that selects **all** members at once. When they pick it, page
+     through `ListChannelMembers` yourself (follow `next_link` until exhausted) to build the full roster
+     — the manager should **not** have to scroll or click through a paginated picker. Confirm the total
+     count (e.g. "Send to all 12 members?") before proceeding.
 3. **Resolve & validate.** Look each address up in the directory (e.g. `GetMultipleUsersDetails`) to
    get first/display names and confirm it's a real, mailable user. Drop and report any that don't
    resolve; **never invent addresses**.
