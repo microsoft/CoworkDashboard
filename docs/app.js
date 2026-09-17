@@ -126,8 +126,8 @@
   var resolved = null; // last successful parse
 
   // Default (un-baked) copy for the state spans, restored when there's no verified link.
-  var DEFAULT_MGR_STATE = "It asks for your Teams channel link the first time you run it.";
-  var DEFAULT_MEM_STATE = "Each teammate is asked for the Teams channel link the first time they run it.";
+  var DEFAULT_MGR_STATE = "Your verified channel gets baked into the download, so there's no link to paste on first run.";
+  var DEFAULT_MEM_STATE = "Your channel gets baked into the zip you share, so teammates don't paste a link on first run.";
 
   function setStatus(el, msg, cls) {
     if (!el) return;
