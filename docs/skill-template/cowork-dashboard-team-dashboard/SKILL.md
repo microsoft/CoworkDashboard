@@ -2,7 +2,7 @@
 name: cowork-dashboard-team-dashboard
 description: |
   Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates post (via the Cowork Team Report Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (five tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest post per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
-  Use when the user asks to "build the team Cowork Team Report", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Team Report", "email the team dashboard", or set up / refresh the rollup.
+  Use when the user asks to "build the team Cowork Team Report", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Team Report", "email the team dashboard", to "walk me through setup" / "set up the skill" right after installing it, or to "send / share the member skill with my team" / "invite my team" / set up / refresh the rollup.
   Do NOT use for: the personal report (cowork-roi-report), a member's own post (cowork-dashboard-member), the member-side aggregated post (cowork-roi-report-aggregated), org-wide/large-team aggregation, GitHub Copilot reports, or single-meeting summaries.
 cowork:
   category: analysis
@@ -41,6 +41,13 @@ the Member skill's (see *Cross-skill contract*).
 ## First run — point the skill at the channel (once)
 
 The rollup reads ONE shared Teams channel that teammates post to. The channel is **not hard-coded**.
+
+> **If the manager just installed the skill and asked to "walk me through setup" (or this is the first
+> setup turn), do the 1:1 share step FIRST** — see *Right after install — offer to send the member
+> skill to teammates 1:1* below — **before** asking for the channel link. Installing the manager skill
+> alone does nothing: unless teammates get the member skill, the channel stays empty and every run
+> produces a blank dashboard. Lead with getting the member skill into their hands, then set up the
+> channel.
 
 1. **Load `config/team_config.json`.** If `team_id` **or** `channel_id` is blank, this is a first run.
 2. **Ask for the channel link.** Use `AskUserQuestion` to ask the user to paste the **link of the
@@ -84,10 +91,12 @@ a zip.** Members are already in this channel, so an inviting welcome posted here
    members the invite body (same recipients rule as step 5) — no attachment needed.
 Do this **once**; on later runs skip it unless the manager explicitly asks to re-invite.
 
-### First run — offer to send the member skill to teammates 1:1
-Right after this skill is installed / first run (once the channel is resolved), **proactively offer to
-deliver the member skill to specific people 1:1**, so the manager doesn't have to chase anyone down.
-This is in addition to the in-channel welcome above.
+### Right after install — offer to send the member skill to teammates 1:1 (do this first)
+**On the manager's very first setup turn — right after the skill is installed, before pointing at the
+channel — proactively offer to deliver the member skill to specific people 1:1**, so the manager
+doesn't have to chase anyone down. (Skills run no code at install, so this first interaction after
+install is the earliest possible moment.) This does **not** require the channel to be set up first,
+and it is separate from actually running a report; it's in addition to the in-channel welcome.
 1. **Ask if they want to.** With `AskUserQuestion`: *"Want me to send the member skill to specific
    teammates now, one-to-one?"* — options **Yes** / **Not now**. On "Not now", stop (the pinned
    channel welcome already reaches everyone in the channel); mention they can say "invite members"
