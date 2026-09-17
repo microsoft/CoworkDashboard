@@ -75,11 +75,12 @@ link only if the user wants to point at a **different** channel.
 Right after the channel is resolved on a **first run** (and any time the manager asks to "invite the
 team" / "onboard members"), **onboard members in-place instead of leaving the manager to hand-deliver
 a zip.** Members are already in this channel, so an inviting welcome posted here *is* the delivery.
-1. **Get the member download link.** Read `member_download_url` from `config/team_config.json`. If
-   blank, ask the manager once (with `AskUserQuestion`) to paste the link members should use to
-   download the `cowork-dashboard-member` skill (the same page the manager got it from, with this
-   channel pre-embedded), and save it back to the config. If they don't have one, proceed without it —
-   the invite will tell members to use the link the manager shares.
+1. **Get the member skill to share (link or attached ZIP).** Read `member_download_url` from
+   `config/team_config.json`. If blank, check whether the member `.zip` is already attached to this
+   session; if not, offer clear choices with `AskUserQuestion` — **Attach the member ZIP** (click the
+   **+** icon in Copilot Cowork and upload `cowork-dashboard-member.zip`, which you can then post into
+   the channel), **Paste a download link** (saved back to the config), or **Skip** (proceed without one —
+   the invite tells members to use the link the manager shares). Never make the link mandatory.
 2. **Render the invite:**
    ```
    python scripts/make_invite.py --team-name "<team_name>" \
@@ -113,10 +114,16 @@ and it is separate from actually running a report; it's in addition to the in-ch
 3. **Resolve & validate.** Look each address up in the directory (e.g. `GetMultipleUsersDetails`) to
    get first/display names and confirm it's a real, mailable user. Drop and report any that don't
    resolve; **never invent addresses**.
-4. **Have the member skill ready to send.** The manager downloaded the channel-baked member `.zip` from
-   the **Installer page** (step 3 there) — send **that file** with each DM. Also read `member_download_url`
-   from `config/team_config.json` and include it if present (one-click install), but don't block on it:
-   if it's blank, the attached `.zip` is enough — no need to ask for a link.
+4. **Make sure the member skill is available to send — and offer an explicit "attach the ZIP" option.**
+   First check whether the member `.zip` (`cowork-dashboard-member.zip`) is **already attached to this
+   session** — the manager may have uploaded it alongside the manager zip. If it is, use that file and
+   move on. If it's **not** attached and `member_download_url` in `config/team_config.json` is blank,
+   **don't drop a bare "type your answer" box on the manager** — use `AskUserQuestion` with clear choices:
+   - **Attach the member ZIP** — the default; tell them to click the **+** icon in Copilot Cowork and
+     upload `cowork-dashboard-member.zip` (the one they downloaded from the Installer page), then continue;
+   - **Paste a download link** — they give a URL instead (save it to `member_download_url`);
+   - **Skip for now** — proceed without 1:1 delivery (the pinned channel welcome still reaches everyone).
+   The attached `.zip` by itself is enough to send — a link is optional, so never make the link mandatory.
 5. **Render the message per recipient.** Run `make_invite.py` with `--recipient-name "<first name>"`;
    it prints every variant between stable markers. Take the one matching how you'll deliver:
    - **Teams DM:** the body between `<<<MEMBER-INVITE-DM>>>` / `<<<END-DM>>>`.
