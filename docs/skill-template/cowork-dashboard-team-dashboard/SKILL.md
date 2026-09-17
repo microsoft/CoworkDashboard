@@ -49,9 +49,13 @@ The rollup reads ONE shared Teams channel that teammates post to. The channel is
 > produces a blank dashboard. Lead with getting the member skill into their hands, then set up the
 > channel.
 
-1. **Load `config/team_config.json`.** If `team_id` **or** `channel_id` is blank, this is a first run.
-2. **Ask for the channel link.** Use `AskUserQuestion` to ask the user to paste the **link of the
-   Teams channel** where the team posts its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to
+1. **Load `config/team_config.json`.** If `team_id` **and** `channel_id` are already filled in — the
+   normal case for a zip downloaded from the **Installer page**, which bakes your channel into the
+   config — **the channel is already set up. Do NOT ask for a channel link: skip steps 2–3 entirely**
+   and go straight to the invite / 1:1 share and the workflow. Only treat this as a blank first run (and
+   do steps 2–3) when **both** fields are empty, which happens only for a hand-built zip.
+2. **Only if the channel is blank — ask for the link.** Use `AskUserQuestion` to ask the user to paste
+   the **link of the Teams channel** where the team posts its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to
    channel*). This must be the same channel `cowork-dashboard-member` posts to.
 3. **Resolve + persist the IDs** from that link — no Graph call needed:
    ```
@@ -108,8 +112,10 @@ and it is separate from actually running a report; it's in addition to the in-ch
 3. **Resolve & validate.** Look each address up in the directory (e.g. `GetMultipleUsersDetails`) to
    get first/display names and confirm it's a real, mailable user. Drop and report any that don't
    resolve; **never invent addresses**.
-4. **Make sure there's a download link.** Use `member_download_url` from `config/team_config.json`; if
-   blank, ask once and save it (as in the invite step) — the DM needs it for one-click install.
+4. **Have the member skill ready to send.** The manager downloaded the channel-baked member `.zip` from
+   the **Installer page** (step 3 there) — send **that file** with each DM. Also read `member_download_url`
+   from `config/team_config.json` and include it if present (one-click install), but don't block on it:
+   if it's blank, the attached `.zip` is enough — no need to ask for a link.
 5. **Render a personalized DM per recipient:**
    ```
    python scripts/make_invite.py --team-name "<team_name>" \
@@ -121,9 +127,9 @@ and it is separate from actually running a report; it's in addition to the in-ch
    rendered DM**, noting each is personalized by first name. Ask for explicit confirmation with
    `AskUserQuestion` (**Send now** / **Edit list** / **Cancel**). Send nothing until they approve.
 7. **Send 1:1.** On approval, direct-message each recipient with the host's 1:1 Teams chat tool (e.g.
-   `SendChatMessage` / `SendMessageToUser`, addressed by email), body = that person's rendered DM.
-   Optionally also attach the member `.zip` to the chat if a file-to-chat tool is available; otherwise
-   the download link in the message is enough.
+   `SendChatMessage` / `SendMessageToUser` / `SendFileToUser`, addressed by email), body = that person's
+   rendered DM, and **attach the member `.zip`** the manager downloaded so install is one click. If no
+   file-to-chat tool is available, include the download link in the message instead.
 8. **Report results.** Tell the manager who was messaged and list any failures. For a failure, offer a
    fallback: email that person the same invite (`SendEmailWithAttachments`) or hand them the link.
 9. Do this **once**; on later runs skip unless the manager asks to "send the member skill to
