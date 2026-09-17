@@ -3,6 +3,25 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.10.0] — 2026-09-17
+
+Adds a 1:1 onboarding path and tightens the invite's privacy wording. No dashboard-render or
+parser-contract changes.
+
+### Added
+- **Send the member skill to teammates 1:1.** On first run (or on request), the skill now offers to
+  deliver the member skill directly to specific people: collect emails (typed or picked from the
+  channel), resolve names, render a personalized DM, **show recipients + a sample and require explicit
+  confirmation**, then direct-message each person and report per-recipient results. See SKILL.md
+  *First run — offer to send the member skill to teammates 1:1*.
+- `scripts/make_invite.py --recipient-name` renders a personalized 1:1 DM variant between
+  `<<<MEMBER-INVITE-DM>>>` / `<<<END-DM>>>`.
+
+### Changed
+- Invite copy no longer claims "no file names ever leave your machine." It now states the actual
+  mechanism: personal names and prompts are excluded and **raw file names are replaced with
+  de-identified descriptions**. Aligned across the member skill SKILL.md/README and the Installer page.
+
 ## [1.9.0] — 2026-09-11
 
 Adds a **Cowork-fit** view and an **Overview measure toggle**, plus two impact-table display

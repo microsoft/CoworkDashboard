@@ -87,7 +87,8 @@ Before publishing, you can remove any session you do not want included. That ses
 artifacts are removed from the pending report before metrics are computed or anything is posted. This does
 not delete the original session from Cowork.
 
-Your individual identity, person name, raw filenames, prompts, and **country** never leave the machine.
+Your individual identity, person name, prompts, and **country** never leave the machine, and raw file
+names are replaced with de-identified descriptive labels.
 The post carries aggregates — totals, categories, value pillars, roles, skills, deliverable/IO counts, and
 the process / jobs-to-be-done tables (which may carry customer/account names) — plus your directory **Role**
 (job title, a de-identified attribute) and only the sessions you kept. Retained work artifacts can appear
@@ -180,7 +181,8 @@ methodology changed — only the post's content and de-identification.
   (**Type · Date · Business process · Skills · Hours · Value**, no file names), followed by the
   by-type rollup.
 - **Your Role in the header.** The runner's directory job title (e.g. "Business Value Advisor –
-  Analytics") is shown. **No country, no names, no file names, no prompts.**
+  Analytics") is shown. **No country, no name, no prompts; deliverables appear as de-identified
+  descriptions, not raw file names.**
 
 **Fixed / verified**
 - **Excluding a session removes its deliverables.** The exclude step now proves it — it reports the

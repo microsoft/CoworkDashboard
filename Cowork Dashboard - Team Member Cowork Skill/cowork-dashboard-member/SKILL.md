@@ -1,7 +1,7 @@
 ---
 name: cowork-dashboard-member
 description: |
-  Member step of the Cowork Team Report: gathers the user's own Cowork sessions, supports exclusions, computes impact metrics, and posts aggregate tables to a chosen Teams channel. Excludes person names, file names and prompts; retains customer/account names. Supports one-time or biweekly runs with review before posting.
+  Member step of the Cowork Team Report: gathers the user's own Cowork sessions, supports exclusions, computes impact metrics, and posts aggregate tables to a chosen Teams channel. Excludes person names and prompts and replaces raw file names with de-identified descriptive labels; retains customer/account names. Supports one-time or biweekly runs with review before posting.
   Use for "post my Cowork Team Report stats", "send my Cowork stats to the team channel", "run the Cowork Team Report member step", or "share my Cowork impact with the team".
   Do NOT use for the full personal HTML report (use cowork-roi-report), the manager-side team dashboard, GitHub Copilot reports, or single-meeting summaries.
 metadata:
@@ -14,7 +14,8 @@ metadata:
 
 Produces the **per-person, de-identified** input to a team Cowork Team Report, rendered as
 **HTML tables** so it's both readable in Teams and easy for a downstream Cowork task to parse.
-**No person names, file names or prompts leave the machine** — the post carries aggregate totals,
+**No person names or prompts leave the machine, and raw file names are replaced with de-identified
+descriptive labels** — the post carries aggregate totals,
 task categories, value pillars, roles, skills, deliverable/IO breakdowns, and the de-duplicated
 **Jobs-to-be-done** and **Work-by-business-process** tables (which may carry customer/account names —
 those are in scope; only people's names are stripped).
@@ -78,8 +79,9 @@ anything. Name the team from `config/team_channel.json` `channel_name` when it's
 and brief, e.g.:
 > 👋 **Welcome!** This shares your **Copilot Cowork** impact with your team's private report channel so
 > everyone's wins add up — while keeping your details private.
-> **Your privacy:** no names, file names, or prompts leave your machine; you review every session and
-> can exclude any of it before anything posts. Only de-identified stats are shared.
+> **Your privacy:** no names or prompts leave your machine, and raw file names are replaced with
+> de-identified descriptions; you review every session and can exclude any of it before anything posts.
+> Only de-identified stats are shared.
 > **Here's the 1-2-3:**
 > 1. I **look at your Cowork sessions and classify them** (work, time, deliverables).
 > 2. **You review and can delete any sessions** before anything leaves your machine.

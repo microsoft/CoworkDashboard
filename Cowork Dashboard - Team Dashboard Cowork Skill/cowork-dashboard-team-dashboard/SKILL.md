@@ -84,6 +84,45 @@ a zip.** Members are already in this channel, so an inviting welcome posted here
    members the invite body (same recipients rule as step 5) — no attachment needed.
 Do this **once**; on later runs skip it unless the manager explicitly asks to re-invite.
 
+### First run — offer to send the member skill to teammates 1:1
+Right after this skill is installed / first run (once the channel is resolved), **proactively offer to
+deliver the member skill to specific people 1:1**, so the manager doesn't have to chase anyone down.
+This is in addition to the in-channel welcome above.
+1. **Ask if they want to.** With `AskUserQuestion`: *"Want me to send the member skill to specific
+   teammates now, one-to-one?"* — options **Yes** / **Not now**. On "Not now", stop (the pinned
+   channel welcome already reaches everyone in the channel); mention they can say "invite members"
+   anytime.
+2. **Gather recipients** — ask how (`AskUserQuestion`):
+   - **Type email addresses** — the manager pastes addresses (comma / space / newline separated); or
+   - **Pick from the channel** — list the current channel members (host Teams member-list tool, e.g.
+     `ListChannelMembers`) and let the manager multi-select.
+3. **Resolve & validate.** Look each address up in the directory (e.g. `GetMultipleUsersDetails`) to
+   get first/display names and confirm it's a real, mailable user. Drop and report any that don't
+   resolve; **never invent addresses**.
+4. **Make sure there's a download link.** Use `member_download_url` from `config/team_config.json`; if
+   blank, ask once and save it (as in the invite step) — the DM needs it for one-click install.
+5. **Render a personalized DM per recipient:**
+   ```
+   python scripts/make_invite.py --team-name "<team_name>" \
+       --download-url "<member_download_url>" --cadence "<cadence>" \
+       --recipient-name "<first name>" --out-dir working
+   ```
+   Lift the body between `<<<MEMBER-INVITE-DM>>>` / `<<<END-DM>>>`.
+6. **Review before sending (always).** Show the manager the **final recipient list** and a **sample
+   rendered DM**, noting each is personalized by first name. Ask for explicit confirmation with
+   `AskUserQuestion` (**Send now** / **Edit list** / **Cancel**). Send nothing until they approve.
+7. **Send 1:1.** On approval, direct-message each recipient with the host's 1:1 Teams chat tool (e.g.
+   `SendChatMessage` / `SendMessageToUser`, addressed by email), body = that person's rendered DM.
+   Optionally also attach the member `.zip` to the chat if a file-to-chat tool is available; otherwise
+   the download link in the message is enough.
+8. **Report results.** Tell the manager who was messaged and list any failures. For a failure, offer a
+   fallback: email that person the same invite (`SendEmailWithAttachments`) or hand them the link.
+9. Do this **once**; on later runs skip unless the manager asks to "send the member skill to
+   <people>" / "invite <names>".
+
+**Never message anyone the manager didn't list or pick, and never send without the review-and-confirm
+in step 6.**
+
 ## Workflow
 
 ### 1. Load config (+ first-run channel link)
@@ -218,7 +257,7 @@ aggregation breaks — **change them in both bundles together**:
 - `config/team_config.json` — rate + k-threshold + cadence + 15-day lookback + email toggle; the
   channel IDs are filled in on first run (not shipped hard-coded).
 - `scripts/resolve_channel.py` — parse a pasted Teams channel/message link → `team_id` + `channel_id`; persist to config (stdlib only).
-- `scripts/make_invite.py` — render the inviting member "get started" message (channel post + email + plaintext) with the download link baked in, so members are onboarded in-channel instead of hand-delivered a bare zip (stdlib only).
+- `scripts/make_invite.py` — render the inviting member "get started" message (channel post + email + plaintext + a personalized 1:1 DM via `--recipient-name`) with the download link baked in, so members are onboarded in-channel or direct-messaged 1:1 instead of hand-delivered a bare zip (stdlib only).
 - `scripts/parse_posts.py` — channel posts → anonymized `team_data.json` (stdlib only; 15-day window, latest-per-sender, groups processes, canonicalizes skills, k-anon-ready).
 - `scripts/build_dashboard.py` — `team_data.json` → self-contained HTML dashboard with the guide built in (stdlib only): the **How to read** tab, per-section **"?"** helpers, per-category **contributor reach** (with a `<k` privacy floor), and **type-only deliverables collapsed per format**.
 - `scripts/build_guide_pdf.py` — **legacy** one-page landscape interpretation PDF (uses `reportlab`). Retained but off by default; the guide now lives inside the dashboard.

@@ -10,6 +10,7 @@ calling agent can lift them verbatim:
   * a Teams channel post  (HTML)  -> post with PostChannelMessage + pin it
   * an email body         (HTML)  -> optionally SendEmailWithAttachments to channel members
   * a short plaintext blurb        -> for a chat/DM or release notes
+  * a personalized 1:1 DM  (HTML)  -> direct-message each teammate (pass --recipient-name)
 
 The message tells the member WHAT this is, WHY it helps them, the PRIVACY promise, and
 the 1-2-3 of WHAT TO DO — with the download link baked in. stdlib only.
@@ -18,7 +19,7 @@ Usage:
   python scripts/make_invite.py --team-name "Data & AI" \
       --download-url "https://.../cowork-dashboard-member.zip" \
       [--channel-link "https://teams.microsoft.com/l/channel/..."] \
-      [--cadence "every other Monday"] [--out-dir working]
+      [--cadence "every other Monday"] [--recipient-name "Alex"] [--out-dir working]
 """
 import argparse
 import html
@@ -29,6 +30,7 @@ POST_B, POST_E = "<<<MEMBER-INVITE-CHANNEL-POST>>>", "<<<END-CHANNEL-POST>>>"
 MAIL_S_B, MAIL_S_E = "<<<MEMBER-INVITE-EMAIL-SUBJECT>>>", "<<<END-EMAIL-SUBJECT>>>"
 MAIL_B, MAIL_E = "<<<MEMBER-INVITE-EMAIL-BODY>>>", "<<<END-EMAIL-BODY>>>"
 TEXT_B, TEXT_E = "<<<MEMBER-INVITE-PLAINTEXT>>>", "<<<END-PLAINTEXT>>>"
+DM_B, DM_E = "<<<MEMBER-INVITE-DM>>>", "<<<END-DM>>>"
 
 RUN_PHRASE = "run the Cowork Team Report member step"
 
@@ -46,7 +48,7 @@ def _steps_html(url):
         f"&ldquo;<i>{html.escape(RUN_PHRASE)}</i>&rdquo;.</li>"
         "<li style='margin:4px 0'><b>Review &amp; confirm</b> — it lists your Cowork sessions; "
         "untick anything you&rsquo;d rather not share, then it posts your <b>de-identified</b> "
-        "stats right here. Nothing personal ever leaves your machine.</li>"
+        "stats right here — aggregate numbers and de-identified descriptions only.</li>"
         "</ol>")
 
 
@@ -63,9 +65,10 @@ def render_post(team, url, cadence):
         "<b>privacy-safe</b> summary and posts it here.</p>"
         "<p style='margin:0 0 4px'><b>Why bother?</b> Your wins get counted in the team story, and "
         "leadership sees our <i>collective</i> ROI — never who did what.</p>"
-        "<p style='margin:0 0 4px'><b>Your privacy is protected.</b> No names, file names, or prompts "
-        "leave your machine. You see every session first and can exclude any of it before anything "
-        "posts. What&rsquo;s shared is aggregate stats only.</p>"
+        "<p style='margin:0 0 4px'><b>Your privacy is protected.</b> Personal names, prompts, and raw "
+        "file names are stripped — your work is shared only as <b>de-identified descriptions</b> and "
+        "aggregate stats, never who did what. You see every session first and can exclude any of it "
+        "before anything posts.</p>"
         "<p style='margin:10px 0 2px'><b>Get started (one time):</b></p>"
         f"{_steps_html(url)}"
         f"<p style='margin:10px 0 0;color:#616161;font-size:12.5px'>Takes ~2 min · runs on demand or "
@@ -87,7 +90,8 @@ def render_text(team, url, cadence):
     return (
         f"Welcome to our Copilot Cowork impact channel{t}!\n"
         "In ~2 minutes you can add your own Cowork work to our team's privacy-safe ROI rollup — "
-        "no names, files, or prompts ever leave your machine, and you review/exclude sessions first.\n"
+        "personal names, prompts, and raw file names are stripped (work is shown as de-identified "
+        "descriptions and aggregate stats), and you review/exclude sessions first.\n"
         "Get started (one time):\n"
         f"  1. Install: download {dl} and drop the cowork-dashboard-member folder into your "
         "Copilot Cowork skills folder.\n"
@@ -97,12 +101,35 @@ def render_text(team, url, cadence):
         f"Runs on demand or automatically {cadence}. Questions? Just reply here.")
 
 
+def render_dm(team, url, cadence, name):
+    # A warm, personal 1:1 chat message the manager DMs to each teammate.
+    greet = f"Hi {html.escape(name.strip())}" if name and name.strip() else "Hi there"
+    team_label = f" {html.escape(team)}" if team else ""
+    return (
+        "<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#242424;"
+        "max-width:600px'>"
+        f"<p style='margin:0 0 10px'>{greet} 👋 — I&rsquo;ve set up a quick way for our{team_label} "
+        "team to see how <b>Copilot Cowork</b> is helping us, and I&rsquo;d love for you to be "
+        "part of it.</p>"
+        "<p style='margin:0 0 10px'>It takes about <b>two minutes</b> and it&rsquo;s "
+        "<b>privacy-safe</b>: personal names, prompts, and raw file names are stripped — your work is "
+        "shared only as <b>de-identified descriptions</b> and aggregate stats, never who did what. You "
+        "review and exclude any of your sessions before anything posts.</p>"
+        "<p style='margin:10px 0 2px'><b>To join (one time):</b></p>"
+        f"{_steps_html(url)}"
+        f"<p style='margin:10px 0 0;color:#616161;font-size:12.5px'>Takes ~2 min · runs on demand or "
+        f"automatically <b>{html.escape(cadence)}</b> · any questions, just message me back!</p>"
+        "</div>")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--team-name", default="")
     ap.add_argument("--download-url", default="")
     ap.add_argument("--channel-link", default="")
     ap.add_argument("--cadence", default="every other Monday")
+    ap.add_argument("--recipient-name", default="",
+                    help="First name for a personalized 1:1 DM greeting; blank = generic.")
     ap.add_argument("--out-dir", default="working")
     a = ap.parse_args()
 
@@ -114,6 +141,7 @@ def main():
     subject = "Get started: add your Copilot Cowork impact to the team rollup" + (f" — {team}" if team else "")
     email = render_email(team, url, cadence)
     text = render_text(team, url, cadence)
+    dm = render_dm(team, url, cadence, a.recipient_name)
 
     if not url:
         print("NOTE: no --download-url given — the invite tells members to use the link the manager "
@@ -131,7 +159,8 @@ def main():
     for b, body, e in ((POST_B, post, POST_E),
                        (MAIL_S_B, subject, MAIL_S_E),
                        (MAIL_B, email, MAIL_E),
-                       (TEXT_B, text, TEXT_E)):
+                       (TEXT_B, text, TEXT_E),
+                       (DM_B, dm, DM_E)):
         print(b)
         print(body)
         print(e)

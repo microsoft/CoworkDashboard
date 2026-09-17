@@ -4,6 +4,10 @@ Shared capture fix with `cowork-roi-report` v42. This release repairs forward ca
 an opt-in historical backfill; it does not run a harvest, report, post, or schedule.
 
 ## Fixed
+- Privacy wording accuracy: the skill no longer states "file names never leave the machine." Because
+  the de-identified deliverable label is produced upstream (not a mechanical redaction), the docs now
+  say **raw file names are replaced with de-identified descriptive labels**. Updated in SKILL.md and
+  README (methodology and behavior unchanged).
 - `scripts/mine_session.py` discovers the newest current Copilot
   `/mnt/workspace/.copilot-state/*/session-state/*/events.jsonl`, while retaining both legacy
   transcript search patterns and the unchanged `--transcript`, `--out`, and `--log` options.
