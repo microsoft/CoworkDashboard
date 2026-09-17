@@ -77,11 +77,26 @@ def render_post(team, url, cadence):
 
 
 def render_email(team, url, cadence):
-    # Email reuses the post body with a short lead-in line.
-    lead = ("<p style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#242424'>"
-            "You&rsquo;re invited to add your Copilot Cowork impact to our team&rsquo;s "
-            "(private, de-identified) rollup. Here&rsquo;s what it is and how to start:</p>")
-    return lead + render_post(team, url, cadence)
+    # A short, friendly email sent WITH the member .zip attached — its own copy (not the channel post).
+    team_bit = f" our {html.escape(team)} team&rsquo;s" if team else " our team&rsquo;s"
+    steps = (
+        "<ol style='margin:6px 0 0 18px;padding:0'>"
+        "<li style='margin:4px 0'>Save this skill locally (the attached <code>.zip</code>).</li>"
+        "<li style='margin:4px 0'>Open a Copilot Cowork session, click the <b>+</b> icon, and upload "
+        "files and images.</li>"
+        "<li style='margin:4px 0'>Install this skill.</li>"
+        f"<li style='margin:4px 0'>Run this report — say &ldquo;<i>{html.escape(RUN_PHRASE)}</i>&rdquo;.</li>"
+        "</ol>")
+    return (
+        "<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#242424;"
+        "max-width:620px'>"
+        f"<p style='margin:0 0 10px'>We&rsquo;re exploring how <b>Copilot Cowork</b> is assisting"
+        f"{team_bit} workflow with a skill. Please attach this skill:</p>"
+        f"{steps}"
+        "<p style='margin:12px 0 0'>The skill gathers your <b>last 15 days</b> of Cowork activity and "
+        "lets you <b>exclude sessions before sharing</b>. Looking forward to seeing some aggregate stats "
+        "on how our team is benefiting from Cowork!</p>"
+        "</div>")
 
 
 def render_text(team, url, cadence):
