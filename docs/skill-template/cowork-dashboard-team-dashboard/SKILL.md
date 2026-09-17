@@ -88,7 +88,8 @@ a zip.** Members are already in this channel, so an inviting welcome posted here
    It prints an inviting **channel post** (HTML), an **email** subject+body, and a **plaintext** blurb
    between stable markers — each explains what the skill is, why it helps, the privacy promise, and the
    1-2-3 to get started, with the download link baked in.
-3. **Post it to the channel and pin it.** Show the manager the draft, then
+3. **Post it to the channel and pin it.** **Print the full rendered post for the manager to read first**
+   (not just "here's the draft"), get an OK, then
    `PostChannelMessage(team_id, channel_id, body=<the CHANNEL-POST html>)`; suggest they **pin** the
    message so newcomers always see how to join. This reaches every member without any manual sending.
 4. **Optionally email it too.** If the manager wants a nudge beyond the channel, email the channel
@@ -116,16 +117,26 @@ and it is separate from actually running a report; it's in addition to the in-ch
    the **Installer page** (step 3 there) — send **that file** with each DM. Also read `member_download_url`
    from `config/team_config.json` and include it if present (one-click install), but don't block on it:
    if it's blank, the attached `.zip` is enough — no need to ask for a link.
-5. **Render a personalized DM per recipient:**
+5. **Render the message per recipient.** Run `make_invite.py` with `--recipient-name "<first name>"`;
+   it prints every variant between stable markers. Take the one matching how you'll deliver:
+   - **Teams DM:** the body between `<<<MEMBER-INVITE-DM>>>` / `<<<END-DM>>>`.
+   - **Email:** the subject between `<<<MEMBER-INVITE-EMAIL-SUBJECT>>>` / `<<<END-EMAIL-SUBJECT>>>` and
+     the body between `<<<MEMBER-INVITE-EMAIL-BODY>>>` / `<<<END-EMAIL-BODY>>>`, with the member `.zip` attached.
    ```
    python scripts/make_invite.py --team-name "<team_name>" \
        --download-url "<member_download_url>" --cadence "<cadence>" \
        --recipient-name "<first name>" --out-dir working
    ```
-   Lift the body between `<<<MEMBER-INVITE-DM>>>` / `<<<END-DM>>>`.
-6. **Review before sending (always).** Show the manager the **final recipient list** and a **sample
-   rendered DM**, noting each is personalized by first name. Ask for explicit confirmation with
-   `AskUserQuestion` (**Send now** / **Edit list** / **Cancel**). Send nothing until they approve.
+6. **Preview the exact message, then confirm (always).** Before sending anything, **render each message
+   and print it in full in the chat so the manager reads exactly what will go out** — never ask for
+   approval with only a description, a filename, or "shown above". Display:
+   - the **final recipient list**;
+   - for **email** delivery: the **subject line** and the **full email body**, and name the attachment
+     (`cowork-dashboard-member.zip`);
+   - for **Teams DM** delivery: the **full DM body** (show one fully rendered example and note each is
+     personalized by first name).
+   Only after showing that, ask for explicit confirmation with `AskUserQuestion`
+   (**Send now** / **Edit list** / **Cancel**). Send nothing until they approve.
 7. **Send 1:1.** On approval, direct-message each recipient with the host's 1:1 Teams chat tool (e.g.
    `SendChatMessage` / `SendMessageToUser` / `SendFileToUser`, addressed by email), body = that person's
    rendered DM, and **attach the member `.zip`** the manager downloaded so install is one click. If no
