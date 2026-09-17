@@ -256,7 +256,7 @@
       btnId: "downloadBtn", statusId: "dlStatus", kind: "member",
       file: "downloads/cowork-dashboard-member.zip",
       fname: "cowork-dashboard-member.zip",
-      successMsg: "post this one into your dedicated channel and @tag your team."
+      successMsg: "keep this file — setup sends it to your team, or share it yourself."
     });
   }
 

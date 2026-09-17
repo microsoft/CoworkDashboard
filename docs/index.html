@@ -499,8 +499,11 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">3</span>
-      <h2>Install the manager skill — “Cowork Team Report - Team Dashboard Cowork Skill”</h2>
+      <h2>Download both skills, then install the manager skill</h2>
     </div>
+    <p>Download <strong>both</strong> skills below — each has your channel baked in. You install the
+       <strong>manager</strong> skill now; keep the <strong>member</strong> skill file handy, because during
+       setup the skill offers to send it to your team for you.</p>
     <div class="dl-block">
       <p class="dl-label"><span class="tag">You install</span> Manager skill —
          <strong>Cowork Team Report - Team Dashboard Cowork Skill</strong></p>
@@ -512,8 +515,21 @@
       <p class="dl-note baked hidden" id="bakeNoteMgr"></p>
       <div id="dlMgrStatus" class="status" role="status" aria-live="polite"></div>
     </div>
-    <p>Open <strong>Copilot Cowork</strong>, click the <strong>+</strong> icon to attach the manager
-       <span class="mono">.zip</span> you just downloaded (don't unzip it), then paste the command below.</p>
+    <div class="dl-block">
+      <p class="dl-label"><span class="tag">Setup sends this</span> Member skill —
+         <strong>Cowork Team Report - Team Member Cowork Skill</strong></p>
+      <div class="row">
+        <button id="downloadBtn" type="button">⬇ Download the member skill (.zip)</button>
+      </div>
+      <p class="dl-note" id="genNote">Keep this file — during setup the manager skill attaches it when it
+         sends the member skill to your teammates. Your channel is baked in, so they don't paste a link on
+         first run.</p>
+      <p class="dl-note baked hidden" id="bakeNote"></p>
+      <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
+    </div>
+    <p>Now open <strong>Copilot Cowork</strong>, click the <strong>+</strong> icon and attach the
+       <strong>manager</strong> <span class="mono">.zip</span> (not the member one; don't unzip it), then paste
+       the command below.</p>
     <div class="copybox">
       <textarea id="installMgrText" readonly>Install this manager skill and walk me through setup.</textarea>
       <button id="copyMgrBtn" class="secondary" type="button">Copy</button>
@@ -537,19 +553,8 @@
       <h2>Optional — hand out the member skill yourself</h2>
     </div>
     <p class="note">During setup (step 3) the manager skill offers to send the member skill to your teammates
-       for you — so most managers can skip this step. Use it only if you'd rather share the skill yourself, or
-       post it once for the whole channel.</p>
-    <div class="dl-block">
-      <p class="dl-label"><span class="tag">Optional</span> Team-member skill —
-         <strong>Cowork Team Report - Team Member Cowork Skill</strong></p>
-      <div class="row">
-        <button id="downloadBtn" type="button">⬇ Download the team-member skill (.zip)</button>
-      </div>
-      <p class="dl-note" id="genNote">This is the ready-to-use team-member skill. Each teammate is asked for
-         the Teams channel link the <strong>first time they run it</strong> — nothing to set up before then.</p>
-      <p class="dl-note baked hidden" id="bakeNote"></p>
-      <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
-    </div>
+       for you — so most managers can skip this step. Use it only if you'd rather share the member
+       <span class="mono">.zip</span> you downloaded in step 3 yourself, or post it once for the whole channel.</p>
     <p>Post that <span class="mono">.zip</span> into your dedicated channel and <strong>@tag every member</strong>
        so they each install it. Each person uploads the <span class="mono">.zip</span> in Copilot Cowork
        (don't unzip it) and asks it to install:</p>
