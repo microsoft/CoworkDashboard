@@ -17,6 +17,11 @@ Teams channel**:
   newsletter** (the dashboard, with the how-to-read guide built in) on a schedule the manager chooses. It only ever reads
   what teammates post — never anyone's files.
 
+<p align="center">
+  <a href="https://microsoft.github.io/CoworkDashboard/demo-report.html"><img src="images/team-dashboard-demo.gif?v=1" alt="Animated preview of the Cowork Team Dashboard — cycling through the Overview, Impact & Value, and How Cowork is used tabs (sample data)" width="760" /></a>
+</p>
+<p align="center"><sub><b>What the team gets:</b> one anonymized, team-level ROI dashboard — Overview, Impact &amp; Value and How Cowork is used tabs (sample data shown). <a href="https://microsoft.github.io/CoworkDashboard/demo-report.html">Open the live interactive demo ↗</a></sub></p>
+
 To make rollout effortless, this repository also hosts a small web page — the
 **[Installer Studio](https://aka.ms/CoworkDashboard)** — where a
 manager pastes their team's Teams channel link once and downloads **both** skills with that channel already
