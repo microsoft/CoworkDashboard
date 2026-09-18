@@ -444,7 +444,7 @@
       <li>Once it exists, grab its link for the next step: hover the channel name, click
           <strong>⋯ → Get link to channel</strong>, and click <strong>Copy</strong>.</li>
     </ol>
-    <p class="note privacy">🔒 <strong>Why a dedicated channel?</strong> A fresh, members-only channel keeps these
+    <p class="note privacy"><strong>Why a dedicated channel?</strong> A fresh, members-only channel keeps these
        reports private to the right people and gives the manager skill clean aggregation data — nothing else in
        the channel to wade through, so totals stay accurate.</p>
   </section>
@@ -452,10 +452,10 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">2</span>
-      <h2>Paste your team's Teams channel link</h2>
+      <h2>Add your team's Teams channel link</h2>
     </div>
     <label for="link">Teams channel link</label>
-    <input id="link" type="text" autocomplete="off" spellcheck="false"
+    <input id="link" type="text" autocomplete="off" spellcheck="false" maxlength="2048"
            placeholder="https://teams.microsoft.com/l/channel/19%3A…%40thread.tacv2/Cowork%20report?groupId=…" />
 
     <details class="help">
@@ -475,15 +475,14 @@
     </details>
 
     <div class="row">
-      <button id="parseBtn" type="button">Parse &amp; verify</button>
+      <button id="parseBtn" type="button">Build my install links</button>
     </div>
-    <p class="muted small">“Verify” checks the link right here in your browser — it pulls out the
-       <span class="mono">team_id</span>, <span class="mono">channel_id</span> and channel name, confirms the
+    <p class="muted small">This reads the link right here in your browser — it pulls out the
+       <span class="mono">team_id</span>, <span class="mono">channel_id</span> and channel name, checks the
        channel id is a real <span class="mono">…@thread.…</span> id and the team id is a valid GUID, and shows
-       them below for you to confirm. It does <strong>not</strong> contact Teams or sign you in; nothing is
-       sent anywhere. <strong>Do this before you download</strong> — the downloads below then <strong>bake this
-       channel straight into each skill zip</strong> (in your browser), so you and your teammates just upload
-       the zip with nothing to paste on first run.</p>
+       them below to confirm. It runs entirely on this page. <strong>Do this before you download</strong> — the
+       downloads below then <strong>bake this channel into each skill zip</strong> (in your browser), so you and
+       your teammates just upload the zip with nothing to paste on first run.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
 
     <div id="resolved" class="resolved" aria-live="polite">
@@ -496,8 +495,8 @@
     </div>
 
     <p class="note privacy">
-      🔒 Your channel link is processed <strong>entirely in your browser</strong>. It is never uploaded
-      to any server — this page makes zero third-party network calls.
+      This page runs <strong>entirely in your browser</strong> — it builds your skill links locally and
+      makes no network calls to third parties.
     </p>
   </section>
 
@@ -611,7 +610,7 @@
       <div>
         <p class="footer-brand">Cowork Team Report · Installer Studio</p>
         <p class="footer-sub">Runs entirely in your browser, built from the skill files in this repository.
-           Your Teams channel link is never uploaded — this page makes zero third-party network calls.</p>
+           It makes no network calls to third parties.</p>
       </div>
       <div>
         <p class="footer-heading">Get started</p>
@@ -629,7 +628,7 @@
 </footer>
 
 <script src="jszip.min.js"></script>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 <script>
   (function () {
     var btn = document.getElementById("themeToggle");

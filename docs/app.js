@@ -20,6 +20,24 @@
     var input = (raw || "").trim();
     if (!input) return { ok: false, error: "Paste your team's Teams channel link first." };
 
+    // --- Safety guards: only accept a real https Microsoft Teams channel link -------------------
+    // Reject oversized input, script/markup or non-web schemes, and anything that isn't an https
+    // link on a known Teams host. This runs before any decoding/baking, so nothing dangerous ever
+    // reaches the readout or gets written into a downloaded skill config.
+    if (input.length > 2048) {
+      return { ok: false, error: "That link is too long — paste just the channel link (⋯ → Copy link in Teams)." };
+    }
+    if (/[<>]/.test(input) || /(?:javascript|data|vbscript|file)\s*:/i.test(input)) {
+      return { ok: false, error: "That doesn't look like a Teams channel link. Paste the https link from the channel's ⋯ → Copy link." };
+    }
+    if (!/https?:\/\//i.test(input) && !/https?%3a%2f%2f/i.test(input)) {
+      return { ok: false, error: "Paste the full https:// channel link (⋯ → Copy link in Teams)." };
+    }
+    var TEAMS_HOST_RE = /(?:\/\/|%2f%2f)(?:[a-z0-9-]+\.)*(?:teams\.microsoft\.(?:com|us)|teams\.live\.com|teams\.cloud\.microsoft)\b/i;
+    if (!TEAMS_HOST_RE.test(input)) {
+      return { ok: false, error: "That isn't a Microsoft Teams channel link (expected a teams.microsoft.com URL). Use the channel's ⋯ → Copy link." };
+    }
+
     // URL-decode the link (%3A -> :, %40 -> @, ...). Fall back to targeted replacements if the
     // whole-string decode throws on a stray percent sequence.
     var decoded;
@@ -62,7 +80,12 @@
     if (idx >= 0 && idx + 1 < segs.length) {
       var cand = segs[idx + 1];
       try { cand = decodeURIComponent(cand); } catch (e) { /* keep raw */ }
-      if (!/^\d+$/.test(cand)) channelName = cand.trim();
+      if (!/^\d+$/.test(cand)) {
+        // Defense in depth: the name is rendered with textContent and JSON-encoded before it is
+        // written into a zip, but still strip control/markup characters and cap the length so a
+        // weird path segment can never carry anything unexpected downstream.
+        channelName = cand.replace(/[\u0000-\u001F\u007F<>"']/g, "").trim().slice(0, 120);
+      }
     }
 
     return { ok: true, channel_id: channelId, team_id: teamId, channel_name: channelName, link: input };
@@ -225,7 +248,7 @@
       onParse(); // reflect it in the UI + readout
       return resolved;
     }
-    setStatus(statusEl, "✕ Paste your Teams channel link above and click “Parse & verify” first — it gets baked into the download.", "err");
+    setStatus(statusEl, "✕ Add your Teams channel link above and click “Build my install links” first — it gets baked into the download.", "err");
     var linkEl = $("link");
     if (linkEl) linkEl.focus();
     return null;
