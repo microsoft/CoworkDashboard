@@ -18,8 +18,7 @@ output/
 outputs/
 *.html
 !docs/index.html
-!docs/demo-report.html
-!docs/start/index.html
+!docs/demo-report.html
 
 # Per-run and per-user artifacts that must never be committed
 working/
