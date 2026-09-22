@@ -22,6 +22,14 @@ Teams channel**:
 </p>
 <p align="center"><sub><b>What the team gets:</b> one anonymized, team-level ROI dashboard — Overview, Impact &amp; Value and How Cowork is used tabs (sample data shown). <a href="https://microsoft.github.io/CoworkDashboard/demo-report.html?v=2">Open the live interactive demo ↗</a></sub></p>
 
+## 🎬 Watch First
+
+Plays here in the page — no download. A 2-minute overview of the Team Cowork Skill — how the member skill and the team-lead skill work together, what the dashboard shows, and how to roll it out for your team.
+
+https://github.com/user-attachments/assets/a288ca39-9be8-4507-916f-939a902968eb
+
+▶️ **[Watch the 2-minute overview](media/Team-Cowork-Skill-Overview.mp4)** &nbsp;·&nbsp; captions: [`.srt`](media/Team-Cowork-Skill-Overview.srt)
+
 To make rollout effortless, this repository also hosts a small web page — the
 **[Installer Studio](https://aka.ms/CoworkDashboard)** — where a
 manager pastes their team's Teams channel link once and downloads **both** skills with that channel already
