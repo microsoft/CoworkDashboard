@@ -211,26 +211,14 @@ own.
 That's the Team Cowork
 
 54
-00:01:46,556 --> 00:01:49,556
+00:01:46,556 --> 00:01:49,372
 Skill — a private, aggregated way to show
 
 55
-00:01:49,569 --> 00:01:51,425
+00:01:49,385 --> 00:01:51,280
 the real value your team creates with
 
 56
-00:01:51,438 --> 00:01:52,188
-Copilot.
-
-57
-00:01:52,609 --> 00:01:53,648
-Set it up once,
-
-58
-00:01:53,675 --> 00:01:55,543
-and the report keeps arriving on its
-
-59
-00:01:55,556 --> 00:01:55,964
-own.
+00:01:51,293 --> 00:01:51,925
+Cowork.
 
