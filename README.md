@@ -35,11 +35,11 @@ process.
 
 ## 🎬 Watch First
 
-Plays here in the page — no download. A 2-minute overview of the Team Cowork Skill — how the member skill and the team-lead skill work together, what the dashboard shows, and how to roll it out for your team.
+Plays here in the page — no download. A step-by-step setup walkthrough: how the team leader stands up the Cowork Team Report, how teammates run the member skill, and what the Team Dashboard shows once it's running.
 
-https://github.com/user-attachments/assets/b8996457-31d0-4fc4-8487-0b6e2afc0710
+https://github.com/user-attachments/assets/f020831d-cb38-423f-b647-ce4415ae7f44
 
-▶️ **[Watch the 2-minute overview](media/Team-Cowork-Skill-Overview.mp4)** &nbsp;·&nbsp; captions: [`.srt`](media/Team-Cowork-Skill-Overview.srt)
+▶️ **[Watch the setup walkthrough](media/Team-Cowork-Skill-Overview.mp4)** &nbsp;·&nbsp; captions: [`.srt`](media/Team-Cowork-Skill-Overview.srt)
 
 ## What you'll need first
 
