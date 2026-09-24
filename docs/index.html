@@ -231,13 +231,16 @@
   }
 
   label { display: block; font-weight: 600; margin: 0 0 8px; color: var(--text); font-size: .95rem; }
-  input[type=text] {
+  input[type=text],
+  input[type=email] {
     width: 100%; padding: 13px 15px; font-size: .98rem; color: var(--text);
     background: var(--field); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: var(--mono);
     transition: border-color .15s, box-shadow .15s;
   }
-  input[type=text]::placeholder { color: color-mix(in srgb, var(--text-muted) 70%, var(--bg)); }
-  input[type=text]:focus {
+  input[type=text]::placeholder,
+  input[type=email]::placeholder { color: color-mix(in srgb, var(--text-muted) 70%, var(--bg)); }
+  input[type=text]:focus,
+  input[type=email]:focus {
     outline: none; border-color: var(--accent);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
   }
