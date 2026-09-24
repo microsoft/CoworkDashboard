@@ -5,7 +5,9 @@ de-identified stats each teammate emails to a shared Teams channel and renders *
 anonymized HTML dashboard** the manager can open, re-price with a live hourly-rate control, and print.
 It then **emails the channel members** a high-level summary with the dashboard attached. The guide for
 reading it is **built into the dashboard** — a **How to read** tab plus a clickable **"?"** on every
-section — so there's no separate file to open. On first run it **asks for the Teams channel link** and
+section — so there's no separate file to open. The bundled renderer produces four tabs:
+**Overview**, **Impact & Value**, **How Cowork is used**, and **How to read + Glossary**. On first run
+it **asks for the Teams channel link** and
 remembers it; every run reads the **latest 15 days** of messages, keeping the latest report per person.
 
 > **Team-safe by design.** Individual identity, raw filenames, prompts, and country are not revealed.
@@ -68,8 +70,25 @@ teammates ──(cowork-dashboard-member email)──▶  Teams channel  ──(
           --config config/team_config.json --out working/team_data.json --window-days 15
    python scripts/build_outputs.py --in working/team_data.json --config config/team_config.json
    ```
-3. Open `output/cowork-team-roi-dashboard.html`; the skill emails it to the channel members. (The
+   This command uses the bundled renderer and runs `verify_dashboard.py`. It fails if any required
+   aggregate visual, control, tab, or privacy check is missing.
+3. **Verify before email.** When browser tools are available, open the generated HTML, visit all four
+   tabs, exercise the controls, expand a process drill-down, and verify the waterfall, category bars,
+   stacked mix, and time/value toggle. Use screenshot verification when available; disclose when it
+   is unavailable. A failed check blocks delivery.
+4. Open `output/cowork-team-roi-dashboard.html`; only after verification passes does the skill email
+   it to the channel members. (The
    how-to-read guide is inside the dashboard — open the **How to read** tab or click any **"?"**.)
+
+## Mandatory dashboard contract
+
+- Build only with `scripts/build_outputs.py`; never substitute a simplified layout.
+- Privacy cleanup removes identifying data, not aggregate chart inputs or visuals.
+- Required visuals: Cowork-fit waterfall, category bars, stacked category mix, expandable
+  business-process drill-downs, and the time/value toggle.
+- `scripts/verify_dashboard.py` must pass before email delivery.
+- If any required visual or control is missing or broken, fix and rebuild instead of sending an
+  incomplete dashboard or calling the run complete.
 
 ### Try it offline (no Teams needed)
 
@@ -125,7 +144,7 @@ posted, not that Cowork missed it. The "by format" table on *Impact & Value* sta
 ## Requirements
 
 - Python 3. The whole default pipeline (`resolve_channel.py`, `parse_posts.py`, `build_dashboard.py`,
-  `build_outputs.py`) is **standard library only** — the how-to-read guide is rendered inside the
+  `verify_dashboard.py`, `build_outputs.py`) is **standard library only** — the how-to-read guide is rendered inside the
   dashboard, so no extra dependency is needed. The **legacy** `build_guide_pdf.py` uses **reportlab**
   (pre-installed in the Copilot Cowork container) and only runs if you pass `--with-pdf`.
 - Runs inside Microsoft Copilot Cowork (Teams + email tools provided by the host). The scripts

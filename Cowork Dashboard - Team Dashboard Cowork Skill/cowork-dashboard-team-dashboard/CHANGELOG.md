@@ -3,6 +3,26 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.11.0] — 2026-09-24
+
+Makes dashboard completeness verification a mandatory pre-email gate and aligns the documentation
+with the renderer's four-tab template.
+
+### Added
+- `scripts/verify_dashboard.py` checks the four tabs, Cowork-fit waterfall, category bars, stacked
+  category mix, expandable process drill-downs, time/value toggle, core controls, unresolved
+  placeholders, and identifying fields in the embedded data.
+- `build_outputs.py` runs the verifier automatically and fails the build when the dashboard contract
+  is incomplete.
+- The manager workflow now requires a rendered browser/control check and screenshot verification
+  when tooling is available, with explicit disclosure when screenshot verification is unavailable.
+
+### Changed
+- Email delivery is blocked until structural and available rendered checks pass.
+- Privacy cleanup explicitly preserves aggregate chart inputs and visuals while removing identifying
+  fields.
+- Documentation now describes the actual four tabs and removes the nonexistent Trends tab.
+
 ## [1.10.0] — 2026-09-17
 
 Adds a 1:1 onboarding path and tightens the invite's privacy wording. No dashboard-render or

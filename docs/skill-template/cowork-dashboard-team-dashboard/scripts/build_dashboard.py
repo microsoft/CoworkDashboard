@@ -14,8 +14,9 @@ Tabs (each small, one clear purpose):
                       deliverables by FILE FORMAT.
   How Cowork is used— business process accordion: each row EXPANDS to its deliverable formats + skills
                       (skills nest in a sub-expand when long); category mix (k-anon), analyzed->produced.
-  Disclaimer        — "modeled tool-impact, not performance" note lives in the blue header (small print).
-  Glossary & method — definitions, the value model, privacy rule, sources.
+  How to read       — definitions, the value model, privacy rule, and sources.
+
+The "modeled tool-impact, not performance" disclaimer lives in the blue header; it is not a tab.
 
 Every $ figure = hours x rate, computed live in the browser (live rate control).
 Usage: python build_dashboard.py --in working/team_data.json --out output/cowork-team-roi-dashboard.html

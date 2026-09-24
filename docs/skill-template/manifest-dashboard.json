@@ -13,5 +13,6 @@
   "cowork-dashboard-team-dashboard/scripts/resolve_channel.py",
   "cowork-dashboard-team-dashboard/scripts/roles_taxonomy.json",
   "cowork-dashboard-team-dashboard/scripts/skill_aliases.json",
-  "cowork-dashboard-team-dashboard/scripts/skills_vocabulary.json"
+  "cowork-dashboard-team-dashboard/scripts/skills_vocabulary.json",
+  "cowork-dashboard-team-dashboard/scripts/verify_dashboard.py"
 ]

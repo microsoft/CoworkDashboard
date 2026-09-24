@@ -1,7 +1,7 @@
 ---
 name: cowork-dashboard-team-dashboard
 description: |
-  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates email (via the Cowork Team Report Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (five tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest report per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
+  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates email (via the Cowork Team Report Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (four tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest report per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
   Use when the user asks to "build the team Cowork Team Report", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Team Report", "email the team dashboard", to "walk me through setup" / "set up the skill" right after installing it, or to "send / share the member skill with my team" / "invite my team" / set up / refresh the rollup.
   Do NOT use for: the personal report (cowork-roi-report), a member's own post (cowork-dashboard-member), the member-side aggregated post (cowork-roi-report-aggregated), org-wide/large-team aggregation, GitHub Copilot reports, or single-meeting summaries.
 cowork:
@@ -94,7 +94,7 @@ a zip.** Members are already in this channel, so an inviting welcome posted here
    `PostChannelMessage(team_id, channel_id, body=<the CHANNEL-POST html>)`; suggest they **pin** the
    message so newcomers always see how to join. This reaches every member without any manual sending.
 4. **Optionally email it too.** If the manager wants a nudge beyond the channel, email the channel
-   members the invite body (same recipients rule as step 5) — no attachment needed.
+   members the invite body (same recipients rule as workflow step 6) — no attachment needed.
 Do this **once**; on later runs skip it unless the manager explicitly asks to re-invite.
 
 ### Right after install — offer to send the member skill to teammates 1:1 (do this first)
@@ -184,18 +184,28 @@ python scripts/parse_posts.py --in working/raw_messages.json --config config/tea
   (`skills_vocabulary.json` + `skill_aliases.json`);
 - writes `working/team_data.json` (meta + one snapshot + members[] with role|null + metrics).
 
-### 4. Build the dashboard (guide built in)
+Privacy cleanup must remove identifying fields, **not aggregate metrics or visual inputs**. Do not
+delete categories, processes, Cowork-fit grades, deliverable rollups, Role groups that meet the
+k-threshold, or time/value measures to make the data "safer." The required aggregate charts are
+part of the output contract; preserve them while removing names, email addresses, prompts, raw file
+names, country, and other identifying fields.
+
+### 4. Build the dashboard with the bundled renderer (guide built in)
 ```
 python scripts/build_outputs.py --in working/team_data.json --config config/team_config.json
 ```
+**Always use this bundled build path. Never hand-author, simplify, replace, or summarize the
+dashboard layout.** `build_outputs.py` invokes `build_dashboard.py` and then the mandatory
+`verify_dashboard.py` structural gate. A failed build or verification is not a usable deliverable.
+
 Renders the single deliverable:
-- **`output/cowork-team-roi-dashboard.html`** — self-contained HTML (no external assets). Five small
+- **`output/cowork-team-roi-dashboard.html`** — self-contained HTML (no external assets). Four small
   tabs: **Overview** (auto-insights + KPI band) · **Impact & Value** (pillars, categories with $ and
   **contributor reach** per category, roles, deliverables by format) · **How Cowork is used**
   (business-process accordion — each process expands to its deliverables, with **type-only items
-  collapsed per format** e.g. "HTML · 5 deliverables" — category mix, analyzed → produced) ·
-  **Trends** (minimal fortnight-over-fortnight line) · **How to read** (the full in-dashboard guide:
-  every KPI, the five tabs, the two controls, how task categories are derived, the privacy model, and
+  collapsed per format** e.g. "HTML · 5 deliverables" — Cowork-fit waterfall and category mix) ·
+  **How to read** (the full in-dashboard guide:
+  every KPI, the four tabs, the controls, how task categories are derived, the privacy model, and
   the methodology). Every section title also carries a clickable **"?"** popover. Value = hours ×
   rate, recomputed live by a rate control.
 
@@ -205,10 +215,37 @@ dashboard, so there is nothing separate to notice or toggle to. `build_outputs.p
 but **off by default**; pass `--with-pdf` to `build_outputs.py` only if someone explicitly wants a
 printable copy.
 
-### 5. Email the channel members (summary + dashboard attachment) — a separate, expected approval
+### 5. Verify the rendered dashboard — mandatory delivery gate
+First run the bundled structural verifier explicitly (the build already runs it once):
+```
+python scripts/verify_dashboard.py --in output/cowork-team-roi-dashboard.html
+```
+It must confirm all **four tabs**, de-identified embedded data, controls, and every required
+aggregate visual:
+- Cowork-fit **waterfall**.
+- **Category bars**.
+- **Stacked category mix**.
+- Expandable **business-process drill-downs**.
+- Working **time/value toggle** plus period, hourly-rate, recapture-rate, reset, and print controls.
+
+Then perform a rendered browser check when browser/page tools are available:
+1. Open `output/cowork-team-roi-dashboard.html` using the generated file, not a substitute preview.
+2. Visit all four tabs and confirm each required chart is visible.
+3. Expand at least one business-process row.
+4. Exercise the period/rate/recapture controls, the time/value toggle, Reset, and tab navigation.
+5. Use screenshot verification when available.
+
+If browser or screenshot tooling is unavailable, **say so clearly** and report that only the bundled
+structural verifier ran. Never imply that rendered screenshots were checked when they were not.
+
+**Block delivery if any required visual or control is missing, empty because aggregate inputs were
+incorrectly removed, or broken.** Fix the data/rendering issue, rebuild with the bundled renderer,
+and repeat verification. Do not email the dashboard or call the run complete until this gate passes.
+
+### 6. Email the channel members (summary + dashboard attachment) — only after verification
 The email send is deliberately **not** bundled into step 4: building the file is one approval, and
-sending it to people is a second, distinct approval. If `email_on_run` is true (default) and the
-user hasn't said "don't send":
+sending it to people is a second, distinct approval. Do not begin this step until step 5 passes. If
+`email_on_run` is true (default) and the user hasn't said "don't send":
 - **Recipients = the channel members.** `ListChannelMembers(team_id, channel_id)` → resolve each to an
   email/UPN; de-duplicate; include the runner. (A standard channel returns the team members — that's
   the intended audience.) Never add anyone outside the channel.
@@ -227,9 +264,9 @@ user hasn't said "don't send":
   In interactive runs the platform's approval dialog is the confirmation; scheduled runs send
   automatically. The "Powered by Copilot Cowork" footer is appended by the host — don't add your own.
 
-### 6. Verify + deliver
-`Glob output/cowork-team-roi-dashboard.html` to confirm it exists, then tell the user it's saved and
-the email went to the channel members.
+### 7. Report delivery
+Only after the verification gate and email action succeed, tell the user the verified dashboard was
+saved and the email went to the channel members.
 Optionally show a **3-line** highlight (time saved, value, top process) — aggregate only.
 
 **Keep the delivery message short. Do NOT prepend, attach, or post a separate "Coverage and
@@ -240,7 +277,7 @@ context line, and the **How to read** tab. The `[parse_posts]` console lines (me
 kept, contributor counts) are **diagnostics for you only** — never surface them or expand them into a
 coverage write-up.
 
-### 7. (Optional) automate — run 1–2 days after the member fortnight
+### 8. (Optional) automate — run 1–2 days after the member fortnight
 If the user asks, `SetupScheduledPrompt` with a self-contained description: *"Read the last 15 days of
 Cowork Team Report posts in the team channel, aggregate them into the anonymized team dashboard (the how-to-read
 guide is built into it), save it to my files, and email it to the channel members."*
@@ -250,7 +287,8 @@ cycle, so schedule the manager rollup to run **1–2 days later — on Wednesday
 teammates Monday and Tuesday to send before the
 rollup reads the channel. Use frequency **Week**, `interval = cadence_days / 7` (= **2** → every other
 Wednesday), `weekDays=["Wednesday"]`, `hours=["9"]`, name "Cowork Team Report team dashboard". Scheduled runs
-build the dashboard and email the channel members automatically (no interactive approval).
+must use the bundled renderer, pass `verify_dashboard.py`, and only then email the channel members
+automatically (no interactive approval). A verification failure blocks the scheduled email.
 
 ## Privacy (hard rules)
 - **Never show anything at an individual level.** Members are counts + a number only.
@@ -285,6 +323,14 @@ aggregation breaks — **change them in both bundles together**:
   **Member-skill change** — flag it before promising named deliverables.
 
 ## Guardrails
+- **Bundled renderer is mandatory.** Always build with `scripts/build_outputs.py`; never substitute a
+  simplified layout or hand-authored summary.
+- **Privacy cleanup preserves aggregate visuals.** Remove identifying data, not chart inputs or
+  aggregate charts.
+- **Required visuals are a delivery contract.** Waterfall, category bars, stacked mix,
+  process drill-downs, and the time/value toggle must all pass verification before email.
+- **No verification, no delivery.** Missing or broken required visuals block email and completion;
+  fix, rebuild, and re-test instead.
 - **No fabricated data.** Every number traces to a post via the pipeline. Empty sections are omitted;
   an empty 15-day window yields no dashboard, not a made-up one.
 - **No hand math.** `parse_posts.py` totals; `build_dashboard.py` prices at the live rate; the email
@@ -305,6 +351,8 @@ aggregation breaks — **change them in both bundles together**:
 - `scripts/make_invite.py` — render the inviting member "get started" message (channel post + email + plaintext + a personalized 1:1 DM via `--recipient-name`) with the download link baked in, so members are onboarded in-channel or direct-messaged 1:1 instead of hand-delivered a bare zip (stdlib only).
 - `scripts/parse_posts.py` — channel posts → anonymized `team_data.json` (stdlib only; 15-day window, latest-per-sender, groups processes, canonicalizes skills, k-anon-ready).
 - `scripts/build_dashboard.py` — `team_data.json` → self-contained HTML dashboard with the guide built in (stdlib only): the **How to read** tab, per-section **"?"** helpers, per-category **contributor reach** (with a `<k` privacy floor), and **type-only deliverables collapsed per format**.
+- `scripts/verify_dashboard.py` — mandatory structural/privacy gate for the four tabs, required
+  aggregate visuals, controls, unresolved placeholders, and identifying fields in embedded data.
 - `scripts/build_guide_pdf.py` — **legacy** one-page landscape interpretation PDF (uses `reportlab`). Retained but off by default; the guide now lives inside the dashboard.
 - `scripts/build_outputs.py` — the build step; renders the dashboard (guide built in). Pass `--with-pdf` to also regenerate the legacy PDF.
 - `scripts/process_groups.json`, `scripts/skills_vocabulary.json`, `scripts/roles_taxonomy.json` — **mirrors** of the Member bundle (shared contract).

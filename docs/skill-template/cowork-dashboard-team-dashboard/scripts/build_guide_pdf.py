@@ -3,7 +3,7 @@
 build_guide_pdf.py — render the one-page, LANDSCAPE "How to read your Team Cowork Team Report"
 interpretation guide that is emailed alongside the HTML dashboard.
 
-A visual, plain-language legend: every KPI, the five tabs, the two controls, the privacy model,
+A visual, plain-language legend: every KPI, the four tabs, the interactive controls, the privacy model,
 and the methodology — on a single landscape page. Team name + hourly rate are pulled from
 team_data.json when available (falls back to the config, then to sensible defaults), so the guide
 always matches the dashboard it ships with.
@@ -105,15 +105,14 @@ def build(out, team, rate):
     c.setFillColor(BLUE); c.circle(48, y2 + 3, 8, stroke=0, fill=1)
     c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 10); c.drawCentredString(48, y2, "2")
     c.setFillColor(INK); c.setFont("Helvetica-Bold", 12)
-    c.drawString(62, y2 - 2, "The five tabs  —  where to look for what")
+    c.drawString(62, y2 - 2, "The four tabs  —  where to look for what")
     tabs = [
         ("Overview",           "Auto-insights + the KPI band. Start here."),
-        ("Impact & Value",     "Value by pillar & task category ($), roles, deliverables."),
-        ("How Cowork is used", "Top business processes, skills, analyzed -> produced."),
-        ("Trends",             "Fortnight-over-fortnight movement over time."),
-        ("Glossary & method",  "Plain-language definitions + the methodology."),
+        ("Impact & Value",     "Task categories, roles and outputs by format."),
+        ("How Cowork is used", "Processes, Cowork fit, and privacy-safe category mix."),
+        ("How to read",        "Plain-language definitions + the methodology."),
     ]
-    tcols, tgap = 5, 10
+    tcols, tgap = 4, 10
     ttw = (W - 80 - tgap * (tcols - 1)) / tcols
     tth, ty2 = 46, y2 - 16
     for i, (t, b) in enumerate(tabs):
@@ -138,16 +137,19 @@ def build(out, team, rate):
     yy = para(lx + 14, 44 + panel_h - 36,
               "Period selector  —  pick the reporting window; every number on the page updates to match.",
               "Helvetica", 8.6, INK, half - 28, 11) - 3
+    yy = para(lx + 14, yy,
+              "Hourly-rate box  —  change $/hr and all value figures recompute instantly "
+              "(default $%d/hr)." % rate, "Helvetica", 8.6, INK, half - 28, 11) - 3
     para(lx + 14, yy,
-         "Hourly-rate box  —  change $/hr and all value / cost-reduction figures recompute instantly "
-         "(default $%d/hr)." % rate, "Helvetica", 8.6, INK, half - 28, 11)
+         "Recapture-rate box and Assisted Time / Value toggle  —  re-price the dashboard or switch "
+         "its impact lens; Reset restores defaults.", "Helvetica", 8.6, INK, half - 28, 11)
     rx = 40 + half + 14
     c.setFillColor(HexColor("#F1F7F1")); c.setStrokeColor(HexColor("#CDE6D3")); c.setLineWidth(1)
     c.roundRect(rx, 44, half, panel_h, 7, stroke=1, fill=1)
     c.setFillColor(GREEN); c.setFont("Helvetica-Bold", 10.5)
     c.drawString(rx + 12, 44 + panel_h - 18, "4   Privacy & anonymity")
     yy = para(rx + 14, 44 + panel_h - 36,
-              "Fully aggregated — no names, file names or prompts ever appear; numbers only.",
+              "Fully aggregated — no names, raw file names or prompts; de-identified descriptions only.",
               "Helvetica", 8.6, INK, half - 28, 11) - 3
     para(rx + 14, yy,
          "A Role is shown only when at least 3 people share it (k-anonymity). Small teams show one "

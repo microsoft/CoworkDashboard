@@ -12,7 +12,9 @@ The legacy one-page PDF guide (build_guide_pdf.py) is still available for anyone
 printable copy: pass --with-pdf to regenerate it. It is NOT part of the default flow.
 
 The EMAIL send that follows (SendEmailWithAttachments to the channel members) is a SEPARATE,
-expected approval — it is intentionally not bundled here.
+expected approval — it is intentionally not bundled here. Before returning success, this build runs
+verify_dashboard.py and fails if the four-tab layout, required aggregate visuals, controls, or
+de-identified data contract are missing.
 
 Usage:
   python build_outputs.py --in working/team_data.json \
@@ -26,6 +28,7 @@ from types import SimpleNamespace
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import build_dashboard          # noqa: E402
+import verify_dashboard          # noqa: E402
 
 
 def main(a):
@@ -34,6 +37,7 @@ def main(a):
         os.makedirs(d, exist_ok=True)
     # HTML dashboard — the interpretation guide is built into it (the "How to read" tab).
     build_dashboard.main(SimpleNamespace(inp=a.inp, out=a.out_html))
+    verify_dashboard.main(SimpleNamespace(inp=a.out_html))
     if getattr(a, "with_pdf", False):
         import build_guide_pdf   # optional (reportlab) — only imported when explicitly requested
         dp = os.path.dirname(a.out_pdf)
