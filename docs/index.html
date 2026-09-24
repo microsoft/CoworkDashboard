@@ -416,7 +416,7 @@
     <ul class="benefits">
       <li><strong>Each teammate runs the “member” skill.</strong> It looks at their own Copilot Cowork work
           and emails a private, plain-language summary — hours saved, the dollar value of that time, the kinds
-          of work, and what they produced — to one shared Teams channel email address.</li>
+          of work, and what they produced — to the Teams channel's email address.</li>
       <li><strong>You run the “manager” skill.</strong> It reads that channel, combines everyone's summaries
           into a single anonymized dashboard, and <strong>emails your team a tidy newsletter</strong> (an HTML
           dashboard with the how-to-read guide built in) on the schedule you choose.</li>
@@ -433,22 +433,19 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">1</span>
-      <h2>Create a dedicated Teams channel for this rollup</h2>
+      <h2>Create a private, dedicated Teams channel for this rollup</h2>
     </div>
     <p class="lead">Before anything else, create a <strong>brand-new, dedicated Teams channel</strong> just for
-       these Cowork ROI reports, and add <strong>only</strong> the members you want included (they'll need
-       access to email their summaries here).</p>
+       these Cowork ROI reports.</p>
     <ol class="steps">
       <li>In <strong>Microsoft Teams</strong>, pick a team and choose <strong>⋯ More options → Add channel</strong>
           (or <strong>Manage team → Add channel</strong>). Give it a clear name like
-          <span class="mono">Cowork report - {team}</span>.</li>
-      <li>Add <strong>only the members you want in this rollup</strong> — everyone you add can see the reports here,
-          so keep it to the people whose Copilot Cowork work should be counted.</li>
-      <li>Once it exists, grab both values for the next step. From the channel's <strong>⋯</strong> menu,
-          use <strong>Get link to channel</strong> and <strong>Get email address</strong>. In the channel's
-          email security settings, allow the team members who will send reports.</li>
+          <span class="mono">Cowork report - {team}</span>. Be sure to select <strong>Private</strong>
+          when setting the <strong>Channel type</strong>.</li>
+      <li>Add <strong>only the leader(s)</strong> who should have access to each team member's responses.
+          To maintain privacy, only add the individual(s) who will be running the manager skill.</li>
     </ol>
-    <p class="note privacy"><strong>Why a dedicated channel?</strong> A fresh, members-only channel keeps these
+    <p class="note privacy"><strong>Why a dedicated channel?</strong> A fresh, leader-only channel keeps these
        reports private to the right people and gives the manager skill clean aggregation data — nothing else in
        the channel to wade through, so totals stay accurate.</p>
   </section>
@@ -456,8 +453,11 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">2</span>
-      <h2>Add your team's Teams channel link and email address</h2>
+      <h2>Add your Teams channel link and email address</h2>
     </div>
+    <ol class="steps">
+      <li>From the channel's <strong>⋯</strong> menu, use <strong>Get link to channel</strong>.</li>
+    </ol>
     <label for="link">Teams channel link</label>
     <input id="link" type="text" autocomplete="off" spellcheck="false" maxlength="2048"
            placeholder="https://teams.microsoft.com/l/channel/19%3A…%40thread.tacv2/Cowork%20report?groupId=…" />
@@ -478,6 +478,10 @@
         <span class="mono">groupId</span> — use <strong>Copy link</strong> so it does.</p>
     </details>
 
+    <ol class="steps" start="2">
+      <li>From the channel's <strong>⋯</strong> menu, use <strong>Get email address</strong>. Open
+          'Advanced Settings' and select the first option (Anyone can send emails to this address).</li>
+    </ol>
     <label for="channelEmail">Teams channel email address</label>
     <input id="channelEmail" type="email" autocomplete="off" spellcheck="false" maxlength="320"
            placeholder="your-channel-name@amer.teams.ms" />
@@ -487,7 +491,7 @@
       <ol class="steps">
         <li>Open the same dedicated Teams channel and select <strong>⋯ More options</strong>.</li>
         <li>Choose <strong>Get email address</strong>, then copy the address into the box above.</li>
-        <li>Open the email security settings and allow the team members who will run the member skill.</li>
+        <li>Open the email Advanced Settings and allow anyone to send emails to this address.</li>
       </ol>
       <p class="muted">The member skill sends each reviewed report through Outlook to this address.
         It does not call the Teams posting API.</p>
