@@ -1,224 +1,772 @@
 1
-00:00:00,092 --> 00:00:02,263
-If your team is using Copilot Cowork,
+00:00:00,000 --> 00:00:00,451
+Welcome.
 
 2
-00:00:02,684 --> 00:00:04,223
-this shows the return you're getting —
+00:00:00,877 --> 00:00:01,648
+In this guide,
 
 3
-00:00:04,736 --> 00:00:06,381
-the hours saved and the value of
+00:00:01,675 --> 00:00:02,805
+we'll set up the Cowork
 
 4
-00:00:06,394 --> 00:00:08,907
-that time — as one clear report in
+00:00:02,818 --> 00:00:04,161
+Team Report from start to
 
 5
-00:00:08,921 --> 00:00:10,118
-everyone's inbox.
+00:00:04,174 --> 00:00:04,760
+finish.
 
 6
-00:00:10,539 --> 00:00:12,223
-It's a pair of Cowork skills that
+00:00:05,185 --> 00:00:06,954
+It's a two-part Copilot Cowork
 
 7
-00:00:12,236 --> 00:00:13,842
-share a single Teams channel.
+00:00:06,967 --> 00:00:08,390
+solution that shows your team
 
 8
-00:00:14,958 --> 00:00:16,129
-Here's how it works.
+00:00:08,403 --> 00:00:09,613
+the return they're getting from
 
 9
-00:00:16,551 --> 00:00:18,603
-Every teammate runs the member skill on
+00:00:09,627 --> 00:00:11,528
+Cowork — the hours saved and
 
 10
-00:00:18,616 --> 00:00:19,551
-their own work.
+00:00:11,542 --> 00:00:12,765
+the dollar value of that
 
 11
-00:00:19,972 --> 00:00:21,906
-It turns their Cowork activity into a
+00:00:12,778 --> 00:00:14,573
+time — and delivers it as
 
 12
-00:00:21,919 --> 00:00:23,801
-clear summary — hours saved,
+00:00:14,587 --> 00:00:16,076
+a polished report that lands
 
 13
-00:00:23,827 --> 00:00:25,064
-the value of that time,
+00:00:16,089 --> 00:00:17,446
+in everyone's inbox.
 
 14
-00:00:25,090 --> 00:00:26,248
-and what they produced.
+00:00:17,858 --> 00:00:19,081
+Let's take it one step
 
 15
-00:00:26,669 --> 00:00:28,853
-Each person reviews their summary first,
+00:00:19,095 --> 00:00:19,853
+at a time.
 
 16
-00:00:29,314 --> 00:00:31,366
-so they can leave out anything sensitive
+00:00:21,100 --> 00:00:22,163
+Here's how it works.
 
 17
-00:00:31,380 --> 00:00:32,143
-or personal.
+00:00:22,588 --> 00:00:23,838
+The team leader sets this
 
 18
-00:00:32,564 --> 00:00:34,327
-Then it posts to one shared Teams
+00:00:23,852 --> 00:00:25,966
+up once — teammates don't do
 
 19
-00:00:34,340 --> 00:00:36,380
-channel as an aggregated summary.
+00:00:25,979 --> 00:00:27,017
+any of the setup.
 
 20
-00:00:37,382 --> 00:00:39,132
-The manager then runs the team lead
+00:00:27,442 --> 00:00:29,024
+Each teammate simply runs the
 
 21
-00:00:39,145 --> 00:00:42,066
-skill, and it combines everyone's summaries into
+00:00:29,038 --> 00:00:30,221
+member skill on their own
 
 22
-00:00:42,079 --> 00:00:45,066
-one aggregated dashboard — total time saved,
+00:00:30,235 --> 00:00:32,176
+Cowork work, and it posts
 
 23
-00:00:45,355 --> 00:00:47,697
-the dollar value, and the team's overall
+00:00:32,189 --> 00:00:33,692
+a short, private summary to
 
 24
-00:00:47,711 --> 00:00:48,816
-speed multiplier.
+00:00:33,705 --> 00:00:35,048
+one shared Team channel.
 
 25
-00:00:49,237 --> 00:00:50,763
-No individual is shown,
+00:00:35,474 --> 00:00:36,524
+Then the leader runs the
 
 26
-00:00:51,303 --> 00:00:53,566
-and it never touches anyone's files.
+00:00:36,538 --> 00:00:38,572
+manager skill, and it emails
 
 27
-00:00:54,575 --> 00:00:56,233
-It also shows where the time went,
+00:00:38,586 --> 00:00:40,301
+the team one combined report.
 
 28
-00:00:56,259 --> 00:00:57,930
-broken down by task category —
+00:00:40,727 --> 00:00:42,110
+It's private by design,
 
 29
-00:00:57,956 --> 00:01:01,048
-meetings, communication, analysis, writing and debugging
+00:00:42,655 --> 00:00:43,985
+so nothing is ever shown
 
 30
-00:01:01,062 --> 00:01:02,141
-code, and more.
+00:00:43,998 --> 00:00:45,301
+for any one person.
 
 31
-00:01:02,562 --> 00:01:04,917
-Each category is valued using published,
+00:00:46,439 --> 00:00:47,676
+Step one — and remember,
 
 32
-00:01:04,943 --> 00:01:07,522
-cited research, so the numbers are defensible.
+00:00:47,702 --> 00:00:48,939
+everything in the setup is
 
 33
-00:01:07,943 --> 00:01:09,641
-And it shows how many people used
+00:00:48,952 --> 00:00:49,630
+done by you,
 
 34
-00:01:09,654 --> 00:01:11,930
-each one, without ever naming anyone.
+00:00:49,657 --> 00:00:50,614
+the team leader.
 
 35
-00:01:12,908 --> 00:01:14,619
-Getting started is effortless.
+00:00:51,040 --> 00:00:52,210
+In Microsoft Teams,
 
 36
-00:01:15,040 --> 00:01:16,724
-On the Installer Studio page,
+00:00:52,237 --> 00:00:53,607
+create a Team channel just
 
 37
-00:01:16,922 --> 00:01:18,777
-paste your team's channel link once and
+00:00:53,620 --> 00:00:54,737
+for these reports.
 
 38
-00:01:18,790 --> 00:01:21,672
-download both skills — each already carrying
+00:00:55,176 --> 00:00:56,293
+Give it a clear name,
 
 39
-00:01:21,685 --> 00:01:22,343
-your channel.
+00:00:56,319 --> 00:00:57,729
+add the people whose Cowork
 
 40
-00:01:22,764 --> 00:01:24,514
-That link never leaves your browser,
+00:00:57,742 --> 00:00:58,912
+work you want counted,
 
 41
-00:01:24,540 --> 00:01:26,237
-so you and your team just install
+00:00:59,245 --> 00:01:00,561
+then copy the Team channel
 
 42
-00:01:26,251 --> 00:01:26,764
-and go.
+00:01:00,575 --> 00:01:01,745
+link for the next step.
 
 43
-00:01:27,738 --> 00:01:29,344
-Rolling it out takes minutes.
+00:01:02,879 --> 00:01:04,395
+Step two — add your Team
 
 44
-00:01:29,765 --> 00:01:31,620
-Create a dedicated Teams channel,
+00:01:04,408 --> 00:01:05,126
+channel link.
 
 45
-00:01:31,949 --> 00:01:34,265
-paste its link into the Installer Studio,
+00:01:05,552 --> 00:01:07,320
+On the Installer Studio page,
 
 46
-00:01:34,581 --> 00:01:36,094
-and download both skills.
+00:01:07,520 --> 00:01:08,597
+paste the link into the
 
 47
-00:01:36,515 --> 00:01:38,159
-Install your own skill first,
+00:01:08,610 --> 00:01:09,834
+box and click Build my
 
 48
-00:01:38,186 --> 00:01:39,581
-and let it hand the member skill
+00:01:09,847 --> 00:01:10,791
+install links.
 
 49
-00:01:39,594 --> 00:01:40,396
-to your team.
+00:01:11,217 --> 00:01:12,666
+It verifies your Team channel
 
 50
-00:01:40,817 --> 00:01:42,028
-Then set a schedule,
+00:01:12,679 --> 00:01:13,969
+right here in your browser
 
 51
-00:01:42,054 --> 00:01:44,002
-and the report emails everyone on its
+00:01:13,983 --> 00:01:14,741
+and adds it to the
 
 52
-00:01:44,015 --> 00:01:44,423
-own.
+00:01:14,754 --> 00:01:16,616
+skill downloads — so later,
 
 53
-00:01:45,412 --> 00:01:46,543
-That's the Team Cowork
+00:01:16,642 --> 00:01:18,039
+there's no link to paste.
 
 54
-00:01:46,556 --> 00:01:49,372
-Skill — a private, aggregated way to show
+00:01:19,169 --> 00:01:19,887
+Step three.
 
 55
-00:01:49,385 --> 00:01:51,280
-the real value your team creates with
+00:01:20,326 --> 00:01:21,829
+Back on the Installer Studio
 
 56
-00:01:51,293 --> 00:01:51,925
-Cowork.
+00:01:21,842 --> 00:01:23,717
+page, download both skills.
+
+57
+00:01:24,142 --> 00:01:24,714
+There are two —
+
+58
+00:01:24,741 --> 00:01:25,672
+the manager skill,
+
+59
+00:01:25,698 --> 00:01:27,094
+which you install and run,
+
+60
+00:01:27,360 --> 00:01:28,344
+and the member skill,
+
+61
+00:01:28,371 --> 00:01:29,555
+which your team uses.
+
+62
+00:01:29,980 --> 00:01:31,523
+Each already includes your Team
+
+63
+00:01:31,536 --> 00:01:32,041
+channel.
+
+64
+00:01:32,467 --> 00:01:34,009
+You'll install the manager skill
+
+65
+00:01:34,023 --> 00:01:35,951
+first — just keep the member
+
+66
+00:01:35,964 --> 00:01:37,467
+skill handy for a moment.
+
+67
+00:01:38,609 --> 00:01:40,284
+Now open Copilot Cowork,
+
+68
+00:01:40,710 --> 00:01:41,947
+click the plus icon,
+
+69
+00:01:42,146 --> 00:01:43,795
+and attach the manager skill —
+
+70
+00:01:44,074 --> 00:01:45,697
+that's the team-dashboard zip.
+
+71
+00:01:46,136 --> 00:01:47,159
+Don't unzip it.
+
+72
+00:01:47,585 --> 00:01:48,902
+Then type the command shown
+
+73
+00:01:48,915 --> 00:01:50,670
+here, or copy it from
+
+74
+00:01:50,683 --> 00:01:51,667
+the setup page.
+
+75
+00:01:52,093 --> 00:01:53,130
+Those words matter —
+
+76
+00:01:53,157 --> 00:01:54,167
+they tell the skill to
+
+77
+00:01:54,181 --> 00:01:55,590
+begin setup right away,
+
+78
+00:01:55,896 --> 00:01:57,638
+including preparing the member skill
+
+79
+00:01:57,652 --> 00:01:58,556
+to hand off to your
+
+80
+00:01:58,569 --> 00:01:59,048
+team.
+
+81
+00:01:59,473 --> 00:02:01,109
+Later, you'll schedule it to
+
+82
+00:02:01,122 --> 00:02:02,027
+run a day or two
+
+83
+00:02:02,040 --> 00:02:03,316
+after your team posts.
+
+84
+00:02:04,459 --> 00:02:05,456
+As part of setup,
+
+85
+00:02:05,696 --> 00:02:07,185
+the manager skill offers to
+
+86
+00:02:07,198 --> 00:02:08,462
+send the member skill for
+
+87
+00:02:08,475 --> 00:02:08,781
+you.
+
+88
+00:02:09,206 --> 00:02:10,456
+Choose Yes, and it lets
+
+89
+00:02:10,470 --> 00:02:11,600
+you pick your teammates and
+
+90
+00:02:11,613 --> 00:02:13,528
+review the invitation before anything
+
+91
+00:02:13,541 --> 00:02:15,310
+is sent — so every teammate
+
+92
+00:02:15,323 --> 00:02:16,666
+gets exactly the file they
+
+93
+00:02:16,680 --> 00:02:17,119
+need.
+
+94
+00:02:18,259 --> 00:02:19,775
+Here's what your teammates receive —
+
+95
+00:02:20,387 --> 00:02:21,770
+an email the manager skill
+
+96
+00:02:21,783 --> 00:02:22,541
+drafts for you,
+
+97
+00:02:22,860 --> 00:02:24,230
+with the member skill attached
+
+98
+00:02:24,243 --> 00:02:25,506
+and three simple steps:
+
+99
+00:02:26,145 --> 00:02:27,674
+upload the skill in Cowork,
+
+100
+00:02:27,900 --> 00:02:29,150
+install it, and run the
+
+101
+00:02:29,163 --> 00:02:29,948
+member step.
+
+102
+00:02:30,373 --> 00:02:31,424
+You just review it and
+
+103
+00:02:31,437 --> 00:02:32,169
+hit send.
+
+104
+00:02:33,310 --> 00:02:34,265
+Step five is where it
+
+105
+00:02:34,278 --> 00:02:35,262
+comes together.
+
+106
+00:02:35,689 --> 00:02:38,016
+Each teammate opens Copilot Cowork,
+
+107
+00:02:38,535 --> 00:02:40,078
+attaches the member skill from
+
+108
+00:02:40,091 --> 00:02:41,673
+the email, and asks it
+
+109
+00:02:41,687 --> 00:02:42,551
+to install.
+
+110
+00:02:42,977 --> 00:02:44,546
+Cowork reviews the skill and
+
+111
+00:02:44,559 --> 00:02:45,836
+confirms it's set for the
+
+112
+00:02:45,849 --> 00:02:46,886
+right Team channel.
+
+113
+00:02:48,039 --> 00:02:49,222
+Then they run it once.
+
+114
+00:02:49,648 --> 00:02:50,831
+They can prepare a single
+
+115
+00:02:50,845 --> 00:02:52,254
+report to review before it
+
+116
+00:02:52,268 --> 00:02:54,010
+posts, or automate it to
+
+117
+00:02:54,023 --> 00:02:55,020
+run biweekly.
+
+118
+00:02:55,446 --> 00:02:56,895
+Before anything posts,
+
+119
+00:02:57,201 --> 00:02:58,730
+they can review their sessions
+
+120
+00:02:58,744 --> 00:03:00,539
+and exclude anything personal.
+
+121
+00:03:01,689 --> 00:03:02,354
+When it's ready,
+
+122
+00:03:02,380 --> 00:03:03,604
+the summary posts to your
+
+123
+00:03:03,617 --> 00:03:04,415
+Team channel.
+
+124
+00:03:04,841 --> 00:03:06,729
+It shows the expert-equivalent hours
+
+125
+00:03:06,742 --> 00:03:07,527
+and their value,
+
+126
+00:03:07,553 --> 00:03:08,724
+the number of sessions,
+
+127
+00:03:08,936 --> 00:03:09,880
+and how well the work
+
+128
+00:03:09,894 --> 00:03:10,918
+suited Cowork.
+
+129
+00:03:11,343 --> 00:03:12,739
+Names and prompts are never
+
+130
+00:03:12,753 --> 00:03:13,298
+shared.
+
+131
+00:03:13,724 --> 00:03:15,958
+And file names become de-identified
+
+132
+00:03:15,971 --> 00:03:16,915
+descriptions.
+
+133
+00:03:18,060 --> 00:03:19,535
+Finally, you run the manager
+
+134
+00:03:19,548 --> 00:03:20,080
+skill.
+
+135
+00:03:20,492 --> 00:03:21,822
+It reads the Team channel,
+
+136
+00:03:22,035 --> 00:03:24,216
+combines everyone's summaries into one
+
+137
+00:03:24,229 --> 00:03:25,665
+aggregated team report,
+
+138
+00:03:26,197 --> 00:03:27,261
+and emails it to your
+
+139
+00:03:27,274 --> 00:03:29,003
+team as a polished newsletter.
+
+140
+00:03:29,415 --> 00:03:30,652
+Set the schedule once,
+
+141
+00:03:30,679 --> 00:03:32,075
+and it keeps everyone current
+
+142
+00:03:32,088 --> 00:03:34,429
+automatically — with nothing to re-run
+
+143
+00:03:34,442 --> 00:03:35,200
+by hand.
+
+144
+00:03:36,349 --> 00:03:37,227
+So what's in the Team
+
+145
+00:03:37,240 --> 00:03:37,971
+Dashboard?
+
+146
+00:03:38,410 --> 00:03:39,381
+Everyone gets it —
+
+147
+00:03:39,407 --> 00:03:40,923
+you just open the attachment
+
+148
+00:03:40,937 --> 00:03:41,828
+on that email.
+
+149
+00:03:42,253 --> 00:03:43,756
+No portal, no sign-in.
+
+150
+00:03:44,181 --> 00:03:45,618
+The Overview tab leads with
+
+151
+00:03:45,631 --> 00:03:46,974
+the headline metrics.
+
+152
+00:03:47,413 --> 00:03:48,756
+Time saved, and what it's
+
+153
+00:03:48,769 --> 00:03:49,886
+worth in dollars.
+
+154
+00:03:50,312 --> 00:03:51,349
+Then the team totals —
+
+155
+00:03:51,376 --> 00:03:53,596
+sessions, deliverables, contributors,
+
+156
+00:03:53,623 --> 00:03:55,059
+and a speed multiplier.
+
+157
+00:03:55,485 --> 00:03:56,947
+These are estimates of effort
+
+158
+00:03:56,961 --> 00:03:59,115
+and value, not billed time.
+
+159
+00:04:00,280 --> 00:04:00,904
+The Impact and
+
+160
+00:04:00,917 --> 00:04:02,327
+Value tab shows where that
+
+161
+00:04:02,340 --> 00:04:03,457
+value came from.
+
+162
+00:04:03,883 --> 00:04:04,814
+Where the time went,
+
+163
+00:04:04,840 --> 00:04:06,130
+by task category.
+
+164
+00:04:06,542 --> 00:04:07,899
+The roles Cowork stood in
+
+165
+00:04:07,912 --> 00:04:08,364
+for.
+
+166
+00:04:08,790 --> 00:04:10,013
+And the outputs your team
+
+167
+00:04:10,026 --> 00:04:10,744
+produced.
+
+168
+00:04:11,889 --> 00:04:13,139
+And the dashboard shows where
+
+169
+00:04:13,152 --> 00:04:14,416
+Cowork is applied,
+
+170
+00:04:14,881 --> 00:04:16,583
+ranked by business process.
+
+171
+00:04:17,009 --> 00:04:18,285
+This is the clearest signal
+
+172
+00:04:18,299 --> 00:04:19,509
+of how your team actually
+
+173
+00:04:19,522 --> 00:04:20,878
+uses it — from
+
+174
+00:04:20,892 --> 00:04:22,368
+Business Value and ROI
+
+175
+00:04:22,381 --> 00:04:24,283
+Analytics to product development and
+
+176
+00:04:24,296 --> 00:04:26,729
+customer relationships — with the hours
+
+177
+00:04:26,743 --> 00:04:27,740
+saved in each one.
+
+178
+00:04:28,166 --> 00:04:29,575
+And it's all aggregated.
+
+179
+00:04:30,001 --> 00:04:31,370
+When fewer than three people
+
+180
+00:04:31,384 --> 00:04:32,381
+used a category,
+
+181
+00:04:32,408 --> 00:04:33,538
+the number is hidden —
+
+182
+00:04:33,764 --> 00:04:34,721
+and no one is ever
+
+183
+00:04:34,735 --> 00:04:35,293
+named.
+
+184
+00:04:36,439 --> 00:04:37,556
+And that's the full setup
+
+185
+00:04:37,569 --> 00:04:39,205
+for the Cowork Team Report.
+
+186
+00:04:39,630 --> 00:04:40,814
+Create the Team channel,
+
+187
+00:04:40,841 --> 00:04:41,452
+add the link,
+
+188
+00:04:41,479 --> 00:04:42,716
+install the two skills,
+
+189
+00:04:42,742 --> 00:04:43,633
+and let it run.
+
+190
+00:04:44,059 --> 00:04:45,614
+From there, your team's Cowork
+
+191
+00:04:45,628 --> 00:04:47,317
+ROI shows up in everyone's
+
+192
+00:04:47,330 --> 00:04:50,056
+inbox — private, aggregated,
+
+193
+00:04:50,083 --> 00:04:51,386
+and always up to date.
 
