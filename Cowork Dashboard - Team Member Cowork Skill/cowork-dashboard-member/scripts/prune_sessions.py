@@ -16,7 +16,7 @@ pre-compute session list):
                     removed and what remains.
 
 This runs BEFORE classify.py/compute.py, so excluded sessions never reach the
-metrics or the posted message — nothing about them is computed, named, or sent.
+metrics or the report email — nothing about them is computed, named, or sent.
 
 Usage:
   python prune_sessions.py --in working/cowork_raw.json --list
@@ -67,8 +67,8 @@ def do_list(d):
     print(PICK_E)
     # Privacy nudge — shown every time the inventory is listed, so it reaches the
     # user right where they choose what to leave out.
-    print("\nReminder: this posts to your team channel. Exclude anything personal "
-          "or non-work you're not comfortable sharing before it posts — each "
+    print("\nReminder: this emails your report to the team channel. Exclude anything personal "
+          "or non-work you're not comfortable sharing before it sends — each "
           "session's deliverables go out with it.")
 
 

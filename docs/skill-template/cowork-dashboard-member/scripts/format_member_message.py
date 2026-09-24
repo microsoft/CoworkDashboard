@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 format_member_message.py — turn a computed cowork_roi_data.json into a DE-IDENTIFIED,
-TABLE-FORMATTED Teams channel message (HTML body) for the team Cowork Team Report rollup.
+TABLE-FORMATTED email (HTML body) for the team Cowork Team Report rollup.
 
-v3 (table layout): the post is rendered as HTML <table>s — both human-readable in Teams AND
+v3 (table layout): the email is rendered as HTML <table>s — both human-readable in Teams AND
 easy for a downstream Cowork task to parse deterministically (one row per item, stable headers).
 It surfaces the full research-grade detail already present in cowork_roi_data.json:
 
@@ -18,7 +18,7 @@ Privacy: NO person / display names, no raw file names, no prompts. Every section
 
 Usage:  python format_member_message.py --in working/cowork_roi_data.json \
                                         --out working/member_message.html
-Prints the HTML body to stdout between BEGIN/END markers for PostChannelMessage(body=...).
+Prints the HTML body to stdout between BEGIN/END markers for the email body.
 """
 import json, argparse, collections, html
 

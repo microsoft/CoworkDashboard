@@ -1,12 +1,12 @@
 # Cowork Team Report — Team Dashboard
 
 A Microsoft Copilot **Cowork skill** that rolls up a small team's Copilot Cowork ROI. It reads the
-de-identified stats each teammate posts to a shared Teams channel and renders **one self-contained,
+de-identified stats each teammate emails to a shared Teams channel and renders **one self-contained,
 anonymized HTML dashboard** the manager can open, re-price with a live hourly-rate control, and print.
 It then **emails the channel members** a high-level summary with the dashboard attached. The guide for
 reading it is **built into the dashboard** — a **How to read** tab plus a clickable **"?"** on every
 section — so there's no separate file to open. On first run it **asks for the Teams channel link** and
-remembers it; every run reads the **latest 15 days** of posts, keeping the latest post per person.
+remembers it; every run reads the **latest 15 days** of messages, keeping the latest report per person.
 
 > **Team-safe by design.** Individual identity, raw filenames, prompts, and country are not revealed.
 > Retained work artifacts may appear under de-identified descriptive names. Before publishing, each
@@ -18,10 +18,10 @@ remembers it; every run reads the **latest 15 days** of posts, keeping the lates
 | Skill | Role | Output |
 |---|---|---|
 | `cowork-roi-report` | A person's **full** personal impact report | Rich HTML web app (their own view) |
-| `cowork-dashboard-member` | A person posts their **de-identified** stats to the team channel | HTML tables in Teams |
-| **`cowork-dashboard-team-dashboard`** (this) | The **manager** aggregates everyone's posts | Anonymized team HTML dashboard (how-to-read guide built in), emailed to the channel members |
+| `cowork-dashboard-member` | A person emails their **de-identified** stats to the team channel | HTML tables in Teams |
+| **`cowork-dashboard-team-dashboard`** (this) | The **manager** aggregates everyone's reports | Anonymized team HTML dashboard (how-to-read guide built in), emailed to the channel members |
 
-This skill **only consumes** what `cowork-dashboard-member` posts. It does not harvest OneDrive and never
+This skill **only consumes** what `cowork-dashboard-member` emails into the channel. It does not harvest OneDrive and never
 sees identities.
 
 ## Scope (v1)
@@ -35,7 +35,7 @@ of scope for now.
 ```
 first run: user pastes channel link ──(scripts/resolve_channel.py)──▶  team_id + channel_id  ──▶ config
 
-teammates ──(cowork-dashboard-member)──▶  Teams channel  ──(ListChannelMessages)──▶  raw_messages.json
+teammates ──(cowork-dashboard-member email)──▶  Teams channel  ──(ListChannelMessages)──▶  raw_messages.json
                                                                                      │
                                                               scripts/parse_posts.py │  (last 15 days,
                                                               + process_groups.json  │   latest per sender,
@@ -54,13 +54,13 @@ teammates ──(cowork-dashboard-member)──▶  Teams channel  ──(ListCh
 ## Quick start
 
 1. **Point it at the channel** (first run only). The skill asks for the **link of the Teams channel**
-   where the team posts its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to channel*), then
+   where the team emails its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to channel*), then
    resolves + saves the IDs:
    ```bash
    python scripts/resolve_channel.py --link "<pasted channel url>" --config config/team_config.json
    ```
    The Team must already exist and you must be a member. The channel **must match** the one
-   `cowork-dashboard-member` posts to. (See `SKILL.md → First run`.)
+   whose email address is configured in `cowork-dashboard-member`. (See `SKILL.md → First run`.)
 2. **Read + build (last 15 days) — dashboard + guide in one step:**
    ```bash
    # after saving the channel messages' `value` array to working/raw_messages.json
@@ -73,7 +73,7 @@ teammates ──(cowork-dashboard-member)──▶  Teams channel  ──(ListCh
 
 ### Try it offline (no Teams needed)
 
-Two real, de-identified posts are bundled:
+Two real, de-identified channel messages are bundled:
 
 ```bash
 python scripts/parse_posts.py --in examples/sample_raw_messages.json \
@@ -90,7 +90,7 @@ python scripts/build_outputs.py --in working/team_data.json --config config/team
 | `channel_link` | The Teams channel URL the user pasted on first run (kept for reference). |
 | `hourly_rate` | Default $/hr for the value model (adjust live in the UI). |
 | `recapture_rate` | Productivity recapture rate `0–1` (default **0.70**): the share of time saved the team realistically harvests. Value = time saved × recapture rate × hourly rate. Adjustable live in the UI. |
-| `cadence_days` | Posting/refresh cadence (default 14). |
+| `cadence_days` | Report/refresh cadence (default 14). |
 | `message_lookback_days` | Window each run reads — **default 15** (the latest cycle). Enforced by `--window-days`. |
 | `privacy_k_threshold` | Minimum contributors sharing an attribute before it breaks out (default 3). |
 | `email_on_run` | When true (default), email the channel members the dashboard (guide built in) after building. |
@@ -99,7 +99,7 @@ python scripts/build_outputs.py --in working/team_data.json --config config/team
 ## Privacy model
 
 - Members are **counts + a number**, never named.
-- Before publishing to the channel, each member can remove any session they do not want included. Its
+- Before emailing the report to the channel, each member can remove any session they do not want included. Its
    artifacts are removed with it before metrics are computed; the original Cowork session is not deleted.
 - The only personal attribute is the directory **Role** a post carries — never identity, country, raw
    filenames, or prompts.

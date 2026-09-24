@@ -2,18 +2,18 @@
  * Cowork Team Report — Team installer helper (client-side only).
  *
  * The two download buttons hand over ready-to-use skill zips that already have the manager's
- * Teams channel BAKED IN. When you paste your channel link and it verifies, the download builds
- * the zip in your browser (via JSZip) and writes the team_id / channel_id into the skill's channel
- * CONFIG file only (member: config/team_channel.json, manager: config/team_config.json) — the same
- * file each skill already reads on first run. No SKILL.md, script, or other skill logic is touched,
- * so an app-baked zip and a hand-downloaded one run identical skill code; the baked one just skips
- * the first-run "paste the link" prompt. Everything happens locally; the link never leaves the page.
+ * Teams channel BAKED IN. The manager skill receives the channel link/IDs it needs to read reports;
+ * the member skill receives the channel email address it needs to deliver reports. The download
+ * builds each zip in the browser (via JSZip) and changes only its channel CONFIG file
+ * (member: config/team_channel.json, manager: config/team_config.json). No SKILL.md, script, or
+ * other skill logic is touched. Everything happens locally; the values never leave the page.
  */
 (function () {
   "use strict";
 
   var GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   var CHANNEL_RE = /(19:[^/?#]+?@thread\.[a-z0-9]+)/i;
+  var EMAIL_RE = /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
   // ---- Resolver (ported from the skill's proven first-run link parser) --------------------------
   function parseTeamsChannelLink(raw) {
@@ -91,14 +91,23 @@
     return { ok: true, channel_id: channelId, team_id: teamId, channel_name: channelName, link: input };
   }
 
+  function parseChannelEmail(raw) {
+    var input = (raw || "").trim();
+    if (!input) return { ok: false, error: "Paste the Teams channel email address first." };
+    if (input.length > 320 || /[\s<>\u0000-\u001F\u007F]/.test(input) || !EMAIL_RE.test(input)) {
+      return { ok: false, error: "That doesn't look like a valid Teams channel email address. Use the channel's ⋯ → Get email address." };
+    }
+    return { ok: true, channel_email: input };
+  }
+
   // ---- Baking: inject the resolved channel into each skill's channel CONFIG file ---------------
   //
   // This helper is PURE (JSON text in → JSON text out) so it can be unit-tested offline. It ONLY
   // fills the channel fields that already exist in the config — key order, comments (_note fields),
   // pricing, and every other value are preserved. No skill logic file is ever modified.
   //
-  //   member  → config/team_channel.json  (channel_link, team_id, channel_id, channel_name)
-  //   manager → config/team_config.json   (same channel fields; pricing/privacy fields untouched)
+  //   member  → config/team_channel.json  (channel_email, channel_name)
+  //   manager → config/team_config.json   (channel link/IDs/name; pricing/privacy fields untouched)
   //
   // A blank config makes the skill ask for the link on first run; a filled one makes it skip that
   // prompt and read the right channel straight away — so baked and hand-downloaded zips behave the
@@ -114,6 +123,7 @@
     if ("channel_link" in cfg) cfg.channel_link = ch.link || "";
     if ("team_id" in cfg) cfg.team_id = ch.team_id || "";
     if ("channel_id" in cfg) cfg.channel_id = ch.channel_id || "";
+    if ("channel_email" in cfg) cfg.channel_email = ch.channel_email || "";
     if ("channel_name" in cfg && ch.channel_name) cfg.channel_name = ch.channel_name;
     return JSON.stringify(cfg, null, 2) + "\n";
   }
@@ -148,9 +158,9 @@
   var $ = function (id) { return document.getElementById(id); };
   var resolved = null; // last successful parse
 
-  // Default (un-baked) copy for the state spans, restored when there's no verified link.
+  // Default (un-baked) copy for the state spans, restored when channel details are incomplete.
   var DEFAULT_MGR_STATE = "Your verified channel gets baked into the download, so there's no link to paste on first run.";
-  var DEFAULT_MEM_STATE = "Your channel gets baked into the zip you share, so teammates don't paste a link on first run.";
+  var DEFAULT_MEM_STATE = "Your channel email gets baked into the zip you share, so teammates never choose a recipient.";
 
   function setStatus(el, msg, cls) {
     if (!el) return;
@@ -160,6 +170,7 @@
 
   function onParse() {
     var res = parseTeamsChannelLink($("link").value);
+    var emailRes = parseChannelEmail($("channelEmail").value);
     var status = $("status");
     var panel = $("resolved");
     if (!res.ok) {
@@ -169,10 +180,19 @@
       setStatus(status, "✕ " + res.error, "err");
       return;
     }
+    if (!emailRes.ok) {
+      resolved = null;
+      panel.classList.remove("show");
+      refreshDownloadNotes();
+      setStatus(status, "✕ " + emailRes.error, "err");
+      return;
+    }
+    res.channel_email = emailRes.channel_email;
     resolved = res;
     $("rName").textContent = res.channel_name || "(none in link)";
     $("rTeam").textContent = res.team_id;
     $("rChannel").textContent = res.channel_id;
+    $("rEmail").textContent = res.channel_email;
     panel.classList.add("show");
     refreshDownloadNotes();
     setStatus(status, "");
@@ -191,12 +211,12 @@
     if (el) el.textContent = txt;
   }
 
-  // Under each download button: when a channel is verified, tell the manager it will be baked into
-  // the zip (nothing to paste on first run). Otherwise, prompt them to verify a link first.
+  // Under each download button: when the channel link and email are verified, explain what each
+  // skill receives. Otherwise, prompt the manager to finish channel setup first.
   function refreshDownloadNotes() {
     if (resolved) {
       var name = resolved.channel_name || "your team's channel";
-      var baked = "✓ Your channel (" + name + ") will be baked into this zip — teammates just upload it, no first-run link to paste.";
+      var baked = "✓ " + resolved.channel_email + " will be baked into this zip — teammates just upload it and review before sending.";
       var bakedMgr = "✓ Your channel (" + name + ") will be baked into this zip — no first-run link to paste.";
       setText("bakeNote", baked);
       setText("bakeNoteMgr", bakedMgr);
@@ -205,7 +225,7 @@
       toggleNote("genNote", false);
       toggleNote("genNoteMgr", false);
       setText("mgrBakeState", "The channel is already baked into your download — no first-run link to paste.");
-      setText("memBakeState", "The channel is already baked into the zip you share — no first-run link to paste.");
+      setText("memBakeState", "The channel email is already baked into the zip you share — teammates never choose a recipient.");
     } else {
       toggleNote("bakeNote", false);
       toggleNote("bakeNoteMgr", false);
@@ -216,8 +236,8 @@
     }
   }
 
-  // Editing the link invalidates any prior verification — fall back to generic until re-verified.
-  function onLinkChanged() {
+  // Editing either channel value invalidates prior verification.
+  function onChannelChanged() {
     resolved = null;
     var panel = $("resolved");
     if (panel) panel.classList.remove("show");
@@ -238,19 +258,21 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   }
 
-  // Resolve the channel to bake: prefer the verified parse; otherwise try to parse the link field
-  // live so a manager who typed a good link but didn't click "verify" still gets a baked zip.
+  // Resolve the channel details to bake: prefer the verified values; otherwise validate both fields.
   function requireChannel(statusEl) {
     if (resolved) return resolved;
     var res = parseTeamsChannelLink($("link") ? $("link").value : "");
-    if (res.ok) {
+    var emailRes = parseChannelEmail($("channelEmail") ? $("channelEmail").value : "");
+    if (res.ok && emailRes.ok) {
+      res.channel_email = emailRes.channel_email;
       resolved = res;
       onParse(); // reflect it in the UI + readout
       return resolved;
     }
-    setStatus(statusEl, "✕ Add your Teams channel link above and click “Build my install links” first — it gets baked into the download.", "err");
-    var linkEl = $("link");
-    if (linkEl) linkEl.focus();
+    var error = res.ok ? emailRes.error : res.error;
+    setStatus(statusEl, "✕ " + error + " Then click “Build my install links”.", "err");
+    var target = res.ok ? $("channelEmail") : $("link");
+    if (target) target.focus();
     return null;
   }
 
@@ -316,7 +338,9 @@
     document.addEventListener("DOMContentLoaded", function () {
       $("parseBtn").addEventListener("click", onParse);
       $("link").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); onParse(); } });
-      $("link").addEventListener("input", onLinkChanged);
+      $("channelEmail").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); onParse(); } });
+      $("link").addEventListener("input", onChannelChanged);
+      $("channelEmail").addEventListener("input", onChannelChanged);
       $("downloadBtn").addEventListener("click", onDownloadMember);
       var mgrBtn = $("downloadMgrBtn"); if (mgrBtn) mgrBtn.addEventListener("click", onDownloadManager);
       $("copyBtn").addEventListener("click", makeCopyHandler("installText", "copyBtn"));
@@ -330,6 +354,7 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = {
       parseTeamsChannelLink: parseTeamsChannelLink,
+      parseChannelEmail: parseChannelEmail,
       patchChannelConfig: patchChannelConfig
     };
   }

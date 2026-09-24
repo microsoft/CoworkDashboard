@@ -13,8 +13,8 @@ it as a skill. Entry names always use forward slashes so the archive works on ma
 Safety rails:
   * The skill files are copied byte-for-byte from the source folder — nothing is edited here.
   * The channel config that ships MUST be blank (the app fills it at download time, and a manual
-    download is meant to prompt on first run). The build ABORTS if a populated config is found,
-    so a real team's channel can never be committed by accident.
+    member download cannot send until an installer supplies its channel email). The build ABORTS
+    if a populated config is found, so a real team's channel can never be committed by accident.
 
 Usage:  python tools/build_skill_downloads.py
 """
@@ -30,7 +30,7 @@ SKILLS = {
     "cowork-dashboard-member": {
         "root": "Cowork Dashboard - Team Member Cowork Skill",
         "config": "config/team_channel.json",
-        "channel_fields": ["channel_link", "team_id", "channel_id", "channel_name"],
+        "channel_fields": ["channel_email", "channel_name"],
     },
     "cowork-dashboard-team-dashboard": {
         "root": "Cowork Dashboard - Team Dashboard Cowork Skill",

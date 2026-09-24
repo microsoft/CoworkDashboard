@@ -1,21 +1,21 @@
 ---
 name: cowork-dashboard-member
 description: |
-  Member step of the Cowork Team Report: gathers the user's own Cowork sessions, supports exclusions, computes impact metrics, and posts aggregate tables to a chosen Teams channel. Excludes person names and prompts and replaces raw file names with de-identified descriptive labels; retains customer/account names. Supports one-time or biweekly runs with review before posting.
-  Use for "post my Cowork Team Report stats", "send my Cowork stats to the team channel", "run the Cowork Team Report member step", or "share my Cowork impact with the team".
+  Member step of the Cowork Team Report: gathers the user's own Cowork sessions, supports exclusions, computes impact metrics, and emails aggregate tables to a configured Teams channel email address. Excludes person names and prompts and replaces raw file names with de-identified descriptive labels; retains customer/account names. Supports one-time or biweekly runs with review before sending.
+  Use for "send my Cowork Team Report stats", "email my Cowork stats to the team channel", "run the Cowork Team Report member step", or "share my Cowork impact with the team".
   Do NOT use for the full personal HTML report (use cowork-roi-report), the manager-side team dashboard, GitHub Copilot reports, or single-meeting summaries.
 metadata:
   category: productivity
   icon: PeopleTeam
-  version: "26"
+  version: "27"
 ---
 
-# Cowork Team Report — Member step (de-identified table post to the team channel)
+# Cowork Team Report — Member step (de-identified table email to the team channel)
 
 Produces the **per-person, de-identified** input to a team Cowork Team Report, rendered as
-**HTML tables** so it's both readable in Teams and easy for a downstream Cowork task to parse.
+**HTML tables** so it's both readable in the Teams channel email and easy for a downstream Cowork task to parse.
 **No person names or prompts leave the machine, and raw file names are replaced with de-identified
-descriptive labels** — the post carries aggregate totals,
+descriptive labels** — the email carries aggregate totals,
 task categories, value pillars, roles, skills, deliverable/IO breakdowns, and the de-duplicated
 **Jobs-to-be-done** and **Work-by-business-process** tables (which may carry customer/account names —
 those are in scope; only people's names are stripped).
@@ -32,40 +32,26 @@ folder). **There is NO bundled seed and nothing user-specific ships in the folde
 starts with no memory and mints the user's processes from their OWN sessions.
 
 ## When to use
-- "Post my Cowork Team Report stats to the team channel" / "run the Cowork Team Report member step"
+- "Email my Cowork Team Report stats to the team channel" / "run the Cowork Team Report member step"
 - A team cadence (e.g. every other Monday) where each member contributes their stats.
 
 ## When NOT to use
 - Full personal HTML report with project detail → `cowork-roi-report`.
-- Gathering everyone's posts into the team dashboard → the manager skill.
+- Gathering everyone's reports into the team dashboard → the manager skill.
 
-## Target channel — asked on first run, then remembered
-This skill posts to **one Teams channel that your team's admin / manager / lead created** for Cowork
-reports (named e.g. `Cowork report - <team>`). It is **not hardcoded** — each member points the skill
-at their team's channel once:
+## Target channel email — configured in the bundle
+This skill sends to **one Teams channel email address that your team's admin / manager / lead
+configured** for Cowork reports (channel named e.g. `Cowork report - <team>`).
 
-0. **Bundled team default.** Read `config/team_channel.json` in this skill's folder. If
-   `channel_link` is non-empty (or `team_id` AND `channel_id` are both non-empty), use those IDs for
-   posting, cache them to the per-user memory file
-   (`/mnt/user-config/.claude/cowork-dashboard-member-channel.<userkey>.json`) so later runs converge on the
-   normal path, and **SKIP asking**. If it's empty, fall through to the existing steps (reuse saved
-   memory → else ask). This file ships **empty** in the bundle; a per-team copy is filled by the
-   installer generator at download time so members never see the link prompt.
-1. **Reuse a saved channel.** Look for the per-user memory file
-   `/mnt/user-config/.claude/cowork-dashboard-member-channel.<userkey>.json` (`<userkey>` = the runner's
-   `mail`). If present, reuse the stored `team_id` + `channel_id`.
-2. **Otherwise, ask for the link.** With `AskUserQuestion`, ask the user to paste the **Teams channel
-   link** their admin/manager/lead shared (in Teams: channel **⋯** → **Copy link**). Parse it:
-   - `channel_id` = the path segment right after `/channel/`, URL-decoded (`%3A`→`:`, `%40`→`@`) →
-     looks like `19:…@thread.tacv2`.
-   - `team_id` = the `groupId` query parameter.
-   Save both (owner-stamped) to the memory file above so later runs don't re-ask.
-3. **Post** with `PostChannelMessage(team_id=…, channel_id=…, body=<html>)`. If an ID call fails, fall
-   back to the `team_name`/`channel_name` parsed from the link.
+1. Read `config/team_channel.json` in this skill's folder.
+2. Require a non-empty, syntactically valid `channel_email`.
+3. Send the HTML report to that address with
+   `SendEmailWithAttachments(to=[channel_email], subject=..., body=<html>)`.
 
-**Never invent a channel.** If nothing is saved and the user can't provide a link, stop and tell them
-to get the channel link from their team's admin/manager/lead (see the repo README's *First-time
-setup*).
+The generic bundle ships with an empty `channel_email`; the installer generator fills it for each
+team. **Never invent, infer, or ask the member to choose a recipient.** If `channel_email` is empty
+or invalid, stop and tell the user that their admin/manager/lead must reinstall a team-configured
+copy or populate the channel email in the config. Do not fall back to `PostChannelMessage`.
 
 All script paths below are under this skill's own folder:
 `/mnt/user-config/skills/cowork-dashboard-member/scripts/`.
@@ -73,19 +59,19 @@ All script paths below are under this skill's own folder:
 ## Workflow
 
 ### 0. Welcome the user (inviting on first run, short preview after)
-**First run (no saved channel memory yet, or the user hasn't run this before):** open with a warm,
+**First run (the user hasn't run this before):** open with a warm,
 plain-language welcome — what this is, why it helps, the privacy promise, and the 1-2-3 — before doing
 anything. Name the team from `config/team_channel.json` `channel_name` when it's set. Keep it friendly
 and brief, e.g.:
 > 👋 **Welcome!** This shares your **Copilot Cowork** impact with your team's private report channel so
 > everyone's wins add up — while keeping your details private.
 > **Your privacy:** no names or prompts leave your machine, and raw file names are replaced with
-> de-identified descriptions; you review every session and can exclude any of it before anything posts.
+> de-identified descriptions; you review every session and can exclude any of it before anything sends.
 > Only de-identified stats are shared.
 > **Here's the 1-2-3:**
 > 1. I **look at your Cowork sessions and classify them** (work, time, deliverables).
 > 2. **You review and can delete any sessions** before anything leaves your machine.
-> 3. The confirmed sessions are **posted — de-identified — to your team's private Teams channel**, so
+> 3. The confirmed sessions are **emailed — de-identified — to your team's private Teams channel**, so
 >    your manager can roll them into an aggregate report.
 
 **Later runs:** just show the short 3-line preview (the numbered 1-2-3 above) so the user knows the
@@ -93,9 +79,9 @@ flow without the full intro. Then continue with the steps below.
 
 ### 1. Choose run mode + period
 Ask once with **`AskUserQuestion`**: *"Run this once, or automate it every other Monday?"* — options
-**"Just once"** / **"Automate biweekly on Mondays (email me to review before each post)"**. The period
+**"Just once"** / **"Automate biweekly on Mondays (email me to review before each send)"**. The period
 defaults to the **last 15 days** (ask only if the user names a different window). Window = N days
-ago 00:00 → today 23:59, local time. If they choose automate, still produce a post now **and** set
+ago 00:00 → today 23:59, local time. If they choose automate, still produce a report now **and** set
 up the schedule in step 9.
 
 > **Note:** This automate/schedule prompt appears on the **first RUN** of the skill, not at install.
@@ -103,7 +89,7 @@ up the schedule in step 9.
 ### 2. Resolve identity & dates
 `GetMyDetails(select="mail,userPrincipalName,displayName,jobTitle")` (the `mail` is the per-user memory
 owner — passed to `reconcile_taxonomy.py --owner` in step 5; `jobTitle` becomes the runner's **Role**
-attribute shown on the post — see step 3). compute `after` = N days ago 00:00 local, `before` =
+attribute shown in the email — see step 3). compute `after` = N days ago 00:00 local, `before` =
 today 23:59 local, `window.label` = "Last N days", `window.months` = N/30.
 **Role, not identity:** carry the directory `jobTitle` only. Never add country, and never any person
 name, file name, or prompt.
@@ -133,7 +119,7 @@ ALL session folders in the window:
 - **Deliverable `name` = a clean, de-identified DESCRIPTIVE label — NOT the raw file name.** For each
   output, write a short readable label (e.g. `ROI newsletter`, `AI-in-One insights deck`, `Clinic
   operations dashboard`) with the extension, person names, and any customer/account names stripped.
-  This `name` is shown verbatim in the **Deliverable** column of the posted table (§7.9), so it must
+  This `name` is shown verbatim in the **Deliverable** column of the emailed table (§7.9), so it must
   carry NO personal or customer identifier and NO raw filename. (Keep the real `ext` — it drives
   classification.)
 - **Live-session telemetry (captures folder-less sessions).** Run
@@ -206,14 +192,14 @@ source is the **Cowork web app's session list**.
 4. These backfilled sessions go through the **same mandatory §4 privacy picker before anything is
    classified or computed**; excluding one removes it entirely from the pending report.
 5. If the browser is unavailable, access fails, the list is incomplete, or the user declines, say
-   so plainly. **Report the historical chat-only coverage gap in the post preview**, without
+   so plainly. **Report the historical chat-only coverage gap in the report preview**, without
    guessing the missing sessions, their work, or their metrics.
 
 Do **not** classify/compute yet — the user prunes first.
 
 ### 4. Privacy opt-out — let the user remove any chat/task BEFORE anything is computed
 **Mandatory, every run, before classify/compute.** Nothing about an excluded session is ever
-classified, costed, named, or posted.
+classified, costed, named, or sent.
 1. List the inventory: `python .../scripts/prune_sessions.py --in working/cowork_raw.json --list`
    (one numbered line per session between `<<<COWORK-SESSION-INVENTORY>>>` markers, **plus a
    ready-to-use options array between `<<<COWORK-SESSION-PICKER-JSON>>>` markers** — one object per
@@ -256,7 +242,7 @@ classified, costed, named, or posted.
      "reply with session numbers / type which to exclude". Every session is an individually tickable
      `Exclude — <name>` checkbox; advancing is the card's Next button; finishing is the final Submit.
 3. **Scheduled run (no interactive user):** do **not** show the picker (it would hang). Compute the
-   draft and **email the user to review/exclude in the task chat** (see step 9) — never post without
+   draft and **email the user to review/exclude in the task chat** (see step 9) — never send without
    the user's opt-out.
 4. Apply: `python .../scripts/prune_sessions.py --in working/cowork_raw.json --drop "<indices>"`
    (or `--drop-ids "<ids>"`); confirm the remaining count.
@@ -294,9 +280,9 @@ python /mnt/user-config/.claude/skills/cowork-dashboard-member/scripts/format_me
   --in working/cowork_roi_data.json --out working/member_message.html
 ```
 The script prints the HTML body between `<<<COWORK-ROI-MEMBER-MESSAGE>>>` and `<<<END>>>` — use that
-exact string as the message body. The header shows the period **and the runner's Role** (directory
+exact string as the email body. The header shows the period **and the runner's Role** (directory
 `meta.role`; no country/name). Metric & section titles are kept **identical to the Copilot ROI Report
-skill** (`cowork-roi-report/scripts/build_report.py`). The post is a sequence of **HTML `<table>`s**
+skill** (`cowork-roi-report/scripts/build_report.py`). The email is a sequence of **HTML `<table>`s**
 (stable headers, one row per item) in this fixed order:
 1. **Headline** — Metric · Value (Expert-equivalent hours +range, Professional-services value, Speed multiplier, Assisted hands-on hours, sessions, run tasks, deliverables, active days, hours/active day, real cost if measured).
 2. **Where the time went — by task category** — Category · Band (low/typ/high) · Tasks · Hours · Value · % time.
@@ -306,35 +292,36 @@ skill** (`cowork-roi-report/scripts/build_report.py`). The post is a sequence of
 6. **Roles Cowork assembled for me** — Role · Hours · Value.
 7. **Skills applied** — Skill · Deliverables · Sessions · Value.
 8. **Analyzed → Produced** — Measure · Value, plus **Inputs by type** and **Outputs by type**.
-9. **Deliverables & the skills behind them** — every deliverable made visible with a **de-identified descriptive label** (person/customer/raw-file names stripped — see §3) and **labelled with the business process it supported**: Deliverable · Type · Date · Business process · Skills · Hours · Value, followed by a **By type** rollup (Deliverable type · Count · Hours · Value · Skills used). The **By type** rollup is the shared-contract shape the aggregated Dashboard parses — do not remove its columns; the per-row **Deliverable** label column is member-post-only.
+9. **Deliverables & the skills behind them** — every deliverable made visible with a **de-identified descriptive label** (person/customer/raw-file names stripped — see §3) and **labelled with the business process it supported**: Deliverable · Type · Date · Business process · Skills · Hours · Value, followed by a **By type** rollup (Deliverable type · Count · Hours · Value · Skills used). The **By type** rollup is the shared-contract shape the aggregated Dashboard parses — do not remove its columns; the per-row **Deliverable** label column is member-email-only.
 10. **Activity by day** — Date · Run tasks.
 
 Every value comes from `cowork_roi_data.json`; no hand math.
 
-### 8. Show + post
-Show the user the rendered tables inline, then post to the channel resolved in **Target channel**
-(reused from memory, or asked-for and parsed from the pasted link on first run):
-`PostChannelMessage(team_id=<resolved team_id>, channel_id=<resolved channel_id>, subject="Cowork Team Report — <window label>", body=<the HTML body>)`.
-The platform shows its own approval dialog before anything sends.
+### 8. Show + email
+Show the user the rendered tables inline, then read `channel_email` from
+`config/team_channel.json` and send:
+`SendEmailWithAttachments(to=[<configured channel_email>], subject="Cowork Team Report — <window label>", body=<the HTML body>)`.
+Use the HTML body exactly as rendered and do not attach the raw working files. The platform shows
+its own approval dialog before anything sends. Never use `PostChannelMessage`.
 
 ### 9. Automate (only if the user chose it in step 1)
 `SetupScheduledPrompt` (frequency **Week**, interval **2**, weekDays `["Monday"]`, hours `["8"]`, name
 "Cowork Team Report member (biweekly, Mondays)") — a fixed **every-other-Monday at 8 AM** cadence so every
 member's 15-day window aligns regardless of install date — with a **self-contained** description:
 > "Generate my Cowork Team Report stats for the last 15 days: harvest my Cowork sessions, compute the
->  table-formatted de-identified post, then EMAIL me that it's ready and ask me to open this task's
->  chat to exclude any sessions I don't want shared before it posts to my team's Cowork report
->  channel. Do not post until I've reviewed."
+>  table-formatted de-identified email, then EMAIL me that it's ready and ask me to open this task's
+>  chat to exclude any sessions I don't want shared before it is emailed to my team's Cowork report
+>  channel. Do not send the report until I've reviewed."
 
 **On each scheduled execution (no user present):** harvest → map-my-work → compute a draft, then
-`SendEmailWithAttachments(to=[<user's own email>], subject="Your Cowork Team Report post is ready to review",
+`SendEmailWithAttachments(to=[<user's own email>], subject="Your Cowork Team Report is ready to review",
 body="<headline summary + the session inventory list>")` telling them to open **this task's chat** to
-run the opt-out picker and post. **Never auto-post on a scheduled run** — the user always does the
-final opt-out + post interactively in the task chat. Confirm setup in plain language.
+run the opt-out picker and send. **Never auto-send the report on a scheduled run** — the user always
+does the final opt-out + channel-email send interactively in the task chat. Confirm setup in plain language.
 
 ## Guardrails
 - **De-identified, not fully anonymized.** Never include any person's name, raw file names, prompt
-  text, or **country**. The post DOES carry the runner's directory **Role** (job title — a
+  text, or **country**. The email DOES carry the runner's directory **Role** (job title — a
   de-identified attribute many people share), and the Jobs-to-be-done and business-process tables —
   including any **customer/account names** their text contains. Do not scrub customer names from
   process/JTBD strings.
@@ -343,23 +330,23 @@ final opt-out + post interactively in the task chat. Confirm setup in plain lang
   granular. This grouping + the skills vocabulary + the Role attribute are a **shared data contract** —
   they must match `cowork-roi-report`'s copies (the aggregated "Cowork report – ROI Advisors" reader
   reuses those). Change them in both bundles together.
-- **Configured channel.** Post only to the team channel resolved in **Target channel** (from the
-  bundled `config/team_channel.json` if a team default was baked in, else asked once from the pasted
-  Teams link, then remembered). Never post to any channel the user didn't point the skill at, and
-  never invent one. `config/team_channel.json` is the **only** team-configurable file — never ship the
-  taxonomy registry or a populated `process_overrides.json`.
+- **Configured channel email.** Send the report only to the `channel_email` in the bundled
+  `config/team_channel.json`. Never ask the member to choose a recipient, never invent one, and
+  never fall back to a Teams API post. `config/team_channel.json` is the **only** team-configurable
+  file — never ship the taxonomy registry or a populated `process_overrides.json`.
 - **Conservative numbers.** All metrics come from the bundled pipeline — no hand math, no fabricated
   figures. If a section is empty, omit it rather than inventing.
-- **Privacy opt-out is mandatory.** Always run step 4 before computing/posting. On interactive runs
+- **Privacy opt-out is mandatory.** Always run step 4 before computing/sending. On interactive runs
   show the picker; on scheduled runs email the user to review in the task chat. Excluded sessions are
   dropped from `cowork_raw.json` so they are never classified, costed, named, or sent.
-- **Scheduled runs never auto-post.** A scheduled execution emails the user and stops; posting only
-  happens after the user's interactive opt-out. The platform approval dialog is the final gate.
+- **Scheduled runs never auto-send the report.** A scheduled execution emails the user and stops;
+  delivery to the channel email only happens after the user's interactive opt-out. The platform
+  approval dialog is the final gate.
 - **Fixed biweekly cadence.** When automating, always schedule `SetupScheduledPrompt(frequency=Week,
   interval=2, weekDays=["Monday"], hours=["8"])` — every other Monday at 8 AM — so all members' 15-day
   windows align regardless of install date. The harvest window stays the **last 15 days**, and the
   review-email + opt-out flow is unchanged.
-- **One post per run.** Re-running replaces the user's contribution; the manager skill keeps the latest per sender.
+- **One report email per run.** The manager skill should keep the latest contribution per sender.
 - **Per-user memory — never leak it.** The taxonomy registry is owner-scoped and owner-stamped;
   `reconcile_taxonomy.py` ignores any file that isn't the invoking user's, and a first run starts
   empty. NEVER bundle the registry, any `cowork-process-registry*.json`, or a populated
@@ -369,10 +356,11 @@ final opt-out + post interactively in the task chat. Confirm setup in plain lang
   guard prevents.)
 
 ## Bundled files (self-contained)
-- `config/team_channel.json` — per-team channel default (ships **empty**; filled per-team by the installer generator so members skip the first-run link prompt — see **Target channel** step 0). Never commit a populated copy.
+- `config/team_channel.json` — per-team Teams channel email target (ships with an empty
+  `channel_email`; filled per-team by the installer generator). Never commit a populated copy.
 - `scripts/prune_sessions.py` — lists the session inventory + applies the privacy opt-out.
 - `scripts/mine_session.py` — live-session telemetry hook: mines the current transcript for real `exec_min`, tool intensity, artifacts, and per-category `runs` (Outlook-mail→email, Teams→comms, transcript/calendar→meeting, code→code, research→analysis); upserts a durable log so folder-less email/Teams/meeting triage sessions are still harvested.
-- `scripts/format_member_message.py` — renders `cowork_roi_data.json` into the de-identified HTML table post.
+- `scripts/format_member_message.py` — renders `cowork_roi_data.json` into the de-identified HTML table email.
 - `scripts/reconcile_taxonomy.py` — aligns each kept session to the invoking user's **owner-scoped** registry (align-first, create-if-novel; ignores any file that isn't theirs); writes `working/process_overrides.json` + persists the owner-stamped registry. Takes `--owner`. Reuses `classify.py`'s matcher.
 - `scripts/classify.py` — ext→category classifier; applies per-run overrides via `--overrides working/process_overrides.json`, then groups the process label via `process_groups.json`. Reads `apqc_taxonomy.json`, `roles_taxonomy.json`, `process_groups.json`.
 - `scripts/compute.py` — research-anchored two-clock model → `cowork_roi_data.json` (incl. `pct_time`).

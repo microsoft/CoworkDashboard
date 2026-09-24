@@ -1,7 +1,7 @@
 ---
 name: cowork-dashboard-team-dashboard
 description: |
-  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates post (via the Cowork Team Report Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (five tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest post per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
+  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates email (via the Cowork Team Report Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (five tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest report per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
   Use when the user asks to "build the team Cowork Team Report", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Team Report", "email the team dashboard", to "walk me through setup" / "set up the skill" right after installing it, or to "send / share the member skill with my team" / "invite my team" / set up / refresh the rollup.
   Do NOT use for: the personal report (cowork-roi-report), a member's own post (cowork-dashboard-member), the member-side aggregated post (cowork-roi-report-aggregated), org-wide/large-team aggregation, GitHub Copilot reports, or single-meeting summaries.
 cowork:
@@ -11,14 +11,14 @@ cowork:
 
 # Cowork Team Report — Team Dashboard (manager rollup)
 
-Aggregates the **de-identified Cowork Team Report posts** teammates publish (via the **Copilot ROI
+Aggregates the **de-identified Cowork Team Report messages** teammates email (via the **Copilot ROI
 Member** skill, `cowork-dashboard-member`) to a shared Teams channel, renders a single self-contained,
 **anonymized** HTML dashboard, and **emails the channel members** a high-level summary with the
 dashboard attached. The interpretation guide is **built into the dashboard** (the **How to read**
 tab, plus a clickable **"?"** on every section title) — there is no separate PDF attachment by
 default, so recipients read everything in one file.
 
-**This skill only reads what the Member skill posts.** It never harvests anyone's OneDrive and
+**This skill only reads what the Member skill emails into the channel.** It never harvests anyone's OneDrive and
 never sees names, files, or prompts. If a label (business process, skill, Role) doesn't match the
 Member bundle's copy, aggregation drifts — the taxonomy files here are **byte-for-byte mirrors** of
 the Member skill's (see *Cross-skill contract*).
@@ -30,7 +30,7 @@ the Member skill's (see *Cross-skill contract*).
 
 ## When NOT to Use
 - **A single person's full impact report** → `cowork-roi-report` (rich personal web app).
-- **Posting your own de-identified stats** to the channel → `cowork-dashboard-member`.
+- **Emailing your own de-identified stats** to the channel → `cowork-dashboard-member`.
 - **The member-side anonymized table post** → `cowork-roi-report-aggregated`.
 - **Org-wide / multi-team / cross-channel aggregation** — out of scope for v1; don't force it.
 - **GitHub Copilot / IDE usage reports**, **daily briefings**, or **single-meeting summaries** —
@@ -40,7 +40,7 @@ the Member skill's (see *Cross-skill contract*).
 
 ## First run — point the skill at the channel (once)
 
-The rollup reads ONE shared Teams channel that teammates post to. The channel is **not hard-coded**.
+The rollup reads ONE shared Teams channel that teammates email reports to. The channel is **not hard-coded**.
 
 > **If the manager just installed the skill and asked to "walk me through setup" (or this is the first
 > setup turn), do the 1:1 share step FIRST** — see *Right after install — offer to send the member
@@ -55,8 +55,8 @@ The rollup reads ONE shared Teams channel that teammates post to. The channel is
    and go straight to the invite / 1:1 share and the workflow. Only treat this as a blank first run (and
    do steps 2–3) when **both** fields are empty, which happens only for a hand-built zip.
 2. **Only if the channel is blank — ask for the link.** Use `AskUserQuestion` to ask the user to paste
-   the **link of the Teams channel** where the team posts its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to
-   channel*). This must be the same channel `cowork-dashboard-member` posts to.
+   the **link of the Teams channel** where the team emails its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to
+   channel*). This must be the same channel whose email address is configured in `cowork-dashboard-member`.
 3. **Resolve + persist the IDs** from that link — no Graph call needed:
    ```
    python scripts/resolve_channel.py --link "<pasted url>" --config config/team_config.json
@@ -245,8 +245,9 @@ If the user asks, `SetupScheduledPrompt` with a self-contained description: *"Re
 Cowork Team Report posts in the team channel, aggregate them into the anonymized team dashboard (the how-to-read
 guide is built into it), save it to my files, and email it to the channel members."*
 
-**Timing:** the Member skill posts on a **biweekly Monday** cycle, so schedule the manager rollup to
-run **1–2 days later — on Wednesday** — which gives teammates Monday and Tuesday to post before the
+**Timing:** the Member skill prompts members to review and email reports on a **biweekly Monday**
+cycle, so schedule the manager rollup to run **1–2 days later — on Wednesday** — which gives
+teammates Monday and Tuesday to send before the
 rollup reads the channel. Use frequency **Week**, `interval = cadence_days / 7` (= **2** → every other
 Wednesday), `weekDays=["Wednesday"]`, `hours=["9"]`, name "Cowork Team Report team dashboard". Scheduled runs
 build the dashboard and email the channel members automatically (no interactive approval).
@@ -263,7 +264,7 @@ build the dashboard and email the channel members automatically (no interactive 
   never who did what.
 
 ## Cross-skill contract (keep in sync)
-This skill can only aggregate what **`cowork-dashboard-member`** posts. These must match its copies or
+This skill can only aggregate what **`cowork-dashboard-member`** emails into the channel. These must match its copies or
 aggregation breaks — **change them in both bundles together**:
 
 | Item | This skill | Must match |
@@ -272,9 +273,9 @@ aggregation breaks — **change them in both bundles together**:
 | **Skills** vocabulary | `scripts/skills_vocabulary.json` | `cowork-dashboard-member/scripts/skills_vocabulary.json` (and `cowork-roi-report`'s) — **byte-for-byte** |
 | **Roles** taxonomy | `scripts/roles_taxonomy.json` | `cowork-dashboard-member/scripts/roles_taxonomy.json` — **byte-for-byte** |
 | **Value pillars** | `references/value-pillars.md` | `cowork-dashboard-member/references/value-pillars.md` — **byte-for-byte** |
-| **Role** attribute + no country/names | reads the post header `Role:` line | `cowork-dashboard-member/scripts/format_member_message.py` (emits `Role:`; excludes country/names) |
+| **Role** attribute + no country/names | reads the report header `Role:` line | `cowork-dashboard-member/scripts/format_member_message.py` (emits `Role:`; excludes country/names) |
 | Deliverable → process link + **by-type** rollup | parser reads the "By type" deliverables table | `format_member_message.py` (that rollup "is also what the aggregated Dashboard reads") |
-| The **shared channel** | `channel_id` resolved from the link the user pastes | the channel `cowork-dashboard-member` posts to (its SKILL.md → *Target channel*) — must be the same channel |
+| The **shared channel** | `channel_id` resolved from the link the user pastes | the channel whose email address is stored in `cowork-dashboard-member/config/team_channel.json` — must be the same channel |
 
 - `scripts/skill_aliases.json` is a **reader-only** compatibility shim (maps older non-canonical skill
   labels → the vocabulary). It is **not** part of the shared contract and lives only here.
@@ -289,8 +290,8 @@ aggregation breaks — **change them in both bundles together**:
 - **No hand math.** `parse_posts.py` totals; `build_dashboard.py` prices at the live rate; the email
   figures are read from `team_data.json`.
 - **Self-contained output.** The HTML embeds all CSS/JS/data — no external assets.
-- **Latest post wins, within the window.** The reader keeps only the last 15 days, then the most
-  recent post per sender; re-running a member's post replaces their earlier contribution.
+- **Latest report wins, within the window.** The reader keeps only the last 15 days, then the most
+  recent report per sender; re-running a member report replaces the earlier contribution.
 - **Channel is user-owned.** Read the channel resolved from the user's link; re-ask only if they name
   a different one. Never guess or construct a `channel_id`.
 - **Email stays inside the channel.** Recipients are the channel members only; the body is

@@ -385,7 +385,7 @@
     <p class="hero-sub">A pair of Microsoft Copilot <strong>Cowork</strong> skills that measure the time and
        money your team saves with Copilot Cowork — your team's real ROI — and turn it into a private,
        easy-to-read team report emailed to you. Download each skill below and upload it to Copilot Cowork —
-       each one asks for your Teams channel link the first time it runs, so there's nothing to configure up front.</p>
+       the installer securely bakes the channel details each skill needs into its download.</p>
     <div class="trust-row">
       <span class="trust-pill"><span class="trust-dot b"></span> Quantifies your team's Copilot Cowork ROI</span>
       <span class="trust-pill"><span class="trust-dot p"></span> Private &amp; de-identified</span>
@@ -412,8 +412,8 @@
        saved and the dollar value of that time — and turns it into a tidy report that lands in everyone's inbox.</p>
     <ul class="benefits">
       <li><strong>Each teammate runs the “member” skill.</strong> It looks at their own Copilot Cowork work
-          and posts a private, plain-language summary — hours saved, the dollar value of that time, the kinds
-          of work, and what they produced — into one shared Teams channel.</li>
+          and emails a private, plain-language summary — hours saved, the dollar value of that time, the kinds
+          of work, and what they produced — to one shared Teams channel email address.</li>
       <li><strong>You run the “manager” skill.</strong> It reads that channel, combines everyone's summaries
           into a single anonymized dashboard, and <strong>emails your team a tidy newsletter</strong> (an HTML
           dashboard with the how-to-read guide built in) on the schedule you choose.</li>
@@ -422,8 +422,8 @@
           descriptions, and nothing is ever shown at an individual level.</li>
     </ul>
     <p class="muted">Both skills need to know the <strong>one Teams channel</strong> your team uses for these
-       reports. Create that channel first (step 1) and keep its link handy — each skill asks for it the
-       <strong>first time it runs</strong>. Just follow the steps below.</p>
+       reports. Create that channel first (step 1), then copy both its link and its email address. The
+       manager skill uses the link to read reports; the member skill uses the email address to deliver them.</p>
   </section>
 
 
@@ -434,15 +434,16 @@
     </div>
     <p class="lead">Before anything else, create a <strong>brand-new, dedicated Teams channel</strong> just for
        these Cowork ROI reports, and add <strong>only</strong> the members you want included (they'll need
-       access to post their summaries here).</p>
+       access to email their summaries here).</p>
     <ol class="steps">
       <li>In <strong>Microsoft Teams</strong>, pick a team and choose <strong>⋯ More options → Add channel</strong>
           (or <strong>Manage team → Add channel</strong>). Give it a clear name like
           <span class="mono">Cowork report - {team}</span>.</li>
-      <li>Add <strong>only the members you want in this rollup</strong> — everyone you add can see and post here,
+      <li>Add <strong>only the members you want in this rollup</strong> — everyone you add can see the reports here,
           so keep it to the people whose Copilot Cowork work should be counted.</li>
-      <li>Once it exists, grab its link for the next step: hover the channel name, click
-          <strong>⋯ → Get link to channel</strong>, and click <strong>Copy</strong>.</li>
+      <li>Once it exists, grab both values for the next step. From the channel's <strong>⋯</strong> menu,
+          use <strong>Get link to channel</strong> and <strong>Get email address</strong>. In the channel's
+          email security settings, allow the team members who will send reports.</li>
     </ol>
     <p class="note privacy"><strong>Why a dedicated channel?</strong> A fresh, members-only channel keeps these
        reports private to the right people and gives the manager skill clean aggregation data — nothing else in
@@ -452,7 +453,7 @@
   <section class="card">
     <div class="step-head">
       <span class="step-num">2</span>
-      <h2>Add your team's Teams channel link</h2>
+      <h2>Add your team's Teams channel link and email address</h2>
     </div>
     <label for="link">Teams channel link</label>
     <input id="link" type="text" autocomplete="off" spellcheck="false" maxlength="2048"
@@ -474,15 +475,29 @@
         <span class="mono">groupId</span> — use <strong>Copy link</strong> so it does.</p>
     </details>
 
+    <label for="channelEmail">Teams channel email address</label>
+    <input id="channelEmail" type="email" autocomplete="off" spellcheck="false" maxlength="320"
+           placeholder="your-channel-name@amer.teams.ms" />
+
+    <details class="help">
+      <summary>Where do I find the channel email address?</summary>
+      <ol class="steps">
+        <li>Open the same dedicated Teams channel and select <strong>⋯ More options</strong>.</li>
+        <li>Choose <strong>Get email address</strong>, then copy the address into the box above.</li>
+        <li>Open the email security settings and allow the team members who will run the member skill.</li>
+      </ol>
+      <p class="muted">The member skill sends each reviewed report through Outlook to this address.
+        It does not call the Teams posting API.</p>
+    </details>
+
     <div class="row">
       <button id="parseBtn" type="button">Build my install links</button>
     </div>
-    <p class="muted small">This reads the link right here in your browser — it pulls out the
+    <p class="muted small">This validates both values right here in your browser. It pulls from the link the
        <span class="mono">team_id</span>, <span class="mono">channel_id</span> and channel name, checks the
-       channel id is a real <span class="mono">…@thread.…</span> id and the team id is a valid GUID, and shows
-       them below to confirm. It runs entirely on this page. <strong>Do this before you download</strong> — the
-       downloads below then <strong>bake this channel into each skill zip</strong> (in your browser), so you and
-       your teammates just upload the zip with nothing to paste on first run.</p>
+       channel id is a real <span class="mono">…@thread.…</span> id, the team id is a valid GUID, and the
+       channel email is valid. <strong>Do this before you download</strong> — the manager zip receives the
+       link/IDs and the member zip receives the email address.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
 
     <div id="resolved" class="resolved" aria-live="polite">
@@ -491,6 +506,7 @@
         <div class="rowline"><span class="k">Channel name</span><p class="v" id="rName">—</p></div>
         <div class="rowline"><span class="k">team_id</span><p class="v" id="rTeam">—</p></div>
         <div class="rowline"><span class="k">channel_id</span><p class="v" id="rChannel">—</p></div>
+        <div class="rowline"><span class="k">channel_email</span><p class="v" id="rEmail">—</p></div>
       </div>
     </div>
 
@@ -505,8 +521,8 @@
       <span class="step-num">3</span>
       <h2>Download both skills, then install the manager skill</h2>
     </div>
-    <p>Download <strong>both</strong> skills below — each already has your <strong>verified channel baked
-       in</strong>, so there's no link to paste when they run. <strong>Install the manager skill first</strong>
+    <p>Download <strong>both</strong> skills below — each already has the channel detail it needs baked
+       in. <strong>Install the manager skill first</strong>
        (the <em>Cowork Team Report - Team Dashboard Cowork Skill</em> — "manager skill" is just how we refer to
        it here, and you run it); just keep the member skill handy — during setup the manager skill sends it to
        your team for you.</p>
@@ -529,8 +545,8 @@
           <button id="downloadBtn" type="button">⬇ Download the member skill (.zip)</button>
         </div>
         <p class="dl-note" id="genNote">Just keep this file — during setup the manager skill attaches it when
-           it sends the member skill to your team. Your channel gets baked in, so they don't paste a link on
-           first run.</p>
+           it sends the member skill to your team. Your channel email gets baked in, so members never choose
+           a recipient.</p>
         <p class="dl-note baked hidden" id="bakeNote"></p>
         <div id="dlStatus" class="status" role="status" aria-live="polite"></div>
       </div>
@@ -546,12 +562,12 @@
        These words make the skill immediately offer to send the member skill to your team — the step that
        actually starts filling your dashboard.</p>
     <p class="note"><span id="mgrBakeState">Your verified channel gets baked into the download, so there's no link to paste on first run.</span>
-       During setup it helps you get the member skill to your team first. Once teammates have posted their
+       During setup it helps you get the member skill to your team first. Once teammates have emailed their
        summaries, ask it to <strong>build the team Cowork Team Report</strong> — then let it run on a schedule
        and email your team automatically every couple of weeks.</p>
     <p class="note privacy">🗓️ <strong>When to run the manager / dashboard skill:</strong> schedule it
-       <strong>1–2 days after</strong> the member cadence, so every member's post is in before it aggregates.
-       For example, if members post <strong>every other Monday</strong>, run the manager skill
+       <strong>1–2 days after</strong> the member cadence, so every member's report is in before it aggregates.
+       For example, if members review and send <strong>every other Monday</strong>, run the manager skill
        <strong>Tuesday or Wednesday</strong> of that same week.</p>
   </section>
 
@@ -567,13 +583,13 @@
        so they each install it. Each person uploads the <span class="mono">.zip</span> in Copilot Cowork
        (don't unzip it) and asks it to install:</p>
     <p class="note privacy">📎 <strong>Safe to post the zip here:</strong> the manager / dashboard reader
-       <strong>ignores zip files</strong> in the channel — it only reads the members' posted summaries — so
+       <strong>ignores zip files</strong> in the channel — it only reads the members' report summaries — so
        dropping the package in the same channel won't affect your aggregation data.</p>
     <div class="copybox">
       <textarea id="installText" readonly>Install the attached Cowork Team Report - Team Member Cowork Skill into my Cowork skills.</textarea>
       <button id="copyBtn" class="secondary" type="button">Copy</button>
     </div>
-    <p class="note"><span id="memBakeState">Your channel is baked into the zip you share, so teammates don't paste a link on first run.</span>
+    <p class="note"><span id="memBakeState">Your channel email is baked into the zip you share, so teammates never choose a recipient.</span>
        <strong>Installing isn't enough — each teammate runs the member skill once</strong> to start it (and can
        choose to automate biweekly — every other Monday — right then). Tell them to type:</p>
     <div class="copybox">
@@ -591,15 +607,15 @@
       <h2>That's it — here's what happens next</h2>
     </div>
     <ol class="steps">
-      <li>Each teammate runs the member skill once to start it, and their private summary posts to your
-          dedicated channel — on its own 15-day schedule from then on.</li>
-      <li>Your manager skill reads those posts, builds one anonymized dashboard, and emails your team a
+      <li>Each teammate runs the member skill once to start it, reviews their sessions, and emails their
+          private summary to your dedicated channel.</li>
+      <li>Your manager skill reads those channel messages, builds one anonymized dashboard, and emails your team a
           newsletter with the dashboard attached — the how-to-read guide is built right into it.</li>
       <li>Keep it automated: your manager skill runs on its schedule (about every two weeks), and each
-          teammate's member skill posts on its own 15-day schedule — together they keep the picture current
+          teammate's member skill prompts for review on its own 15-day schedule — together they keep the picture current
           with nothing to re-run by hand.</li>
     </ol>
-    <p class="muted small">The manager skill only ever reads what teammates choose to post — it never touches
+    <p class="muted small">The manager skill only ever reads what teammates choose to email into the channel — it never touches
        anyone's files, and no individual is named in the dashboard or the email.</p>
   </section>
 </main>
