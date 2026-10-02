@@ -144,9 +144,11 @@ posted, not that Cowork missed it. The "by format" table on *Impact & Value* sta
 ## Requirements
 
 - Python 3. The whole default pipeline (`resolve_channel.py`, `parse_posts.py`, `build_dashboard.py`,
-  `verify_dashboard.py`, `build_outputs.py`) is **standard library only** — the how-to-read guide is rendered inside the
-  dashboard, so no extra dependency is needed. The **legacy** `build_guide_pdf.py` uses **reportlab**
-  (pre-installed in the Copilot Cowork container) and only runs if you pass `--with-pdf`.
+  `verify_dashboard.py`, `build_outputs.py`) is **standard library only**. The renderer loads its
+  bundled HTML, CSS, and JavaScript from `scripts/dashboard_assets/` and inlines them into the
+  self-contained dashboard, so no extra dependency is needed. The **legacy** `build_guide_pdf.py`
+  uses **reportlab** (pre-installed in the Copilot Cowork container) and only runs if you pass
+  `--with-pdf`.
 - Runs inside Microsoft Copilot Cowork (Teams + email tools provided by the host). The scripts
   themselves run anywhere Python 3 does.
 
