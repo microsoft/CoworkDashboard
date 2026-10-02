@@ -3,6 +3,19 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.12.0] — 2026-10-02
+
+Separates the dashboard's static web assets from the Python renderer to prevent Microsoft Defender
+from misclassifying the packaged renderer as `Trojan:Win32/MalUri.A!cl`.
+
+### Changed
+- `build_dashboard.py` now loads the bundled HTML, CSS, and JavaScript from
+  `scripts/dashboard_assets/` and still emits one self-contained dashboard.
+- The generated dashboard is byte-for-byte identical to the previous renderer output; no visual,
+  privacy, calculation, or interaction behavior changed.
+- The packaged Python source no longer embeds a complete HTML document and JavaScript application,
+  removing the cross-language pattern that triggered Defender's cloud heuristic.
+
 ## [1.11.0] — 2026-09-24
 
 Makes dashboard completeness verification a mandatory pre-email gate and aligns the documentation

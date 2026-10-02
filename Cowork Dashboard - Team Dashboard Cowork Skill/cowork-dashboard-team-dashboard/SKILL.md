@@ -350,7 +350,7 @@ aggregation breaks — **change them in both bundles together**:
 - `scripts/resolve_channel.py` — parse a pasted Teams channel/message link → `team_id` + `channel_id`; persist to config (stdlib only).
 - `scripts/make_invite.py` — render the inviting member "get started" message (channel post + email + plaintext + a personalized 1:1 DM via `--recipient-name`) with the download link baked in, so members are onboarded in-channel or direct-messaged 1:1 instead of hand-delivered a bare zip (stdlib only).
 - `scripts/parse_posts.py` — channel posts → anonymized `team_data.json` (stdlib only; 15-day window, latest-per-sender, groups processes, canonicalizes skills, k-anon-ready).
-- `scripts/build_dashboard.py` — `team_data.json` → self-contained HTML dashboard with the guide built in (stdlib only): the **How to read** tab, per-section **"?"** helpers, per-category **contributor reach** (with a `<k` privacy floor), and **type-only deliverables collapsed per format**.
+- `scripts/build_dashboard.py` + `scripts/dashboard_assets/` — `team_data.json` → self-contained HTML dashboard with the guide built in (stdlib only). The HTML, CSS, and JavaScript are stored as static assets and inlined during the build; the result includes the **How to read** tab, per-section **"?"** helpers, per-category **contributor reach** (with a `<k` privacy floor), and **type-only deliverables collapsed per format**.
 - `scripts/verify_dashboard.py` — mandatory structural/privacy gate for the four tabs, required
   aggregate visuals, controls, unresolved placeholders, and identifying fields in embedded data.
 - `scripts/build_guide_pdf.py` — **legacy** one-page landscape interpretation PDF (uses `reportlab`). Retained but off by default; the guide now lives inside the dashboard.
