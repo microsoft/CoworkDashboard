@@ -8,13 +8,13 @@ INPUT  (--in): a JSON array of channel messages. Two shapes are accepted:
   A) simplified : [{"from_id": "...", "created": "ISO8601", "subject": "...", "body": "<html>"}]
   B) Graph/MCP  : [{"from":{"user":{"id":"..."}}, "createdDateTime":"...", "body":{"content":"<html>"}}]
      (or an object with a top-level "value": [ ...Graph messages... ]).
-  `from_id` is used ONLY to keep the latest post per sender and is then HASHED away —
-  it is never written to the output or shown. No display names are ever read.
+  `from_id` is used only to keep the latest post per sender, then discarded; it is never
+  written to the output. No display names are read.
 
-OUTPUT (--out): team_data.json — meta + snapshots + members[], where each member is
-  {anon, role|null, posted, reports:{<snapshot>:{...metrics...}}}. NO names, NO country,
-  NO file names. Role (job title) is the only attribute, and only if a post carried a
-  "Role:" header line.
+OUTPUT (--out): a PRIVATE working intermediate — meta + snapshots + members[], where each member
+  has a local ordinal, optional Role, and per-snapshot report metrics. This file is required by
+  build_dashboard.py for cohort aggregation. Never publish, email, or attach it; the dashboard
+  builder creates a separate aggregate-only public payload and filters every breakdown by k.
 
 PARSING: stdlib only (html.parser). Tables are matched by their FIRST HEADER CELL, so
 metric/section wording can drift (e.g. "Time saved" vs "Expert-equivalent hours") without
@@ -318,11 +318,16 @@ def normalize_messages(raw):
     return out
 
 def main(a):
-    cfg = _load(os.path.relpath(a.config, HERE)) if os.path.isabs(a.config) is False and os.path.exists(os.path.join(HERE, a.config)) else json.load(open(a.config, encoding="utf-8"))
+    if os.path.isabs(a.config) is False and os.path.exists(os.path.join(HERE, a.config)):
+        cfg = _load(os.path.relpath(a.config, HERE))
+    else:
+        with open(a.config, encoding="utf-8") as handle:
+            cfg = json.load(handle)
     rate = cfg.get("hourly_rate", 72)
     recapture = cfg.get("recapture_rate", 0.70)
     pg, vocab, aliases = load_taxonomies()
-    raw = json.load(open(a.inp, encoding="utf-8"))
+    with open(a.inp, encoding="utf-8") as handle:
+        raw = json.load(handle)
     all_msgs = [m for m in normalize_messages(raw) if not m["deleted"] and "Cowork Team Report" in (m["body"] or "")]
     # Only parse messages that actually carry the de-identified stats tables. This skips
     # attachment/zip shares (e.g. a member-skill .zip posted to the channel) that mention

@@ -3,6 +3,23 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.12.0] — 2026-10-02
+
+Hardens dashboard rendering against untrusted channel content and makes the shared HTML aggregate-only.
+
+### Changed
+- The dashboard builder now converts private contributor-level working data into a separate public
+  aggregate contract. Every category, process, role, skill, deliverable format, fit grade, and
+  secondary breakdown requires support from at least the configured k-threshold.
+- Suppressed small role cohorts are combined only when the residual pool itself reaches the threshold.
+  Individual task rows, deliverable names, role assignments, and per-item dates are no longer rendered.
+- Dynamic dashboard text is escaped for HTML contexts, metadata is HTML-escaped, and JSON embedded in
+  script elements neutralizes script-closing characters.
+- The dashboard verifier checks the public data schema and cohort threshold for every emitted
+  breakdown, in addition to the charts, controls, and four-tab layout.
+- Documentation now distinguishes the private `working/team_data.json` intermediate from the
+  shareable aggregate dashboard.
+
 ## [1.11.0] — 2026-09-24
 
 Makes dashboard completeness verification a mandatory pre-email gate and aligns the documentation

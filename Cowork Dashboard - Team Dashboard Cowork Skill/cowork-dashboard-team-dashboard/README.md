@@ -10,10 +10,11 @@ section — so there's no separate file to open. The bundled renderer produces f
 it **asks for the Teams channel link** and
 remembers it; every run reads the **latest 15 days** of messages, keeping the latest report per person.
 
-> **Team-safe by design.** Individual identity, raw filenames, prompts, and country are not revealed.
-> Retained work artifacts may appear under de-identified descriptive names. Before publishing, each
-> teammate can remove any session from the pending report, which also removes that session's artifacts;
-> a Role breaks out only when at least **3** contributors share it.
+> **Team-safe by design.** The private working file contains per-contributor metrics for aggregation;
+> it is not the report and must never be shared. The builder embeds only team totals and breakdowns
+> supported by at least the configured k-threshold. It excludes member records, task-level entries,
+> deliverable names, raw filenames, prompts, and country. Small residual cohorts are suppressed unless
+> the combined pool also meets the threshold.
 
 ## The three-skill family
 
@@ -23,8 +24,9 @@ remembers it; every run reads the **latest 15 days** of messages, keeping the la
 | `cowork-dashboard-member` | A person emails their **de-identified** stats to the team channel | HTML tables in Teams |
 | **`cowork-dashboard-team-dashboard`** (this) | The **manager** aggregates everyone's reports | Anonymized team HTML dashboard (how-to-read guide built in), emailed to the channel members |
 
-This skill **only consumes** what `cowork-dashboard-member` emails into the channel. It does not harvest OneDrive and never
-sees identities.
+This skill **only consumes** what `cowork-dashboard-member` emails into the channel. It does not
+harvest OneDrive. Sender IDs are used transiently to deduplicate posts and are not written to the
+working JSON or dashboard.
 
 ## Scope (v1)
 
@@ -42,11 +44,11 @@ teammates ──(cowork-dashboard-member email)──▶  Teams channel  ──(
                                                               scripts/parse_posts.py │  (last 15 days,
                                                               + process_groups.json  │   latest per sender,
                                                               + skills_vocabulary    │   group processes,
-                                                              + skill_aliases         ▼   anonymize → role only)
-                                                                                team_data.json
+                                                              + skill_aliases         ▼   private intermediate)
+                                                                                team_data.json (keep private)
                                                                                      │
-                                     scripts/build_outputs.py ──▶ build_dashboard.py │  (k-anonymity, live rate,
-                                     (guide built into the dashboard's               ▼   How-to-read tab + "?" helpers)
+                                     scripts/build_outputs.py ──▶ build_dashboard.py │  (aggregate-only payload,
+                                     (guide built into the dashboard's               ▼   cohort filters, live rate)
                                       "How to read" tab)              output/cowork-team-roi-dashboard.html
                                                                                      │
                                                           SendEmailWithAttachments ──▶ channel members
@@ -83,7 +85,15 @@ teammates ──(cowork-dashboard-member email)──▶  Teams channel  ──(
 ## Mandatory dashboard contract
 
 - Build only with `scripts/build_outputs.py`; never substitute a simplified layout.
-- Privacy cleanup removes identifying data, not aggregate chart inputs or visuals.
+- The parser's `working/team_data.json` is an internal intermediate containing contributor-level
+  metrics. Do not email, publish, or attach it. The renderer constructs a separate public aggregate
+  contract before embedding data in the HTML.
+- Each category, process, role, skill, deliverable format, fit grade, and secondary detail is included
+  only when at least `privacy_k_threshold` contributors support it. Small residual role groups are
+  combined only when the pooled group also meets that threshold; otherwise they are omitted.
+- The shared HTML never embeds member records, individual roles, task descriptions, deliverable names,
+  per-deliverable rows, or contributor-to-category links. Process drill-downs contain cohort-qualified
+  format and skill totals only.
 - Required visuals: Cowork-fit waterfall, category bars, stacked category mix, expandable
   business-process drill-downs, and the time/value toggle.
 - `scripts/verify_dashboard.py` must pass before email delivery.
@@ -120,12 +130,11 @@ python scripts/build_outputs.py --in working/team_data.json --config config/team
 - Members are **counts + a number**, never named.
 - Before emailing the report to the channel, each member can remove any session they do not want included. Its
    artifacts are removed with it before metrics are computed; the original Cowork session is not deleted.
-- The only personal attribute is the directory **Role** a post carries — never identity, country, raw
-   filenames, or prompts.
-- Retained work artifacts may be shown under de-identified descriptive names so the team can understand
-   what was produced.
-- **k-anonymity:** per-Role breakdowns require ≥ `privacy_k_threshold` contributors; otherwise they
-  collapse into one combined bar. Small teams typically show a single combined bar.
+- The private working JSON contains the directory **Role** and per-contributor statistics for
+   aggregation; neither the Role assignments nor individual records are published.
+- **Cohort threshold:** every published breakdown requires ≥ `privacy_k_threshold` distinct
+   contributors. Category reach is shown only above that threshold; lower-support categories and
+   secondary details are omitted rather than exposed as small residual groups.
 
 ## Shared taxonomy contract (keep in sync)
 
@@ -134,12 +143,10 @@ python scripts/build_outputs.py --in working/team_data.json --config config/team
 in turn mirrors `cowork-roi-report`). If those change, update this copy too or team aggregation
 drifts. `skill_aliases.json` is reader-only and not part of the contract.
 
-**Deliverable names:** the Member skill emits **de-identified descriptive names** (never raw file
-names), but a post can also carry a compact **type-only** line with no name. Named deliverables list
-individually under each business process — repeated versions of the same name collapse into one
-`+N versions` entry — with the file format inline. **Type-only** deliverables collapse into one row per
-format (e.g. "HTML · 5 deliverables", hours/value summed), so a format-only row means the name wasn't
-posted, not that Cowork missed it. The "by format" table on *Impact & Value* stays a type/format rollup.
+**Deliverable detail:** contributor-level names, dates, and rows are never published. The dashboard
+shows only aggregate counts and hours grouped by a standard file format, and only when at least
+`privacy_k_threshold` distinct contributors support that format (including within a process). Skills
+in process detail follow the same cohort rule.
 
 ## Requirements
 

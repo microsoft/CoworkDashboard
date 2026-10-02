@@ -3,10 +3,9 @@
 build_dashboard.py — render team_data.json (from parse_posts.py) into a single
 self-contained, team-safe HTML dashboard.
 
-v1 scope: small, homogeneous teams at the team level. Anonymized — members are
-numbers, the only attribute is Role, and NOTHING is shown at an individual level.
-A per-Role breakdown appears only when >= kThreshold members share that Role
-(privacy k-anonymity); otherwise contributors collapse into one combined bar.
+The input JSON is a private working intermediate. Before rendering, the builder drops
+contributor records and emits only aggregate breakdowns supported by >= kThreshold people.
+It never embeds task-level entries, deliverable names, or role assignments.
 
 Tabs (each small, one clear purpose):
   Overview          — auto-insights + the single KPI band.
@@ -21,7 +20,356 @@ The "modeled tool-impact, not performance" disclaimer lives in the blue header; 
 Every $ figure = hours x rate, computed live in the browser (live rate control).
 Usage: python build_dashboard.py --in working/team_data.json --out output/cowork-team-roi-dashboard.html
 """
-import json, argparse, re
+import json, argparse, os, re
+
+
+CATEGORIES = {
+    "Analysis & Research", "Write or debug code", "Document & content creation",
+    "Meeting workflows", "Specialized workflows", "General assistance / Other",
+    "Email workflows", "Communication workflows",
+}
+FORMATS = {
+    "deck": "PPTX", "slides": "PPTX", "presentation": "PPTX",
+    "slide deck": "PPTX", "document": "Word", "doc": "Word", "word": "Word",
+    "spreadsheet": "Excel / CSV", "excel": "Excel / CSV", "csv": "Excel / CSV",
+    "web page": "HTML", "webpage": "HTML", "web": "HTML", "html": "HTML",
+    "text": "Text / MD", "markdown": "Text / MD", "image": "Image",
+    "pdf": "PDF", "file": "File (other)",
+}
+GRADES = {"H", "M", "L"}
+
+
+def number(value):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if value != value or abs(value) == float("inf"):
+        return 0
+    value = max(0, value)
+    return int(value) if value.is_integer() else value
+
+
+def public_data(data):
+    """Build a cohort-filtered public contract; never serialize contributor records."""
+    meta = data.get("meta", {})
+    if not isinstance(meta, dict):
+        meta = {}
+    try:
+        threshold = max(2, int(meta.get("kThreshold", 3)))
+    except (TypeError, ValueError, OverflowError):
+        threshold = 3
+
+    def read_json(name):
+        path = os.path.join(os.path.dirname(__file__), name)
+        with open(path, encoding="utf-8") as handle:
+            return json.load(handle)
+
+    processes = set(read_json("process_groups.json").get("groups", []))
+    roles = {
+        item["role"] for item in read_json("roles_taxonomy.json").get("roles", [])
+        if isinstance(item, dict) and item.get("role")
+    }
+    skills_data = read_json("skills_vocabulary.json")
+    skills = {
+        item["name"]
+        for key in ("domain_skills", "tech_skills")
+        for item in skills_data.get(key, [])
+        if isinstance(item, dict) and item.get("name")
+    }
+    category_aliases = {
+        "email": "Email workflows", "email workflow": "Email workflows",
+        "communication": "Communication workflows", "specialized": "Specialized workflows",
+        "general assistance": "General assistance / Other", "other": "General assistance / Other",
+    }
+    process_lookup = {process.casefold(): process for process in processes}
+    role_lookup = {role.casefold(): role for role in roles}
+    skill_lookup = {skill.casefold(): skill for skill in skills}
+
+    def safe_role(value):
+        return role_lookup.get(value.casefold(), "Other role") if isinstance(value, str) else "Other role"
+
+    def safe_process(value):
+        return process_lookup.get(value.casefold(), "Other process") if isinstance(value, str) else "Other process"
+
+    def safe_skill(value):
+        return skill_lookup.get(value.casefold(), "Other skill") if isinstance(value, str) else "Other skill"
+
+    def safe_category(value):
+        if not isinstance(value, str):
+            return "General assistance / Other"
+        if value in CATEGORIES:
+            return value
+        return category_aliases.get(value.casefold(), "General assistance / Other")
+
+    def safe_process_with_unknown(value):
+        process = safe_process(value)
+        return process if process != "Other process" else "General Productivity"
+
+    def safe_format(value):
+        return FORMATS.get(str(value or "").strip().lower(), "Other format")
+
+    def empty_metric(fields):
+        return {"contributors": set(), **{field: 0.0 for field in fields}}
+
+    def aggregate(ids):
+        rows = {
+            "categories": {}, "processes": {}, "roles": {}, "skills": {},
+            "deliverables": {}, "processDetails": {}, "fit": {}, "fitDetails": {},
+            "inputs": {}, "outputs": {}, "roleGroups": {},
+        }
+        head = {key: 0.0 for key in (
+            "timeTyp", "timeLow", "timeHigh", "expertH", "assistedH", "sessions",
+            "runTasks", "deliverables", "activeDays",
+        )}
+        low_count = high_count = 0
+        contributors = set()
+
+        def add(metric, key, fields, source, member_id):
+            if not isinstance(source, dict):
+                return
+            values = {field: number(source.get(field)) for field in fields}
+            item = metric.setdefault(key, empty_metric(fields))
+            if any(value > 0 for value in values.values()):
+                item["contributors"].add(member_id)
+            for field in fields:
+                item[field] += values[field]
+
+        private_members = data.get("members", [])
+        if not isinstance(private_members, list):
+            private_members = []
+        for member_index, member in enumerate(private_members):
+            if not isinstance(member, dict):
+                continue
+            reports = member.get("reports", {})
+            if not isinstance(reports, dict):
+                continue
+            selected = [reports[period_id] for period_id in ids if isinstance(reports.get(period_id), dict)]
+            if not selected:
+                continue
+            member_id = member_index
+            contributors.add(member_id)
+            role_group = safe_role(member.get("role"))
+            role_group_data = rows["roleGroups"].setdefault(
+                role_group, {"contributors": set(), "categories": {}}
+            )
+            role_group_data["contributors"].add(member_id)
+
+            for report in selected:
+                headline = report.get("headline", {})
+                for field in head:
+                    if field in ("timeLow", "timeHigh"):
+                        continue
+                    head[field] += number(headline.get(field))
+                if headline.get("timeLow") is not None:
+                    head["timeLow"] += number(headline.get("timeLow"))
+                    low_count += 1
+                if headline.get("timeHigh") is not None:
+                    head["timeHigh"] += number(headline.get("timeHigh"))
+                    high_count += 1
+
+                for item in (report.get("categories", []) if isinstance(report.get("categories"), list) else []):
+                    if not isinstance(item, dict):
+                        continue
+                    name = safe_category(item.get("name"))
+                    add(rows["categories"], name, ("tasks", "hours"), item, member_id)
+                    role_cat = role_group_data["categories"].setdefault(
+                        name, {"contributors": set(), "hours": 0.0}
+                    )
+                    if number(item.get("tasks")) > 0 or number(item.get("hours")) > 0:
+                        role_cat["contributors"].add(member_id)
+                        role_cat["hours"] += number(item.get("hours"))
+
+                for item in (report.get("processes", []) if isinstance(report.get("processes"), list) else []):
+                    if not isinstance(item, dict):
+                        continue
+                    add(rows["processes"], safe_process_with_unknown(item.get("name")),
+                        ("sessions", "hours"), item, member_id)
+                for item in (report.get("roles", []) if isinstance(report.get("roles"), list) else []):
+                    if not isinstance(item, dict):
+                        continue
+                    add(rows["roles"], safe_role(item.get("name")), ("hours",), item, member_id)
+                for item in (report.get("skills", []) if isinstance(report.get("skills"), list) else []):
+                    if not isinstance(item, dict):
+                        continue
+                    add(rows["skills"], safe_skill(item.get("name")),
+                        ("deliverables", "sessions", "hours"), item, member_id)
+                for item in (report.get("deliverables", []) if isinstance(report.get("deliverables"), list) else []):
+                    if not isinstance(item, dict):
+                        continue
+                    add(rows["deliverables"], safe_format(item.get("type")),
+                        ("count", "hours"), item, member_id)
+                for item in (report.get("deliverablesDetail", []) if isinstance(report.get("deliverablesDetail"), list) else []):
+                    if not isinstance(item, dict):
+                        continue
+                    process = safe_process_with_unknown(item.get("process"))
+                    fmt = safe_format(item.get("type"))
+                    key = (process, fmt)
+                    add(rows["processDetails"], key, ("count", "hours"), {
+                        "count": 1, "hours": item.get("hours"),
+                    }, member_id)
+                    detail = rows["processDetails"][key]
+                    if "skills" not in detail:
+                        detail["skills"] = {}
+                    item_skills = item.get("skills", [])
+                    for skill in (set(safe_skill(value) for value in item_skills if isinstance(value, str))
+                                  if isinstance(item_skills, list) else ()):
+                        entry = detail["skills"].setdefault(
+                            skill, {"contributors": set(), "count": 0}
+                        )
+                        entry["contributors"].add(member_id)
+                        entry["count"] += 1
+                for item in (report.get("coworkFit", []) if isinstance(report.get("coworkFit"), list) else []):
+                    if not isinstance(item, dict):
+                        continue
+                    grade = item.get("grade")
+                    if grade not in GRADES:
+                        continue
+                    add(rows["fit"], grade, ("count", "hours"), {
+                        "count": 1, "hours": item.get("hours"),
+                    }, member_id)
+                    category = safe_category(item.get("category"))
+                    key = (grade, safe_process_with_unknown(item.get("process")), category)
+                    add(rows["fitDetails"], key, ("count", "hours"), {
+                        "count": 1, "hours": item.get("hours"),
+                    }, member_id)
+                io = report.get("io", {})
+                if not isinstance(io, dict):
+                    io = {}
+                for source_key, target_key in (("inputs", "inputs"), ("outputs", "outputs")):
+                    source_items = io.get(source_key, [])
+                    for item in source_items if isinstance(source_items, list) else ():
+                        if not isinstance(item, dict):
+                            continue
+                        add(rows[target_key], safe_format(item.get("type")), ("count",), item, member_id)
+
+        head["timeLow"] = head["timeLow"] if low_count else head["timeTyp"]
+        head["timeHigh"] = head["timeHigh"] if high_count else head["timeTyp"]
+
+        def exposed(metric, names):
+            result = []
+            for key, item in metric.items():
+                if len(item["contributors"]) < threshold:
+                    continue
+                row = {name: key if name == "name" else item.get(name, 0) for name in names}
+                row["contributors"] = len(item["contributors"])
+                result.append(row)
+            return result
+
+        categories = exposed(rows["categories"], ("name", "tasks", "hours"))
+        processes_out = exposed(rows["processes"], ("name", "sessions", "hours"))
+        roles_out = exposed(rows["roles"], ("name", "hours"))
+        skills_out = exposed(rows["skills"], ("name", "deliverables", "sessions", "hours"))
+        deliverables_out = exposed(rows["deliverables"], ("name", "count", "hours"))
+        details_out = []
+        for (process, fmt), item in rows["processDetails"].items():
+            if len(item["contributors"]) < threshold:
+                continue
+            visible_skills = [
+                {"name": name, "count": value["count"],
+                 "contributors": len(value["contributors"])}
+                for name, value in item.get("skills", {}).items()
+                if len(value["contributors"]) >= threshold
+            ]
+            details_out.append({
+                "process": process, "type": fmt, "count": item["count"],
+                "hours": item["hours"], "contributors": len(item["contributors"]),
+                "skills": visible_skills,
+            })
+
+        fit_out = exposed(rows["fit"], ("name", "count", "hours"))
+        fit_out = [{"grade": item["name"], "count": item["count"],
+                    "hours": item["hours"], "contributors": item["contributors"]}
+                   for item in fit_out]
+        fit_details_out = [
+            {"grade": key[0], "process": key[1], "category": key[2],
+             "count": item["count"], "hours": item["hours"],
+             "contributors": len(item["contributors"])}
+            for key, item in rows["fitDetails"].items()
+            if len(item["contributors"]) >= threshold
+        ]
+
+        role_groups = []
+        pooled_members = set()
+        for name, item in rows["roleGroups"].items():
+            if len(item["contributors"]) < threshold:
+                pooled_members.update(item["contributors"])
+                continue
+            role_groups.append({
+                "name": name, "contributors": len(item["contributors"]),
+                "categories": [
+                    {"name": cat, "hours": value["hours"],
+                     "contributors": len(value["contributors"])}
+                    for cat, value in item["categories"].items()
+                    if len(value["contributors"]) >= threshold
+                ],
+            })
+        if len(pooled_members) >= threshold:
+            role_groups.append({"name": "Other roles (combined)",
+                                "contributors": len(pooled_members), "categories": []})
+
+        def expose_formats(metric):
+            return exposed(metric, ("name", "count"))
+
+        return {
+            "contributors": len(contributors), "head": head, "categories": categories,
+            "processes": processes_out, "roles": roles_out, "skills": skills_out,
+            "deliverables": deliverables_out, "processDetails": details_out,
+            "fit": fit_out, "fitDetails": fit_details_out, "roleGroups": role_groups,
+            "inputs": expose_formats(rows["inputs"]), "outputs": expose_formats(rows["outputs"]),
+            "kThreshold": threshold,
+        }
+
+    def safe_date(value):
+        return value if isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) else None
+
+    public_snapshots = []
+    private_snapshot_ids = []
+    aggregate_by_id = {}
+    snapshots = data.get("snapshots", [])
+    if not isinstance(snapshots, list):
+        snapshots = []
+    for index, snapshot in enumerate(snapshots, 1):
+        if not isinstance(snapshot, dict):
+            continue
+        private_id = str(snapshot.get("id", ""))
+        public_id = private_id if safe_date(private_id) else f"snapshot-{index}"
+        label = str(snapshot.get("label", ""))
+        if not re.fullmatch(r"Last \d{1,3} days|All time|Current period", label, re.I):
+            label = "Reporting period"
+        public_snapshots.append({
+            "id": public_id,
+            "label": label,
+            "periodStart": safe_date(snapshot.get("periodStart")),
+            "periodEnd": safe_date(snapshot.get("periodEnd")),
+            "postedDate": safe_date(snapshot.get("postedDate")),
+        })
+        private_snapshot_ids.append(private_id)
+        aggregate_by_id[public_id] = aggregate([private_id])
+    aggregate_by_id["ALL"] = aggregate(private_snapshot_ids)
+    return {
+        "meta": {
+            "team": str(meta.get("team") or "Team"),
+            "generated": safe_date(meta.get("generated")) or "",
+            "defaultRate": number(meta.get("defaultRate", 72)),
+            "defaultRecapture": min(1, max(0, number(meta.get("defaultRecapture", 0.70)))),
+            "kThreshold": threshold,
+        },
+        "snapshots": public_snapshots,
+        "aggregates": aggregate_by_id,
+    }
+
+
+def json_for_html(value):
+    """Keep JSON data inside its script element, even when untrusted text contains </script>."""
+    return (json.dumps(value, ensure_ascii=False)
+            .replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e")
+            .replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"))
+
+
+def escape_html(value):
+    return (str(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            .replace('"', "&quot;").replace("'", "&#x27;"))
 
 CSS = r"""
 :root{--bg:#f3f4f8;--panel:#fff;--ink:#1f2329;--muted:#5d6470;--faint:#8a909c;--line:#e4e7ee;
@@ -182,241 +530,7 @@ details.drill .dbody{display:block!important}.acct-row>.acct-body{display:block!
 header.top{background:var(--brand)!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}section.block{break-inside:avoid}}
 """
 
-JS = r"""
-const RAW=JSON.parse(document.getElementById('cw-data').textContent);
-const RATE0=RAW.meta.defaultRate, KMIN=RAW.meta.kThreshold||3;
-const RECAP0=(RAW.meta.defaultRecapture!=null?RAW.meta.defaultRecapture:0.70);
-const CAT_COLOR={'Analysis & Research':'var(--c0)','Write or debug code':'var(--c1)','Document & content creation':'var(--c2)','Meeting workflows':'var(--c3)','Specialized workflows':'var(--c4)','General assistance / Other':'var(--c6)','Email workflows':'var(--c5)','Communication workflows':'var(--c7)'};
-const PAL=['var(--c0)','var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)','var(--c7)'];
-// Cowork-fit grade palette: High = green, Medium = gold, Low = neutral grey.
-const FIT_META={H:{label:'High fit',color:'var(--c1)'},M:{label:'Medium fit',color:'var(--c2)'},L:{label:'Low fit',color:'var(--c5)'}};
-// Deliverable types → concrete file formats (types like Text/File/Deck/Document overlap; formats don't).
-const FMT={'Deck':'PPTX','Slides':'PPTX','Presentation':'PPTX','Slide deck':'PPTX','Document':'Word','Doc':'Word','Word':'Word','Spreadsheet':'Excel / CSV','Excel':'Excel / CSV','CSV':'Excel / CSV','Web page':'HTML','Webpage':'HTML','Web':'HTML','HTML':'HTML','Text':'Text / MD','Markdown':'Text / MD','Image':'Image','PDF':'PDF','File':'File (other)'};
-const fmtLabel=t=>FMT[t]||t;
-// Glossary map (built from the Glossary tab at build time) → hover tooltips on matching KPI labels.
-const GLOSSARY=__GLOSSARY__;
-function glossLabel(t){const d=GLOSSARY[String(t).toLowerCase()];return d?`<span class="gloss" tabindex="0">${t}<span class="gtip">${d}</span></span>`:t;}
-// Display-only remap of grouped process labels (taxonomy files stay byte-for-byte identical).
-const PROC_LABEL={'Skill Development':'Cowork Skill Development'};
-const procLabel=n=>PROC_LABEL[n]||n;
-const posted=RAW.members.filter(m=>m.posted);
-const state={snapshot:RAW.snapshots[RAW.snapshots.length-1].id,rate:RATE0,recap:RECAP0,tab:'overview',metric:'time'};
-const el=id=>document.getElementById(id);
-const money=v=>'$'+Math.round(v).toLocaleString('en-US');
-const hrs=h=>h.toFixed(1)+' h';
-const pct=(n,d)=>d>0?Math.round(n/d*100):0;
-const wk=h=>(h/40).toFixed(1);
-const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-// Global measure: honors the Assisted Time / Assisted Value toggle so every chart shows one basis.
-const measure=(h,RE)=>state.metric==='value'?money(h*RE):hrs(h);
-const measLabel=()=>state.metric==='value'?'Value':'Hours';
-function snapIds(){return state.snapshot==='ALL'?RAW.snapshots.map(s=>s.id):[state.snapshot];}
-function snapLabel(){if(state.snapshot==='ALL')return 'All snapshots';const s=RAW.snapshots.find(x=>x.id===state.snapshot);return s.label+(s.periodStart?' ('+s.periodStart+' → '+s.periodEnd+')':'');}
-function activeMembers(){const ids=snapIds();return posted.filter(m=>ids.some(id=>m.reports[id]));}
-function memberReports(m){return snapIds().map(id=>m.reports[id]).filter(Boolean);}
-
-function aggregate(members){
-  const a={n:members.length,head:{timeTyp:0,timeLow:0,timeHigh:0,expertH:0,assistedH:0,sessions:0,runTasks:0,deliverables:0,activeDays:0},
-    cat:{},proc:{},role:{},skill:{},deliv:{},delivDetail:[],fit:[],inputs:{},outputs:{},inA:0,outP:0};
-  let lowN=0,highN=0;
-  members.forEach(m=>memberReports(m).forEach(r=>{
-    const h=r.headline;for(const k in a.head){if(k!=='timeLow'&&k!=='timeHigh')a.head[k]+=(h[k]||0);}
-    if(h.timeLow!=null){a.head.timeLow+=h.timeLow;lowN++;} if(h.timeHigh!=null){a.head.timeHigh+=h.timeHigh;highN++;}
-    r.categories.forEach(c=>{const o=a.cat[c.name]||(a.cat[c.name]={tasks:0,hours:0});o.tasks+=c.tasks;o.hours+=c.hours;});
-    r.processes.forEach(p=>{const o=a.proc[p.name]||(a.proc[p.name]={sessions:0,hours:0});o.sessions+=p.sessions;o.hours+=p.hours;});
-    r.roles.forEach(x=>{const o=a.role[x.name]||(a.role[x.name]={hours:0});o.hours+=x.hours;});
-    r.skills.forEach(x=>{const o=a.skill[x.name]||(a.skill[x.name]={deliverables:0,sessions:0,hours:0});o.deliverables+=x.deliverables;o.sessions+=x.sessions;o.hours+=x.hours;});
-    r.deliverables.forEach(d=>{const o=a.deliv[d.type]||(a.deliv[d.type]={count:0,hours:0,skills:new Set()});o.count+=d.count;o.hours+=d.hours;(d.skills||[]).forEach(s=>o.skills.add(s));});
-    (r.deliverablesDetail||[]).forEach(d=>a.delivDetail.push(d));
-    (r.coworkFit||[]).forEach(f=>a.fit.push(f));
-    (r.io.inputs||[]).forEach(i=>a.inputs[i.type]=(a.inputs[i.type]||0)+i.count);
-    (r.io.outputs||[]).forEach(i=>a.outputs[i.type]=(a.outputs[i.type]||0)+i.count);
-    a.inA+=r.io.inputsAnalyzed||0;a.outP+=r.io.outputsProduced||0;
-  }));
-  if(!lowN)a.head.timeLow=a.head.timeTyp; if(!highN)a.head.timeHigh=a.head.timeTyp;
-  return a;
-}
-const toArr=o=>Object.keys(o).map(k=>Object.assign({name:k},o[k]));
-const sortH=a=>a.sort((x,y)=>y.hours-x.hours);
-function barRow(label,p,color,v){return `<div class="row"><div class="rl" title="${label}">${label}</div><div class="rbar"><div class="rfill" style="width:${p}%;background:${color}"></div></div><div class="rv">${v}</div></div>`;}
-// Reach = how many active contributors used a task category. Aggregate count only — identities never shown.
-// Privacy floor: below KMIN (k-anonymity) the exact count is withheld and shown as "<K".
-function catReach(members,name){let c=0;members.forEach(m=>{if(memberReports(m).some(r=>(r.categories||[]).some(k=>k.name===name&&((k.hours||0)>0||(k.tasks||0)>0))))c++;});return c;}
-function reachLabel(count,total){return count>=KMIN?`used by ${count} of ${total} contributors`:`used by &lt;${KMIN} contributors`;}
-// Per-process detail shown inside each expandable business-process row: the distinct DELIVERABLES the
-// process produced (file format shown inline on each) + the SKILLS behind them (skills collapse into a
-// sub-expand when the list is long).
-function procDetailHTML(items,R){
-  if(!items||!items.length)
-    return `<div class="sec-note">No per-item detail for this process in the current posts. Deliverable names are de-identified by the Member skill (no file names); the list appears here when a teammate's post carries it.</div>`;
-  // Distinct NAMED deliverables list individually; UNNAMED ones (a teammate's post carried only the
-  // file type, not a de-identified name) collapse into ONE row per format, e.g., "HTML · 5 deliverables".
-  const named=[],byfmt={};
-  items.forEach(d=>{
-    const nm=(d.name&&String(d.name).trim())?String(d.name).trim():'';
-    if(nm){named.push({nm:nm,tag:fmtLabel(d.type),hours:d.hours||0});}
-    else{const f=fmtLabel(d.type);const o=byfmt[f]||(byfmt[f]={fmt:f,count:0,hours:0});o.count++;o.hours+=(d.hours||0);}
-  });
-  const rows=named.concat(Object.keys(byfmt).map(k=>{const o=byfmt[k];
-      return {nm:o.fmt,tag:o.count+' deliverable'+(o.count!==1?'s':''),hours:o.hours};}))
-    .sort((a,b)=>(b.hours||0)-(a.hours||0));
-  const list=rows.map(d=>`<div class="dlv"><span class="dlv-nm" title="${esc(d.nm)}">${esc(d.nm)}</span><span class="fmt-tag">${esc(d.tag)}</span><span class="dlv-v">${measure(d.hours||0,R)}</span></div>`).join('');
-  const sk={};items.forEach(d=>(d.skills||[]).forEach(s=>sk[s]=(sk[s]||0)+1));
-  const skArr=Object.keys(sk).map(k=>({name:k,n:sk[k]})).sort((a,b)=>b.n-a.n);
-  const skPills=skArr.map(s=>`<span class="pill">${esc(s.name)}${s.n>1?' ·'+s.n:''}</span>`).join('');
-  const skBlock=!skArr.length?'':(skArr.length>6
-     ? `<details class="drill sub"><summary>Skills used · ${skArr.length}</summary><div class="dbody">${skPills}</div></details>`
-     : `<div class="skline"><span class="sklbl">Skills used</span>${skPills}</div>`);
-  return `<div class="dlv-list">${list}</div>`+skBlock;
-}
-
-function render(){
-  const R=state.rate,mem=activeMembers(),A=aggregate(mem),H=A.head;
-  const RC=(state.recap!=null?state.recap:1),RE=R*RC;
-  const teamSpeed=H.assistedH>0?H.expertH/H.assistedH:0;
-  const catArr=sortH(toArr(A.cat)),totCatH=catArr.reduce((s,x)=>s+x.hours,0);
-  const procArr=sortH(toArr(A.proc)),totProcH=procArr.reduce((s,x)=>s+x.hours,0);
-  el('ctxline').textContent=`${snapLabel()} · ${mem.length} contributor${mem.length===1?'':'s'} · $${R}/hr · ${Math.round(RC*100)}% recapture`;
-
-  // Overview KPIs
-  el('ov-kpis').innerHTML=[
-    {l:'Time saved',v:hrs(H.timeTyp),s:`≈ ${wk(H.timeTyp)} weeks · range ${hrs(H.timeLow)}–${hrs(H.timeHigh)}`,h:1,sel:state.metric==='time'},
-    {l:'Effective time recaptured',v:hrs(H.timeTyp*RC),s:`${Math.round(RC*100)}% recapture of time saved · drives value`,h:1},
-    {l:'Value / cost reduction',v:money(H.expertH*RE),s:`${Math.round(RC*100)}% recapture × $${R}/hr · range ${money(H.timeLow*RE)}–${money(H.timeHigh*RE)}`,h:1,sel:state.metric==='value'},
-    {l:'Team speed multiplier',v:teamSpeed.toFixed(1)+'×',s:`${hrs(H.assistedH)} hands-on compared to ${hrs(H.expertH)} without Cowork`,h:1},
-    {l:'Contributors',v:mem.length,s:`posted this period`,h:1},
-    {l:'Sessions',v:H.sessions,s:`${H.runTasks} run tasks across ${H.sessions} sessions`},{l:'Deliverables',v:H.deliverables,s:'produced'},
-    {l:'Active days',v:H.activeDays,s:`person-days · ${(H.activeDays?H.expertH/H.activeDays:0).toFixed(1)} h/day`},
-  ].map(k=>`<div class="kpi${k.h?' hero':''}${k.sel?' metric-sel':''}"><div class="k-l">${glossLabel(k.l)}</div><div class="k-v">${k.v}</div><div class="k-s">${k.s}</div></div>`).join('');
-
-  const ovVal=state.metric==='value';
-  const headTime=`Cowork helped the team save about <b>${H.timeTyp.toFixed(1)} hours of total time</b> over this time period, enabling tasks to be completed <b>${teamSpeed.toFixed(1)}× faster.</b> At a <b>${Math.round(RC*100)}% recapture rate</b>, that is <b>${hrs(H.timeTyp*RC)}</b> of effective time recaptured, worth an estimated <b>${money(H.expertH*RE)}.</b>`;
-  const headVal=`Cowork delivered an estimated <b>${money(H.expertH*RE)}</b> in value / cost reduction over this time period — from <b>${hrs(H.timeTyp*RC)}</b> of effective time recaptured (a <b>${Math.round(RC*100)}% recapture rate</b> on ${hrs(H.timeTyp)} saved) priced at <b>$${R}/hr</b>, with work completed <b>${teamSpeed.toFixed(1)}× faster.</b>`;
-  const headline=`<div class="ins" style="grid-column:1/-1"><div class="ic">${ovVal?'💰':'⏱️'}</div><div class="tx">${ovVal?headVal:headTime}</div></div>`;
-  const where=[];
-  if(catArr[0])where.push({i:'🎯',h:'Task Category',goto:'impact',scroll:'im-categories',name:catArr[0].name,val:`${measure(catArr[0].hours,RE)} · ${pct(catArr[0].hours,totCatH)}% of total`});
-  if(procArr[0])where.push({i:'🏭',h:'Business Process',goto:'work',scroll:'wk-proc',name:procLabel(procArr[0].name),val:`${measure(procArr[0].hours,RE)} · ${pct(procArr[0].hours,totProcH)}% of total`});
-  const group=where.length?`<div class="ins insgroup" style="grid-column:1/-1"><div class="ig-h">Where did we ${ovVal?'drive the most value':'save the most time'}:</div><div class="ig-rows">${where.map(x=>`<div class="ig-row"><div class="ic">${x.i}</div><div class="tx"><button type="button" class="ig-cat navlink" data-goto="${x.goto}" data-scroll="${x.scroll}" title="Go to ${x.h}">${x.h}<span class="ig-arrow" aria-hidden="true">↗</span></button><div class="ig-name">${x.name}</div><div class="ig-val">${x.val}</div></div></div>`).join('')}</div></div>`:'';
-  el('ov-insights').innerHTML=headline+group;
-
-  // Overview — top business processes (attention-grabbing preview of the full "How Cowork is used" tab).
-  (function(){const el0=el('ov-proc');if(!el0)return;
-    const arr=procArr.slice(0,5);
-    if(!arr.length){el0.innerHTML='<div class="sec-note">No business-process data in these posts yet.</div>';return;}
-    const rows=arr.map((p,i)=>`<li class="rk-row"><span class="rk-badge">${i+1}</span><span class="rk-nm">${procLabel(p.name)}</span><span class="rk-v"><b>${measure(p.hours,RE)}</b> · ${pct(p.hours,totProcH)}% of total</span></li>`).join('');
-    const more=`<div class="sec-note" style="margin-top:10px">${procArr.length>5?`Top 5 of ${procArr.length} business processes — `:''}<button type="button" class="xref" data-goto="work" data-scroll="wk-proc">open the full breakdown</button> to expand each process into its deliverables and the skills behind them.</div>`;
-    el0.innerHTML=`<ol class="ranklist">${rows}</ol>`+more;})();
-
-  // Impact & Value
-  (function(){const mx=Math.max(1,...catArr.map(a=>a.hours)),N=mem.length;const catRows=catArr.map(c=>{
-    const sub=`<span style="font-size:11px;color:var(--faint)">${reachLabel(catReach(mem,c.name),N)}</span>`;
-    return barRow(c.name,c.hours/mx*100,'var(--c0)',`<b>${measure(c.hours,RE)}</b> · ${c.tasks} run tasks · ${pct(c.hours,totCatH)}%`)+`<div style="margin:-4px 0 6px 191px">${sub}</div>`;}).join('');
-    const totTasks=catArr.reduce((s,x)=>s+(x.tasks||0),0);
-    const totalRow=`<div class="row" style="border-top:2px solid var(--line);margin-top:6px;padding-top:9px"><div class="rl"><b>Total</b></div><div class="rbar" style="background:none"></div><div class="rv"><b>${measure(totCatH,RE)}</b> · ${totTasks} run tasks</div></div>`;
-    el('im-categories').innerHTML=catRows+totalRow;})();
-  (function(){const arrAll=sortH(toArr(A.role)),arr=arrAll.slice(0,10),mx=Math.max(1,...arr.map(a=>a.hours));
-    const roleHtml=arr.length?arr.map((x,i)=>barRow(x.name,x.hours/mx*100,'var(--c0)',`<b>${measure(x.hours,RE)}</b>`)).join(''):'<div class="sec-note">No role data in these posts.</div>';
-    const moreNote=arrAll.length>10?`<div class="sec-note" style="margin-top:8px">Showing the top 10 of ${arrAll.length} roles by hours.</div>`:'';
-    const sk=sortH(toArr(A.skill));
-    const skHtml=sk.length?`<details class="drill"><summary>Skills behind these roles — ${sk.length}</summary><div class="dbody"><table class="dt"><thead><tr><th>Skill</th><th class="r">Deliverables</th><th class="r">Sessions</th><th class="r">${measLabel()}</th></tr></thead><tbody>`+
-      sk.map(s=>`<tr><td>${s.name}</td><td class="r">${s.deliverables}</td><td class="r">${s.sessions}</td><td class="r">${measure(s.hours,RE)}</td></tr>`).join('')+
-      `</tbody></table><div class="sec-note" style="margin-top:6px">The specific skills that make up the roles above — the same expertise, one level of detail down.</div></div></details>`:'';
-    el('im-roles').innerHTML=roleHtml+moreNote+skHtml;})();
-  (function(){
-    const bym={};toArr(A.deliv).forEach(d=>{const f=fmtLabel(d.name);const o=bym[f]||(bym[f]={name:f,count:0});o.count+=d.count;});
-    const arr=Object.keys(bym).map(k=>bym[k]).sort((a,b)=>b.count-a.count),tc=arr.reduce((s,x)=>s+x.count,0);
-    let html=`<table class="dt"><thead><tr><th>Format</th><th class="r">Count</th></tr></thead><tbody>`+
-      arr.map(d=>`<tr><td><b>${d.name}</b></td><td class="r">${d.count}</td></tr>`).join('')+
-      `<tr class="tot"><td>Total</td><td class="r">${tc}</td></tr></tbody></table>`;
-    html+=`<p class="sec-note" style="margin-top:10px">Counts every output file and version the team produced with Cowork, by file format.</p>`;
-    el('im-deliv').innerHTML=html;})();
-
-  // How Cowork is used — process leads
-  (function(){
-    const byp={};(A.delivDetail||[]).forEach(d=>{const p=d.process||'Other';(byp[p]=byp[p]||[]).push(d);});
-    const head=`<div class="acct-h"><span>Business process</span><span class="r">Sessions</span><span class="r">${measLabel()}</span><span class="r">% time</span></div>`;
-    const rows=procArr.map(p=>`<details class="acct-row"><summary><span class="ap">${procLabel(p.name)}</span><span class="r">${p.sessions}</span><span class="r">${measure(p.hours,RE)}</span><span class="r">${pct(p.hours,totProcH)}%</span></summary><div class="acct-body">${procDetailHTML(byp[p.name]||[],RE)}</div></details>`).join('');
-    const tot=`<div class="acct-tot"><span>Total</span><span class="r">${procArr.reduce((s,x)=>s+x.sessions,0)}</span><span class="r">${measure(totProcH,RE)}</span><span class="r">100%</span></div>`;
-    el('wk-proc').innerHTML=`<div class="acct">${head}${rows}${tot}</div>`;})();
-  renderCatMix('wk-stack',mem,catArr.map(c=>c.name),RE);
-  // Cowork fit — quantified waterfall (Total → High / Medium / Low) with click-to-expand task lists.
-  (function(){
-    const fit=A.fit||[];const sec=el('wk-fit');if(!sec)return;
-    if(!fit.length){sec.innerHTML='<div class="sec-note">No Cowork-fit data in these posts yet. Once contributors post from the latest member skill, graded tasks appear here.</div>';return;}
-    const gradedMembers=mem.filter(m=>memberReports(m).some(r=>(r.coworkFit||[]).length)).length;
-    const order=['H','M','L'],grp={H:[],M:[],L:[]};
-    fit.forEach(f=>{if(grp[f.grade])grp[f.grade].push(f);});
-    const total=fit.length,totH=fit.reduce((s,x)=>s+(x.hours||0),0);
-    // Composition waterfall (task counts): All graded → High → Medium → Low; bands sum to the task total, so
-    // bar heights and the shown percentages both read off task counts (measure = hours or value per the toggle).
-    const gH={H:0,M:0,L:0};fit.forEach(f=>{if(gH[f.grade]!=null)gH[f.grade]+=(f.hours||0);});
-    const gN={H:grp.H.length,M:grp.M.length,L:grp.L.length};
-    const mx=total||1;
-    const steps=[{lab:'All graded',cnt:total,val:totH,top:total,bot:0,color:'var(--c0)',sub:'100% · '+measure(totH,RE)}];
-    let run=total;
-    order.forEach(g=>{const c=gN[g];if(c<=0)return;steps.push({lab:FIT_META[g].label,cnt:c,val:gH[g],top:run,bot:run-c,color:FIT_META[g].color,sub:pct(c,mx)+'% · '+measure(gH[g],RE)});run-=c;});
-    const W=900,Hh=300,padT=30,padB=54,padL=8,padR=8,nS=steps.length,slot=(W-padL-padR)/nS,bw=Math.min(130,slot*0.6),yOf=v=>padT+(1-v/mx)*(Hh-padT-padB);
-    let svg='';
-    steps.forEach((s,i)=>{const cx=padL+slot*i+slot/2,x=cx-bw/2,yT=yOf(s.top),yB=yOf(s.bot),hh=Math.max(2,yB-yT);
-      if(i<nS-1){const ny=yOf(steps[i+1].top);svg+=`<line class="wfc" x1="${(x+bw).toFixed(1)}" y1="${ny.toFixed(1)}" x2="${(padL+slot*(i+1)+slot/2-bw/2).toFixed(1)}" y2="${ny.toFixed(1)}"/>`;}
-      svg+=`<rect x="${x.toFixed(1)}" y="${yT.toFixed(1)}" width="${bw.toFixed(1)}" height="${hh.toFixed(1)}" rx="4" fill="${s.color}"><title>${esc(s.lab)}: ${s.cnt} task${s.cnt===1?'':'s'} · ${hrs(s.val)} · ${money(s.val*RE)}</title></rect>`;
-      svg+=`<text class="wfv" x="${cx.toFixed(1)}" y="${(yT-8).toFixed(1)}" text-anchor="middle">${s.cnt}</text>`;
-      svg+=`<text class="wfl" x="${cx.toFixed(1)}" y="${(Hh-padB+20).toFixed(1)}" text-anchor="middle">${esc(s.lab)}</text>`;
-      svg+=`<text class="wfs" x="${cx.toFixed(1)}" y="${(Hh-padB+37).toFixed(1)}" text-anchor="middle">${s.sub}</text>`;});
-    const bar=`<div class="wf-cap"><b>${total}</b> graded task${total===1?'':'s'} · ${measure(totH,RE)} — composition by task count</div><svg class="wf-svg" viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cowork fit composition waterfall">${svg}</svg>`;
-    const head=`<div class="acct-h"><span>Cowork fit</span><span class="r">Tasks</span><span class="r">% tasks</span><span class="r">${measLabel()}</span></div>`;
-    const rows=order.map(g=>{const items=grp[g];if(!items.length)return '';const n=items.length,h=items.reduce((s,x)=>s+(x.hours||0),0);
-      const list=items.slice().sort((a,b)=>(b.hours||0)-(a.hours||0)).map(x=>`<div class="dlv"><span class="dlv-nm" title="${esc(procLabel(x.process||'—'))}">${esc(procLabel(x.process||'—'))}</span><span class="fmt-tag">${esc(x.category||'—')}</span><span class="dlv-v">${measure(x.hours||0,RE)}</span></div>`).join('');
-      return `<details class="acct-row"><summary><span class="ap"><span class="wf-dot" style="background:${FIT_META[g].color};margin-inline-end:7px"></span>${FIT_META[g].label}</span><span class="r">${n}</span><span class="r">${pct(n,total)}%</span><span class="r">${measure(h,RE)}</span></summary><div class="acct-body"><div class="dlv-list">${list}</div></div></details>`;}).join('');
-    const tot=`<div class="acct-tot"><span>Total</span><span class="r">${total}</span><span class="r">100%</span><span class="r">${measure(totH,RE)}</span></div>`;
-    const cov=gradedMembers<mem.length?`<p class="sec-note" style="margin-top:8px">Cowork-fit graded on ${gradedMembers} of ${mem.length} contributors&rsquo; posts; ungraded tasks from older posts aren&rsquo;t shown here.</p>`:'';
-    sec.innerHTML=bar+`<div class="acct" style="margin-top:14px">${head}${rows}${tot}</div>`+cov;})();
-}
-
-// k-anonymity: a Role breaks out only when >= KMIN members share it; else combine.
-function renderCatMix(id,mem,cats,RE){
-  const groups={};mem.forEach(m=>{const r=m.role||'Unspecified';(groups[r]=groups[r]||[]).push(m);});
-  let bars=[],pooled=[];
-  Object.keys(groups).forEach(r=>{groups[r].length>=KMIN?bars.push({label:r,members:groups[r]}):pooled=pooled.concat(groups[r]);});
-  if(pooled.length)bars.push({label:bars.length?'Other contributors (combined)':'Team (combined)',members:pooled});
-  const rows=bars.map(b=>{const cm={};b.members.forEach(m=>memberReports(m).forEach(r=>r.categories.forEach(k=>cm[k.name]=(cm[k.name]||0)+k.hours)));
-    const tot=Object.values(cm).reduce((s,v)=>s+v,0)||1;
-    const segs=cats.filter(c=>cm[c]).map(c=>{const sp=cm[c]/tot*100;return `<div class="stackseg" style="width:${sp}%;background:${CAT_COLOR[c]||'var(--c6)'}" title="${c}: ${measure(cm[c],RE)} · ${Math.round(sp)}%">${sp>=10?`<span class="segpct">${Math.round(sp)}%</span>`:''}</div>`;}).join('');
-    return `<div class="stackrow"><div class="rl" style="font-size:12.5px">${b.label} · ${b.members.length}</div><div class="stackbar">${segs}</div></div>`;}).join('');
-  const overall={};mem.forEach(m=>memberReports(m).forEach(r=>r.categories.forEach(k=>overall[k.name]=(overall[k.name]||0)+k.hours)));
-  const oTot=Object.values(overall).reduce((s,v)=>s+v,0)||1;
-  const leg=cats.map(c=>`<div class="li"><span class="sw" style="background:${CAT_COLOR[c]||'var(--c6)'}"></span><span class="lt" style="font-size:12px">${c} <span style="color:var(--muted)">(${pct(overall[c]||0,oTot)}% · ${measure(overall[c]||0,RE)})</span></span></div>`).join('');
-  el(id).innerHTML=rows+`<div class="legend" style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px">${leg}</div>`+
-    `<div class="sec-note" style="margin-top:10px">Individual roles are shown only when <b>${KMIN}+</b> people share it — otherwise contributors are combined.</div>`;
-}
-function showTab(name,scrollId){
-  state.tab=name;
-  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('on',x.getAttribute('data-tab')===name));
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('on',p.id==='tab-'+name));
-  if(scrollId){requestAnimationFrame(()=>{const t=el(scrollId);if(!t)return;const d=(t.tagName==='DETAILS')?t:(t.closest&&t.closest('details.meth'));if(d)d.open=true;const tgt=(t.tagName==='DETAILS')?t:((t.closest&&t.closest('.block'))||t);tgt.scrollIntoView({behavior:'smooth',block:'start'});});}
-}
-function build(){
-  const ss=el('snapSel');RAW.snapshots.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.label+(s.periodEnd?' · '+s.periodEnd:'');ss.appendChild(o);});
-  if(RAW.snapshots.length>1){const o=document.createElement('option');o.value='ALL';o.textContent='All snapshots';ss.appendChild(o);}
-  ss.value=state.snapshot;ss.addEventListener('change',()=>{state.snapshot=ss.value;render();});
-  const ri=el('rateInput');ri.value=state.rate;ri.addEventListener('input',()=>{const v=parseFloat(ri.value);state.rate=(isFinite(v)&&v>0)?v:0;render();});
-  const rc=el('recapInput');rc.value=Math.round(state.recap*100);rc.addEventListener('input',()=>{const v=parseFloat(rc.value);state.recap=(isFinite(v)&&v>=0)?v/100:0;render();});
-  el('resetBtn').addEventListener('click',()=>{state.rate=RATE0;state.recap=RECAP0;state.snapshot=RAW.snapshots[RAW.snapshots.length-1].id;state.metric='time';ss.value=state.snapshot;ri.value=RATE0;rc.value=Math.round(RECAP0*100);syncOvSeg();render();});
-  const ovBtns=document.querySelectorAll('#ovSeg .seg-btn');function syncOvSeg(){ovBtns.forEach(b=>b.classList.toggle('on',b.getAttribute('data-metric')===state.metric));}
-  ovBtns.forEach(b=>b.addEventListener('click',()=>{state.metric=b.getAttribute('data-metric');syncOvSeg();render();}));
-  el('printBtn').addEventListener('click',()=>window.print());
-  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>showTab(b.getAttribute('data-tab'))));
-  // Deep-link: clicking a labeled header in the Overview 'Where did we save' card jumps to that tab + section.
-  document.addEventListener('click',e=>{const nav=e.target.closest&&e.target.closest('[data-goto]');if(nav){e.preventDefault();showTab(nav.getAttribute('data-goto'),nav.getAttribute('data-scroll')||'');}});
-  // "?" section helpers: click toggles the adjacent popover; clicking elsewhere closes any open one.
-  document.querySelectorAll('.help').forEach(b=>b.addEventListener('click',e=>{
-    e.stopPropagation();const pop=b.nextElementSibling;const on=pop&&pop.classList.contains('on');
-    document.querySelectorAll('.helppop.on').forEach(p=>p.classList.remove('on'));
-    if(pop&&!on)pop.classList.add('on');}));
-  document.addEventListener('click',()=>document.querySelectorAll('.helppop.on').forEach(p=>p.classList.remove('on')));
-}
-build();render();
-"""
+JS = open(os.path.join(os.path.dirname(__file__), "dashboard_runtime.js"), encoding="utf-8").read()
 
 TEMPLATE = """<!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -455,34 +569,34 @@ TEMPLATE = """<!DOCTYPE html>
   <div class="tab-panel on" id="tab-overview">
     <section class="block"><h2 class="sec"><span class="dot"></span>What the data says<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">A plain-language reading of the team's posts, generated automatically. It re-words itself when you change the hourly rate below.</span></h2><p class="sec-note">The four highlights below summarize the team's Cowork impact at a glance: the total time reclaimed and its dollar value, the task category driving the most savings, the business process where Cowork is applied most, and the type of business value it advances most — so you can quickly see where the impact is concentrated.</p><div class="insights" id="ov-insights"></div></section>
     <section class="block"><h2 class="sec"><span class="dot"></span>Team impact at a glance<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The headline totals for the selected period. <b>Value</b> = manual hours &times; the hourly rate in the control bar, so it recomputes whenever you change the rate.</span></h2><div class="kpis" id="ov-kpis"></div><p class="sec-note" style="margin-top:12px"><b>About the ranges:</b> under <b>Time saved</b> and <b>Value / cost reduction</b> the headline is the typical (mid-point) estimate; the low&ndash;high range beside it is the conservative-to-optimistic span from the research time bands (each task category carries a low / typical / high band &mdash; see <button type="button" class="xref" data-goto="method" data-scroll="sec-bands"><i>How to read</i></button>).</p></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Where Cowork is applied — top business processes<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The business processes the team uses Cowork for most, ranked by the selected measure (time saved or value). This is a preview — the full <b>How Cowork is used</b> tab expands every process into its deliverables and the skills behind them.</span></h2><p class="sec-note">The business processes where Cowork does the most work for the team — the clearest signal of how it's actually being used. Open the full breakdown to drill into each one.</p><div class="card" id="ov-proc"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Where Cowork is applied — top business processes<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The business processes the team uses Cowork for most, ranked by the selected measure (time saved or value). Process and detail breakdowns appear only when supported by the privacy threshold.</span></h2><p class="sec-note">The business processes where Cowork does the most work for the team — the clearest signal of how it's actually being used. Open the full breakdown to drill into supported aggregate detail.</p><div class="card" id="ov-proc"></div></section>
   </div>
 
   <div class="tab-panel" id="tab-impact">
-    <section class="block"><h2 class="sec"><span class="dot"></span>Where the time went — by task category<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The <b>method</b> used, task by task. Each task is sorted by its output file type and goal keywords (e.g., spreadsheets &rarr; Analysis; code / HTML &rarr; Write or debug code). Each category carries a research time band (minutes saved per run); time saved = run tasks &times; band. The <b>reach</b> line shows how many contributors used it. Full mapping is on the <b>How to read</b> tab.</span></h2><p class="sec-note">Understand how much time is saved by the team across each task category. Refer to the <button type="button" class="xref" data-goto="method" data-scroll="sec-bands"><i>How to read</i></button> section to understand the research-based time ranges for each category.</p><p class="sec-note" style="margin-top:8px">Each task category row shows <b>how many contributors</b> used it — e.g., &ldquo;used by 4 of 5 contributors&rdquo; — so you can see where usage is concentrated vs. spread, not just the volume of hours. This is an aggregate count and never names anyone. To protect a small team, when <b>fewer than __KTHRESH__</b> people used a category the exact number is withheld and shown as &ldquo;used by &lt;__KTHRESH__ contributors&rdquo;.</p><div class="card" id="im-categories"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Where the time went — by task category<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The <b>method</b> used, summarized by category. Each category carries a research time band (minutes saved per run); time saved = run tasks &times; band. Category totals and reach are shown only when at least __KTHRESH__ contributors used that category. Full mapping is on the <b>How to read</b> tab.</span></h2><p class="sec-note">Understand how much time is saved by the team across supported task categories. Refer to the <button type="button" class="xref" data-goto="method" data-scroll="sec-bands"><i>How to read</i></button> section to understand the research-based time ranges.</p><p class="sec-note" style="margin-top:8px">A category appears only when at least <b>__KTHRESH__</b> contributors support it. Smaller categories are omitted instead of exposing a low-count pool.</p><div class="card" id="im-categories"></div></section>
     <section class="block"><div class="grid2">
       <div class="card"><h3>Roles Cowork stood in for</h3><p class="hint">Roles a services firm would have billed — expand for the specific skills behind them.</p><div id="im-roles"></div></div>
-      <div class="card"><h3>Outputs produced — by format</h3><p class="hint">Every output the team produced with Cowork, by file type. Note that outputs count each file and version, so this may be higher than the &ldquo;Deliverables&rdquo; count on the <button type="button" class="xref" data-goto="overview"><i>Overview</i></button> tab, which counts distinct deliverables. Per-item detail sits under &ldquo;<button type="button" class="xref" data-goto="work" data-scroll="wk-proc">Work by business process</button>&rdquo; on the <button type="button" class="xref" data-goto="work"><i>How Cowork is used</i></button> tab.</p><div id="im-deliv"></div></div>
+      <div class="card"><h3>Outputs produced — by format</h3><p class="hint">Aggregate file-format counts. Formats appear only when at least __KTHRESH__ contributors support them; individual output files and names are never listed.</p><div id="im-deliv"></div></div>
     </div></section>
   </div>
 
   <div class="tab-panel" id="tab-work">
-    <section class="block"><h2 class="sec"><span class="dot"></span>Work by business process<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">What the team actually does with Cowork, grouped into the shared canonical process set. <b>Click any row</b> to expand its deliverables and the skills behind them. Deliverables with a de-identified name list individually; ones a post carried only by file type collapse into a single row (e.g., &ldquo;HTML &middot; 5 deliverables&rdquo;).</span></h2><p class="sec-note">The business processes the team used Cowork for, ranked by time saved. <b>Click any process to expand it</b> and see the deliverables it produced and the skills behind them.</p><p class="sec-note" style="margin-top:8px">Named deliverables (e.g., &ldquo;Team ROI dashboard&rdquo;) list on their own row. A row that shows only a format (e.g., &ldquo;HTML&rdquo;) is a deliverable whose name wasn't included in that teammate's post. All type-only deliverables of one format collapse into a single row — e.g., &ldquo;HTML &middot; 5 deliverables&rdquo; — with their hours and value summed.</p><div class="card" id="wk-proc"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Cowork fit — how well the work suited Cowork<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Every task is graded <b>High / Medium / Low</b> on how well it fit Cowork's agentic, cross-app strengths. <b>High</b> = work only Cowork can do (builds &amp; packaged skills, executed automations/connectors, many-source synthesis); <b>Low</b> = a single-app Copilot could have done it. <b>Click a fit level</b> to see the tasks in it — de-identified to business process &amp; method, never a person or file.</span></h2><p class="sec-note">A composition of graded hours by how well the work fit Cowork, shown as a waterfall — the bands add up to all graded time. <b>Click High, Medium or Low</b> below to expand the tasks in that band.</p><div class="card" id="wk-fit"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Category mix<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">How each contributor group splits its time across categories. A role only breaks out when <b>__KTHRESH__+</b> people share it; otherwise everyone is combined into one bar — no individual is ever shown.</span></h2><p class="sec-note">How saved time splits across task categories — grouped by Role where privacy allows.</p><div class="card" id="wk-stack"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Work by business process<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Business processes are grouped into the shared canonical set. <b>Click a row</b> to expand aggregate format and skill summaries, each supported by at least __KTHRESH__ contributors. Named deliverables, individual records, and per-item dates are never shown.</span></h2><p class="sec-note">The business processes the team used Cowork for, ranked by time saved. <b>Click a supported process</b> to expand its cohort-qualified format and skill summaries.</p><p class="sec-note" style="margin-top:8px">Process and secondary detail with fewer than __KTHRESH__ contributing people are omitted.</p><div class="card" id="wk-proc"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Cowork fit — how well the work suited Cowork<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Tasks are graded <b>High / Medium / Low</b> on how well they fit Cowork's agentic, cross-app strengths. <b>High</b> = work only Cowork can do (builds &amp; packaged skills, executed automations/connectors, many-source synthesis); <b>Low</b> = a single-app Copilot could have done it. The waterfall includes supported grade totals; expanded rows show only cohort-qualified process/category aggregates.</span></h2><p class="sec-note">A composition of supported graded tasks by Cowork fit, shown as a waterfall. Grades and expanded details appear only when at least __KTHRESH__ contributors support them.</p><div class="card" id="wk-fit"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Category mix<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">How supported role cohorts split their time across categories. A role and each category segment appear only when at least <b>__KTHRESH__</b> contributors support that breakdown. Small residual role groups are combined only if the pool also meets the threshold.</span></h2><p class="sec-note">How saved time splits across supported task categories — grouped by Role where privacy allows.</p><div class="card" id="wk-stack"></div></section>
   </div>
 
   <div class="tab-panel" id="tab-method">
     <details class="meth" open><summary>Glossary of terms</summary><div class="mbody" id="gloss-body">
       <p><b>Active days</b> — Person-days with at least one Cowork task in the window.</p>
-      <p><b>Anonymity</b> — A role or attribute is shown separately only when at least __KTHRESH__ contributors share it; otherwise contributors are combined. Nothing is ever shown per person.</p>
+      <p><b>Anonymity</b> — The public dashboard contains only team totals and breakdowns supported by at least __KTHRESH__ distinct contributors. Small residual groups and secondary details are suppressed unless their combined cohort reaches the same threshold. Contributor records remain private in the working file.</p>
       <p><b>Business process</b> — The business need served by the work &mdash; e.g., Business Value &amp; ROI Analytics.</p>
       <p><b>Contributors</b> — The number of teammates who posted their de-identified stats this period. Never named.</p>
       <p><b>Cowork fit</b> — How well a task suited Cowork's agentic, cross-app strengths, graded High / Medium / Low. High = work only Cowork can do (builds &amp; packaged skills, executed automations, many-source synthesis); Low = a single-app Copilot could have done it. Shown as a quantified waterfall on the <i>How Cowork is used</i> tab.</p>
       <p><b>Deliverables</b> — The count of <i>distinct</i> pieces of work produced.</p>
       <p><b>Hands-on time</b> — The actual time the team spent working with Cowork.</p>
-      <p><b>Outputs</b> — Every output file and version created. May be higher than deliverables because it counts each file and version.</p>
-      <p><b>Reach</b> — How many contributors used a given task category. Withheld as &ldquo;&lt;__KTHRESH__&rdquo; when fewer than __KTHRESH__ share it.</p>
+      <p><b>Outputs</b> — The number of output files in a supported file-format cohort. Individual files and versions are never listed.</p>
+      <p><b>Reach</b> — The number of contributors using a task category. Reach and category totals appear only when at least __KTHRESH__ contributors share it.</p>
       <p><b>Research time band</b> — The low / typical / high minutes of manual time saved per run for a task category, drawn from published studies (see &ldquo;<button type="button" class="xref" data-goto="method" data-scroll="sec-bands">Research bands &amp; sources</button>&rdquo; below).</p>
       <p><b>Run tasks</b> — A single unit of work run with Cowork — one discrete request or action (e.g., analyzing a file, drafting a document). Run tasks are grouped into sessions.</p>
       <p><b>Sessions</b> — Distinct Cowork chats run across the team. A session may contain one or multiple run tasks.</p>
@@ -521,7 +635,7 @@ TEMPLATE = """<!DOCTYPE html>
 
 
     <details class="meth"><summary>Privacy &amp; anonymity</summary><div class="mbody">
-      <p><b>Nothing is shown at an individual level.</b> Members appear only as counts. The one per-attribute view (category mix) breaks a Role out only when <b>__KTHRESH__+</b> contributors share it; otherwise they collapse into a single combined bar. The only attribute used is the directory <b>Role</b> (job title) that a teammate's post carries — never names, never country, never file names or prompts.</p>
+      <p><b>No contributor-level records or links are published.</b> The dashboard is built from a separate aggregate-only data payload; the private working file is not a deliverable. Categories, processes, roles, skills, formats, fit grades, and secondary details appear only when <b>__KTHRESH__+</b> distinct contributors support them. Small residual role groups and sparse detail are suppressed. Names, country, raw filenames, prompts, deliverable names, individual task rows, and per-item dates are never embedded.</p>
     </div></details>
 
     <details class="meth"><summary>Value model</summary><div class="mbody">
@@ -557,6 +671,7 @@ TEMPLATE = """<!DOCTYPE html>
   <footer class="foot">Generated by Microsoft Copilot Cowork · Cowork Team Report Team Dashboard skill · anonymized &amp; team-safe — numbers only, no names. Modeled estimates of tool-assisted time savings, not audited financials or performance metrics.</footer>
 </div>
 <script type="application/json" id="cw-data">__DATA__</script>
+<script type="application/json" id="cw-glossary">__GLOSSARY__</script>
 <script>__JS__</script>
 </body>
 </html>
@@ -575,16 +690,33 @@ def extract_glossary(template):
     return g
 
 def main(a):
-    data = json.load(open(a.inp, encoding="utf-8"))
+    with open(a.inp, encoding="utf-8") as handle:
+        data = json.load(handle)
+    public = public_data(data)
     glossary = extract_glossary(TEMPLATE)
-    html = (TEMPLATE.replace("__CSS__", CSS).replace("__JS__", JS)
-            .replace("__GLOSSARY__", json.dumps(glossary, ensure_ascii=False))
-            .replace("__DATA__", json.dumps(data, ensure_ascii=False))
-            .replace("__TEAM__", data["meta"].get("team", "Team"))
-            .replace("__GENERATED__", str(data["meta"].get("generated", "")))
-            .replace("__RATE__", str(data["meta"].get("defaultRate", 72)))
-            .replace("__RECAP__", str(int(round(float(data["meta"].get("defaultRecapture", 0.70)) * 100))))
-            .replace("__KTHRESH__", str(data["meta"].get("kThreshold", 3))))
+    glossary_replacements = {
+        "__RECAP__": str(int(round(public["meta"]["defaultRecapture"] * 100))),
+        "__RATE__": str(public["meta"]["defaultRate"]),
+        "__KTHRESH__": str(public["meta"]["kThreshold"]),
+    }
+    glossary = {
+        term: re.sub(
+            r"__[A-Z][A-Z0-9_]*__",
+            lambda match: glossary_replacements.get(match.group(), match.group()),
+            definition,
+        )
+        for term, definition in glossary.items()
+    }
+    replacements = {
+        "__CSS__": CSS, "__JS__": JS, "__GLOSSARY__": json_for_html(glossary),
+        "__DATA__": json_for_html(public),
+        "__TEAM__": escape_html(public["meta"]["team"]),
+        "__GENERATED__": escape_html(public["meta"]["generated"]),
+        "__RATE__": escape_html(public["meta"]["defaultRate"]),
+        "__RECAP__": escape_html(int(round(public["meta"]["defaultRecapture"] * 100))),
+        "__KTHRESH__": escape_html(public["meta"]["kThreshold"]),
+    }
+    html = re.sub(r"__[A-Z][A-Z0-9_]*__", lambda match: replacements[match.group()], TEMPLATE)
     with open(a.out, "w", encoding="utf-8") as f:
         f.write(html)
     print(f"[build_dashboard] wrote {a.out} ({len(html)} bytes)")

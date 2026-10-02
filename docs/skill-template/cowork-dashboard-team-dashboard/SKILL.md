@@ -1,7 +1,8 @@
 ---
 name: cowork-dashboard-team-dashboard
 description: |
-  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates email (via the Cowork Team Report Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (four tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and keeps the latest report per person. Numbers only — no names or files; a Role breaks out only when 3+ share it. Small homogeneous teams; not org-wide.
+  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates email (via the Cowork Team Report Member skill) to a shared Teams channel into ONE anonymized HTML dashboard (four tabs, with the how-to-read guide built in), then emails the channel members a summary with the dashboard attached. First run asks for the Teams channel link and remembers it; each run reads the latest 15 days and   keeps the latest report per person. The shared dashboard contains no member records and shows a
+  breakdown only when at least 3 contributors support it. Small homogeneous teams; not org-wide.
   Use when the user asks to "build the team Cowork Team Report", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Team Report", "email the team dashboard", to "walk me through setup" / "set up the skill" right after installing it, or to "send / share the member skill with my team" / "invite my team" / set up / refresh the rollup.
   Do NOT use for: the personal report (cowork-roi-report), a member's own post (cowork-dashboard-member), the member-side aggregated post (cowork-roi-report-aggregated), org-wide/large-team aggregation, GitHub Copilot reports, or single-meeting summaries.
 cowork:
@@ -177,18 +178,22 @@ python scripts/parse_posts.py --in working/raw_messages.json --config config/tea
 ```
 `parse_posts.py`:
 - keeps only posts from the **last 15 days** (`--window-days`, anchored to `--now`/today), then keeps
-  the **latest post per sender** (id hashed away, never stored/shown), numbering contributors 1..N;
+  the **latest post per sender** (sender IDs are used transiently and never written), numbering
+  contributors only inside the private working file;
 - reads each post's parser-stable tables by header signature (tolerant of metric wording drift);
-- pulls the **Role** line if present (the only attribute — no names, no country, no files);
+- parses the **Role** line and report metrics into a private working file; this file is not a
+  deliverable and must never be emailed, published, or attached;
 - **groups business processes** (`process_groups.json`) and **canonicalizes skills**
   (`skills_vocabulary.json` + `skill_aliases.json`);
-- writes `working/team_data.json` (meta + one snapshot + members[] with role|null + metrics).
+- writes `working/team_data.json` (meta + snapshots + per-contributor metrics for internal aggregation).
 
-Privacy cleanup must remove identifying fields, **not aggregate metrics or visual inputs**. Do not
-delete categories, processes, Cowork-fit grades, deliverable rollups, Role groups that meet the
-k-threshold, or time/value measures to make the data "safer." The required aggregate charts are
-part of the output contract; preserve them while removing names, email addresses, prompts, raw file
-names, country, and other identifying fields.
+The private working JSON is not the public data contract. `build_dashboard.py` must first construct
+the separate public aggregate payload: omit contributor records and contributor links, and include
+each category, process, role, skill, deliverable format, fit grade, and secondary breakdown only when
+at least `privacy_k_threshold` distinct contributors support it. Combine small residual role groups
+only when the pooled group also reaches the threshold; otherwise suppress them. Do not publish named
+deliverables, individual task rows, task descriptions, per-item dates, or individual role assignments.
+Keep the aggregate charts and controls, but never weaken the cohort checks to fill sparse charts.
 
 ### 4. Build the dashboard with the bundled renderer (guide built in)
 ```
@@ -200,10 +205,10 @@ dashboard layout.** `build_outputs.py` invokes `build_dashboard.py` and then the
 
 Renders the single deliverable:
 - **`output/cowork-team-roi-dashboard.html`** — self-contained HTML (no external assets). Four small
-  tabs: **Overview** (auto-insights + KPI band) · **Impact & Value** (pillars, categories with $ and
-  **contributor reach** per category, roles, deliverables by format) · **How Cowork is used**
-  (business-process accordion — each process expands to its deliverables, with **type-only items
-  collapsed per format** e.g. "HTML · 5 deliverables" — Cowork-fit waterfall and category mix) ·
+  tabs: **Overview** (auto-insights + KPI band) · **Impact & Value** (categories with $ and
+  thresholded contributor reach, roles, deliverables by format) · **How Cowork is used**
+  (business-process accordion — each process expands to thresholded format and skill aggregates,
+  plus the Cowork-fit waterfall and category mix) ·
   **How to read** (the full in-dashboard guide:
   every KPI, the four tabs, the controls, how task categories are derived, the privacy model, and
   the methodology). Every section title also carries a clickable **"?"** popover. Value = hours ×
@@ -249,10 +254,10 @@ sending it to people is a second, distinct approval. Do not begin this step unti
 - **Recipients = the channel members.** `ListChannelMembers(team_id, channel_id)` → resolve each to an
   email/UPN; de-duplicate; include the runner. (A standard channel returns the team members — that's
   the intended audience.) Never add anyone outside the channel.
-- **Body = a high-level HTML summary** (aggregate only, same privacy rules as the dashboard). Pull the
-  figures from `working/team_data.json` — sum the members' headline metrics (time saved, value =
-  hours × rate, sessions, run tasks, deliverables) and name the top 1–2 business processes. Do **not**
-  hand-invent numbers; if a figure isn't in the data, omit it.
+- **Body = a high-level HTML summary** (aggregate only, same privacy rules as the dashboard). Use
+  only team-wide headline totals and process names that appear in the verified dashboard's public
+  aggregate payload; never derive or disclose per-contributor figures or name a process that failed
+  the cohort threshold. Do **not** attach or quote `working/team_data.json`.
 - **Send** with the dashboard attached (the guide is inside it — no separate PDF):
   ```
   SendEmailWithAttachments(
@@ -291,15 +296,20 @@ must use the bundled renderer, pass `verify_dashboard.py`, and only then email t
 automatically (no interactive approval). A verification failure blocks the scheduled email.
 
 ## Privacy (hard rules)
-- **Never show anything at an individual level.** Members are counts + a number only.
-- **k-anonymity:** a per-attribute (Role) breakdown renders only when **≥ `privacy_k_threshold`**
-  (default **3**) contributors share that Role; otherwise those contributors collapse into a single
-  combined bar. Small homogeneous teams usually render one combined bar — that's correct.
-- **Attributes:** only the directory **Role** a post carries. **Never** names, country, file names,
-  prompts, or JTBD prose. The parser doesn't read them and the dashboard can't show them.
+- **Never publish contributor-level records or links between contributors and metrics.** The parser's
+  working JSON contains these only as a private intermediate; the HTML contains a separate aggregate
+  contract with no member records or role assignments.
+- **Cohort threshold:** every category, process, role, skill, deliverable format, fit grade, and
+  secondary detail is included only when **≥ `privacy_k_threshold`** (default **3**) distinct
+  contributors support it. Suppress small residual pools unless their combined contributor count
+  also meets the threshold.
+- **Never publish** names, country, raw filenames, prompts, JTBD prose, deliverable names, individual
+  task rows, or per-item dates. Process detail is restricted to threshold-qualified format and skill
+  totals.
 - **The email body is aggregate-only too** — same rules; no member is ever named or singled out.
-- The whole artifact is **team-safe / shareable** — it exposes totals and the generic shape of work,
-  never who did what.
+- The dashboard is designed for team-level sharing. It exposes team totals and cohort-qualified
+  breakdowns, not who did what. Keep `working/team_data.json` private and never send it as an
+  attachment.
 
 ## Cross-skill contract (keep in sync)
 This skill can only aggregate what **`cowork-dashboard-member`** emails into the channel. These must match its copies or
@@ -325,8 +335,9 @@ aggregation breaks — **change them in both bundles together**:
 ## Guardrails
 - **Bundled renderer is mandatory.** Always build with `scripts/build_outputs.py`; never substitute a
   simplified layout or hand-authored summary.
-- **Privacy cleanup preserves aggregate visuals.** Remove identifying data, not chart inputs or
-  aggregate charts.
+- **The public-data boundary is mandatory.** Never embed `team_data.json` directly. The renderer
+  builds a separate aggregate-only payload and suppresses any breakdown below the configured cohort
+  threshold while preserving the dashboard controls and aggregate visual surfaces.
 - **Required visuals are a delivery contract.** Waterfall, category bars, stacked mix,
   process drill-downs, and the time/value toggle must all pass verification before email.
 - **No verification, no delivery.** Missing or broken required visuals block email and completion;
@@ -349,8 +360,8 @@ aggregation breaks — **change them in both bundles together**:
   channel IDs are filled in on first run (not shipped hard-coded).
 - `scripts/resolve_channel.py` — parse a pasted Teams channel/message link → `team_id` + `channel_id`; persist to config (stdlib only).
 - `scripts/make_invite.py` — render the inviting member "get started" message (channel post + email + plaintext + a personalized 1:1 DM via `--recipient-name`) with the download link baked in, so members are onboarded in-channel or direct-messaged 1:1 instead of hand-delivered a bare zip (stdlib only).
-- `scripts/parse_posts.py` — channel posts → anonymized `team_data.json` (stdlib only; 15-day window, latest-per-sender, groups processes, canonicalizes skills, k-anon-ready).
-- `scripts/build_dashboard.py` — `team_data.json` → self-contained HTML dashboard with the guide built in (stdlib only): the **How to read** tab, per-section **"?"** helpers, per-category **contributor reach** (with a `<k` privacy floor), and **type-only deliverables collapsed per format**.
+- `scripts/parse_posts.py` — channel posts → private `working/team_data.json` intermediate (stdlib only; 15-day window, latest-per-sender, groups processes, canonicalizes skills).
+- `scripts/build_dashboard.py` + `scripts/dashboard_runtime.js` — private intermediate → cohort-filtered aggregate-only HTML dashboard (stdlib only): the **How to read** tab, per-section **"?"** helpers, thresholded category reach, format/skill summaries, and preserved dashboard controls.
 - `scripts/verify_dashboard.py` — mandatory structural/privacy gate for the four tabs, required
   aggregate visuals, controls, unresolved placeholders, and identifying fields in embedded data.
 - `scripts/build_guide_pdf.py` — **legacy** one-page landscape interpretation PDF (uses `reportlab`). Retained but off by default; the guide now lives inside the dashboard.
