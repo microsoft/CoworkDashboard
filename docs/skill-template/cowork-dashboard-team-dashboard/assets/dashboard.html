@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark">
+<title>Cowork Team Dashboard</title>
+<link rel="stylesheet" href="assets/dashboard.css">
+<script src="assets/dashboard.js" defer></script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand"><svg width="22" height="22" viewBox="0 0 23 23" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="#F25022"></rect><rect x="12" y="1" width="10" height="10" fill="#7FBA00"></rect><rect x="1" y="12" width="10" height="10" fill="#00A4EF"></rect><rect x="12" y="12" width="10" height="10" fill="#FFB900"></rect></svg><span class="nm">Microsoft Copilot Cowork</span></div>
+  <h1>Cowork Team Dashboard</h1>
+  <p class="sub">__TEAM__ Impact &amp; how Cowork is used</p>
+  <p class="gen">Generated __GENERATED__ · <span id="ctxline"></span></p>
+  <p class="disc">Use the information in this report to gauge the impact of Cowork on your team, <b>not as individual or team performance scores</b>. Treat these as directional estimates of tool-assisted time savings, and read them with team context in mind (e.g., project phase, seasonality). Anonymized &amp; team-level only: nothing is shown per person.</p>
+  <p class="disc" style="margin-top:7px">New to this report? The <button type="button" class="xref" data-goto="method"><i>How to read + Glossary</i></button> tab explains every number, tab and control &mdash; and every section title has a clickable <b>?</b> for a quick explanation.</p>
+  <p class="disc" style="margin-top:7px">Use the <b>Period selector, Hourly rate box, and Recapture rate box</b> below to pick the reporting window, the hourly rate (default $__RATE__/hr), and the productivity recapture rate (default __RECAP__%). Value / cost-reduction figures = effective recaptured hours × hourly rate and recompute instantly; time-saved hours and counts stay the same.</p>
+</div></header>
+<div class="wrap">
+  <p id="load-status" role="status">Loading local aggregate data...</p>
+  <noscript>This dashboard needs JavaScript. The reviewed totals are available in the Markdown export.</noscript>
+  <div class="controls">
+    <div class="ctl"><label for="snapSel">Period</label><select id="snapSel"></select></div>
+    <div class="ctl"><label for="rateInput">Hourly rate</label><div class="rate-in"><span>$</span><input id="rateInput" type="number" min="1" step="1" inputmode="numeric"><span>/hr</span></div></div>
+    <div class="ctl"><label for="recapInput">Recapture rate</label><div class="rate-in"><input id="recapInput" type="number" min="0" max="100" step="5" inputmode="numeric"><span>%</span></div></div>
+    <div class="ctl"><label>Show impact as</label><div class="seg" id="ovSeg" role="group" aria-label="Show impact as Assisted Time or Assisted Value"><button type="button" class="seg-btn on" data-metric="time">Assisted Time</button><button type="button" class="seg-btn" data-metric="value">Assisted Value</button></div></div>
+    <div class="spacer"></div>
+    <button class="btn" id="resetBtn" type="button">Reset</button>
+    <button class="btn primary" id="printBtn" type="button">Save / Print PDF</button>
+    <a class="btn" href="team-summary.md" download>Export Markdown summary</a>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn on" type="button" data-tab="overview">Overview</button>
+    <button class="tab-btn" type="button" data-tab="impact">Impact &amp; Value</button>
+    <button class="tab-btn" type="button" data-tab="work">How Cowork is used</button>
+    <button class="tab-btn" type="button" data-tab="method" style="font-style:italic">How to read + Glossary</button>
+  </div>
+
+  <div class="tab-panel on" id="tab-overview">
+    <section class="block"><h2 class="sec"><span class="dot"></span>What the data says<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">A plain-language reading of the team's posts, generated automatically. It re-words itself when you change the hourly rate below.</span></h2><p class="sec-note">The four highlights below summarize the team's Cowork impact at a glance: the total time reclaimed and its dollar value, the task category driving the most savings, the business process where Cowork is applied most, and the type of business value it advances most — so you can quickly see where the impact is concentrated.</p><div class="insights" id="ov-insights"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Team impact at a glance<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The headline totals for the selected period. <b>Value</b> = manual hours &times; the hourly rate in the control bar, so it recomputes whenever you change the rate.</span></h2><div class="kpis" id="ov-kpis"></div><p class="sec-note" style="margin-top:12px"><b>About the ranges:</b> under <b>Time saved</b> and <b>Value / cost reduction</b> the headline is the typical (mid-point) estimate; the low&ndash;high range beside it is the conservative-to-optimistic span from the research time bands (each task category carries a low / typical / high band &mdash; see <button type="button" class="xref" data-goto="method" data-scroll="sec-bands"><i>How to read</i></button>).</p></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Where Cowork is applied — top business processes<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The business processes the team uses Cowork for most, ranked by the selected measure (time saved or value). Process and detail breakdowns appear only when supported by the privacy threshold.</span></h2><p class="sec-note">The business processes where Cowork does the most work for the team — the clearest signal of how it's actually being used. Open the full breakdown to drill into supported aggregate detail.</p><div class="card" id="ov-proc"></div></section>
+  </div>
+
+  <div class="tab-panel" id="tab-impact">
+    <section class="block"><h2 class="sec"><span class="dot"></span>Where the time went — by task category<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">The <b>method</b> used, summarized by category. Each category carries a research time band (minutes saved per run); time saved = run tasks &times; band. Category totals and reach are shown only when at least __KTHRESH__ contributors used that category. Full mapping is on the <b>How to read</b> tab.</span></h2><p class="sec-note">Understand how much time is saved by the team across supported task categories. Refer to the <button type="button" class="xref" data-goto="method" data-scroll="sec-bands"><i>How to read</i></button> section to understand the research-based time ranges.</p><p class="sec-note" style="margin-top:8px">A category appears only when at least <b>__KTHRESH__</b> contributors support it. Smaller categories are omitted instead of exposing a low-count pool.</p><div class="card" id="im-categories"></div></section>
+    <section class="block"><div class="grid2">
+      <div class="card"><h3>Roles Cowork stood in for</h3><p class="hint">Roles a services firm would have billed — expand for the specific skills behind them.</p><div id="im-roles"></div></div>
+      <div class="card"><h3>Outputs produced — by format</h3><p class="hint">Aggregate file-format counts. Formats appear only when at least __KTHRESH__ contributors support them; individual output files and names are never listed.</p><div id="im-deliv"></div></div>
+    </div></section>
+  </div>
+
+  <div class="tab-panel" id="tab-work">
+    <section class="block"><h2 class="sec"><span class="dot"></span>Work by business process<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Business processes are grouped into the shared canonical set. <b>Click a row</b> to expand aggregate format and skill summaries, each supported by at least __KTHRESH__ contributors. Named deliverables, individual records, and per-item dates are never shown.</span></h2><p class="sec-note">The business processes the team used Cowork for, ranked by time saved. <b>Click a supported process</b> to expand its cohort-qualified format and skill summaries.</p><p class="sec-note" style="margin-top:8px">Process and secondary detail with fewer than __KTHRESH__ contributing people are omitted.</p><div class="card" id="wk-proc"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Cowork fit — how well the work suited Cowork<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Tasks are graded <b>High / Medium / Low</b> on how well they fit Cowork's agentic, cross-app strengths. <b>High</b> = work only Cowork can do (builds &amp; packaged skills, executed automations/connectors, many-source synthesis); <b>Low</b> = a single-app Copilot could have done it. The waterfall includes supported grade totals; expanded rows show only cohort-qualified process/category aggregates.</span></h2><p class="sec-note">A composition of supported graded tasks by Cowork fit, shown as a waterfall. Grades and expanded details appear only when at least __KTHRESH__ contributors support them.</p><div class="card" id="wk-fit"></div></section>
+    <section class="block"><h2 class="sec"><span class="dot"></span>Category mix<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">How supported role cohorts split their time across categories. A role and each category segment appear only when at least <b>__KTHRESH__</b> contributors support that breakdown. Small residual role groups are combined only if the pool also meets the threshold.</span></h2><p class="sec-note">How saved time splits across supported task categories — grouped by Role where privacy allows.</p><div class="card" id="wk-stack"></div></section>
+  </div>
+
+  <div class="tab-panel" id="tab-method">
+    <details class="meth" open><summary>Glossary of terms</summary><div class="mbody" id="gloss-body">
+      <p><b>Active days</b> — Person-days with at least one Cowork task in the window.</p>
+      <p><b>Anonymity</b> — The public dashboard contains only team totals and breakdowns supported by at least __KTHRESH__ distinct contributors. Small residual groups and secondary details are suppressed unless their combined cohort reaches the same threshold. Contributor records remain private in the working file.</p>
+      <p><b>Business process</b> — The business need served by the work &mdash; e.g., Business Value &amp; ROI Analytics.</p>
+      <p><b>Contributors</b> — The number of teammates who posted their de-identified stats this period. Never named.</p>
+      <p><b>Cowork fit</b> — How well a task suited Cowork's agentic, cross-app strengths, graded High / Medium / Low. High = work only Cowork can do (builds &amp; packaged skills, executed automations, many-source synthesis); Low = a single-app Copilot could have done it. Shown as a quantified waterfall on the <i>How Cowork is used</i> tab.</p>
+      <p><b>Deliverables</b> — The count of <i>distinct</i> pieces of work produced.</p>
+      <p><b>Hands-on time</b> — The actual time the team spent working with Cowork.</p>
+      <p><b>Outputs</b> — The number of output files in a supported file-format cohort. Individual files and versions are never listed.</p>
+      <p><b>Reach</b> — The number of contributors using a task category. Reach and category totals appear only when at least __KTHRESH__ contributors share it.</p>
+      <p><b>Research time band</b> — The low / typical / high minutes of manual time saved per run for a task category, drawn from published studies (see &ldquo;<button type="button" class="xref" data-goto="method" data-scroll="sec-bands">Research bands &amp; sources</button>&rdquo; below).</p>
+      <p><b>Run tasks</b> — A single unit of work run with Cowork — one discrete request or action (e.g., analyzing a file, drafting a document). Run tasks are grouped into sessions.</p>
+      <p><b>Sessions</b> — Distinct Cowork chats run across the team. A session may contain one or multiple run tasks.</p>
+      <p><b>Skills</b> — The specific capabilities behind roles (e.g., Data Visualization, Python).</p>
+      <p><b>Task category</b> — How the work was done (the method) &mdash; e.g., Analysis &amp; Research, Write or debug code. Each carries a research time band (see &ldquo;<button type="button" class="xref" data-goto="method" data-scroll="sec-bands">Research bands &amp; sources</button>&rdquo; below).</p>
+      <p><b>Team speed multiplier</b> — How much faster the work went: estimated hours without Cowork &divide; actual hands-on with Cowork hours.</p>
+      <p><b>Time saved</b> — Manual hours Cowork saved this period: for each task, run tasks &times; the research time band for its category. The headline is the typical estimate, with a low&ndash;high range alongside.</p>
+      <p><b>Recapture rate</b> — The share of time saved the team can realistically harvest into productive output. Set in the control bar (default __RECAP__%). It scales every value figure but leaves time-saved hours and counts unchanged.</p>
+      <p><b>Effective time recaptured</b> — Time saved &times; the recapture rate — the productive hours the team actually reclaims. This is what the value figure prices.</p>
+      <p><b>Value / cost reduction</b> — Effective time recaptured priced out: time saved &times; recapture rate &times; the hourly rate in the control bar. Recomputes whenever you change the rate or the recapture rate.</p>
+    </div></details>
+
+
+    <details class="meth"><summary>How task categories are derived</summary><div class="mbody">
+      <p>Each task is sorted into up to two categories from three signals:</p>
+      <p style="margin-bottom:3px"><b>1 · Output file type</b></p>
+      <ul>
+        <li>spreadsheets (.xlsx / .csv / .json) &rarr; Analysis &amp; Research</li>
+        <li>code &amp; web (.py / .html / .sql / .js) &rarr; Write or debug code</li>
+        <li>documents (.docx / .pdf / .pptx / images) &rarr; Document &amp; content creation</li>
+        <li>packaged skills (.zip / .skill) &rarr; Specialized workflows</li>
+      </ul>
+      <p style="margin-bottom:3px"><b>2 · Goal keywords</b></p>
+      <ul>
+        <li>&ldquo;analyze / research / ROI / benchmark&rdquo; &rarr; Analysis</li>
+        <li>&ldquo;debug / refactor / script / API / automation&rdquo; &rarr; Write or debug code</li>
+        <li>&ldquo;email / inbox / reply&rdquo; &rarr; Email</li>
+        <li>&ldquo;meeting / transcript / standup / agenda&rdquo; &rarr; Meeting</li>
+      </ul>
+      <p style="margin-bottom:3px"><b>3 · Input signal</b></p>
+      <ul>
+        <li>if the sources are data files, or there are 3 or more of them &rarr; Analysis</li>
+      </ul>
+      <p>A task with no saved file and no signal falls to General assistance / Other. When more than one matches, they rank (code &rsaquo; analysis &rsaquo; specialized &rsaquo; document &rsaquo; communication &rsaquo; meeting &rsaquo; email &rsaquo; general) and the top two are kept.</p>
+    </div></details>
+
+
+    <details class="meth"><summary>Privacy &amp; anonymity</summary><div class="mbody">
+      <p><b>No contributor-level records or links are published.</b> The dashboard is built from a separate aggregate-only data payload; the private working file is not a deliverable. Categories, processes, roles, skills, formats, fit grades, and secondary details appear only when <b>__KTHRESH__+</b> distinct contributors support them. Small residual role groups and sparse detail are suppressed. Names, country, raw filenames, prompts, deliverable names, individual task rows, and per-item dates are never embedded.</p>
+    </div></details>
+
+    <details class="meth"><summary>Value model</summary><div class="mbody">
+      <ul>
+        <li><b>Time saved</b> = Count of run tasks × the research band (minutes saved/run).</li>
+        <li><b>Recapture rate</b> = the share of time saved the team realistically converts into productive output (default __RECAP__%; adjustable in the control bar).</li>
+        <li><b>Effective time recaptured</b> = time saved × recapture rate.</li>
+        <li><b>Value / cost reduction</b> = effective recaptured hours × hourly rate (default $__RATE__/hr) = time saved × recapture rate × rate.</li>
+        <li><b>Speed multiplier</b> = manual hours ÷ modeled hands-on hours.</li>
+      </ul>
+      <p>All figures come from the posts; the dashboard only re-totals and re-prices them.</p>
+    </div></details>
+
+    <details class="meth" id="sec-bands"><summary>Research bands &amp; sources</summary><div class="mbody">
+      <p>Each task category carries a research-anchored time band — the minutes of manual time saved per run, at a low / typical / high estimate.<sup>†</sup> Time saved = run tasks &times; the band for that category.</p>
+      <table class="dt" style="margin-top:11px">
+        <thead><tr><th>Task category</th><th class="r">Low</th><th class="r">Typical</th><th class="r">High</th></tr></thead>
+        <tbody>
+          <tr><td><span class="catsw" style="background:var(--c0)"></span>Analysis &amp; Research</td><td class="r">30</td><td class="r">67</td><td class="r">92</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c1)"></span>Write or debug code</td><td class="r">30</td><td class="r">56</td><td class="r">96</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c2)"></span>Document &amp; content creation</td><td class="r">12</td><td class="r">24</td><td class="r">42</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c3)"></span>Meeting workflows</td><td class="r">12</td><td class="r">31</td><td class="r">43</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c5)"></span>Email workflows</td><td class="r">3</td><td class="r">7</td><td class="r">12</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c7)"></span>Communication workflows</td><td class="r">2</td><td class="r">4</td><td class="r">6</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c4)"></span>Specialized workflows</td><td class="r">10</td><td class="r">25</td><td class="r">40</td></tr>
+          <tr><td><span class="catsw" style="background:var(--c6)"></span>General assistance / Other</td><td class="r">2</td><td class="r">5</td><td class="r">8</td></tr>
+        </tbody>
+      </table>
+      <p class="footnote"><sup>†</sup> Minutes of manual time saved per run (low / typical / high). <b>Sources:</b> Stanford-WB (SSRN 5136877), Microsoft Research 2026 (DiD n=72,186), Noy &amp; Zhang (Science 2023), Cambon et al. (MSR 2024), Cui et al. (CACM 2024), Brynjolfsson, Li &amp; Raymond (QJE 2025), Forrester TEI 2024.</p>
+    </div></details>
+  </div>
+
+  <footer class="foot">Generated by Microsoft Copilot Cowork · Cowork Team Report Team Dashboard skill · anonymized &amp; team-safe — numbers only, no names. Modeled estimates of tool-assisted time savings, not audited financials or performance metrics.</footer>
+</div>
+</body>
+</html>

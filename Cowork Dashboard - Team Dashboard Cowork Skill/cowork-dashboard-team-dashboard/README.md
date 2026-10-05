@@ -1,9 +1,10 @@
 # Cowork Team Report — Team Dashboard
 
 A Microsoft Copilot **Cowork skill** that rolls up a small team's Copilot Cowork ROI. It reads the
-de-identified stats each teammate emails to a shared Teams channel and renders **one self-contained,
-anonymized HTML dashboard** the manager can open, re-price with a live hourly-rate control, and print.
-It then **emails the channel members** a high-level summary with the dashboard attached. The guide for
+de-identified stats each teammate emails to a shared Teams channel and renders **a private local site**
+the manager can open, re-price with live controls, and print. HTML, CSS, JavaScript and public JSON
+are separate files with no CDN dependencies. Share only a reviewed Markdown or PDF export after
+explicit approval; do not send the localhost URL or standalone HTML. The guide for
 reading it is **built into the dashboard** — a **How to read** tab plus a clickable **"?"** on every
 section — so there's no separate file to open. The bundled renderer produces four tabs:
 **Overview**, **Impact & Value**, **How Cowork is used**, and **How to read + Glossary**. On first run
@@ -11,7 +12,7 @@ it **asks for the Teams channel link** and
 remembers it; every run reads the **latest 15 days** of messages, keeping the latest report per person.
 
 > **Team-safe by design.** The private working file contains per-contributor metrics for aggregation;
-> it is not the report and must never be shared. The builder embeds only team totals and breakdowns
+> it is not the report and must never be shared. The builder exports only team totals and breakdowns
 > supported by at least the configured k-threshold. It excludes member records, task-level entries,
 > deliverable names, raw filenames, prompts, and country. Small residual cohorts are suppressed unless
 > the combined pool also meets the threshold.
@@ -22,7 +23,7 @@ remembers it; every run reads the **latest 15 days** of messages, keeping the la
 |---|---|---|
 | `cowork-roi-report` | A person's **full** personal impact report | Rich HTML web app (their own view) |
 | `cowork-dashboard-member` | A person emails their **de-identified** stats to the team channel | HTML tables in Teams |
-| **`cowork-dashboard-team-dashboard`** (this) | The **manager** aggregates everyone's reports | Anonymized team HTML dashboard (how-to-read guide built in), emailed to the channel members |
+| **`cowork-dashboard-team-dashboard`** (this) | The **manager** aggregates everyone's reports | Local aggregate-only site, plus reviewed Markdown/PDF exports |
 
 This skill **only consumes** what `cowork-dashboard-member` emails into the channel. It does not
 harvest OneDrive. Sender IDs are used transiently to deduplicate posts and are not written to the
@@ -49,10 +50,10 @@ teammates ──(cowork-dashboard-member email)──▶  Teams channel  ──(
                                                                                      │
                                      scripts/build_outputs.py ──▶ build_dashboard.py │  (aggregate-only payload,
                                      (guide built into the dashboard's               ▼   cohort filters, live rate)
-                                      "How to read" tab)              output/cowork-team-roi-dashboard.html
+                                      "How to read" tab)              output/team-dashboard/index.html
                                                                                      │
-                                                          SendEmailWithAttachments ──▶ channel members
-                                                          (high-level summary + the dashboard attached)
+                                                          serve_dashboard.py ──▶ localhost browser
+                                                          reviewed Markdown/PDF export ──▶ approved sharing
 ```
 
 ## Quick start
@@ -74,24 +75,37 @@ teammates ──(cowork-dashboard-member email)──▶  Teams channel  ──(
    ```
    This command uses the bundled renderer and runs `verify_dashboard.py`. It fails if any required
    aggregate visual, control, tab, or privacy check is missing.
-3. **Verify before email.** When browser tools are available, open the generated HTML, visit all four
+3. **Start the local server.** Requires Python 3.9+ (no new runtime or package install):
+   ```bash
+   python scripts/serve_dashboard.py --dir output/team-dashboard
+   ```
+   It binds only to `127.0.0.1:7333` and opens the browser. Use `--no-open` for headless runs,
+   or `--port 7334` if the default port is occupied. Stop with Ctrl+C. Do not open the HTML file
+   directly: the separate JSON files require HTTP. No desktop icon or start-at-login is installed.
+4. **Verify before sharing.** When browser tools are available, open `http://127.0.0.1:7333/`, visit all four
    tabs, exercise the controls, expand a process drill-down, and verify the waterfall, category bars,
    stacked mix, and time/value toggle. Use screenshot verification when available; disclose when it
    is unavailable. A failed check blocks delivery.
-4. Open `output/cowork-team-roi-dashboard.html`; only after verification passes does the skill email
-   it to the channel members. (The
-   how-to-read guide is inside the dashboard — open the **How to read** tab or click any **"?"**.)
+5. **Review and share an export.** Download `team-summary.md` using the export link (default
+   pricing), or use Save / Print PDF (current controls). Read the export, confirm recipients,
+   then explicitly approve sharing. Builds and scheduled runs no longer email automatically.
+
+The server serves only known public site files, rejects invalid Host/origin/path requests, and
+has no command endpoints. Raw messages, working JSON and configuration are never served.
+"Local" describes the site: Teams tools and the model still process input, and exports/backups
+can leave the device. Use an approved agent and storage. This architecture change is not a
+Microsoft Defender clearance; do not disable antivirus or add exclusions.
 
 ## Mandatory dashboard contract
 
 - Build only with `scripts/build_outputs.py`; never substitute a simplified layout.
 - The parser's `working/team_data.json` is an internal intermediate containing contributor-level
   metrics. Do not email, publish, or attach it. The renderer constructs a separate public aggregate
-  contract before embedding data in the HTML.
+  contract before writing public JSON.
 - Each category, process, role, skill, deliverable format, fit grade, and secondary detail is included
   only when at least `privacy_k_threshold` contributors support it. Small residual role groups are
   combined only when the pooled group also meets that threshold; otherwise they are omitted.
-- The shared HTML never embeds member records, individual roles, task descriptions, deliverable names,
+- The local site never includes member records, individual roles, task descriptions, deliverable names,
   per-deliverable rows, or contributor-to-category links. Process drill-downs contain cohort-qualified
   format and skill totals only.
 - Required visuals: Cowork-fit waterfall, category bars, stacked category mix, expandable
@@ -109,6 +123,7 @@ python scripts/parse_posts.py --in examples/sample_raw_messages.json \
        --config config/team_config.json --out working/team_data.json \
        --window-days 15 --now 2026-07-02 --generated 2026-07-01
 python scripts/build_outputs.py --in working/team_data.json --config config/team_config.json
+python scripts/serve_dashboard.py --dir output/team-dashboard
 ```
 
 ## Config (`config/team_config.json`)
@@ -122,7 +137,7 @@ python scripts/build_outputs.py --in working/team_data.json --config config/team
 | `cadence_days` | Report/refresh cadence (default 14). |
 | `message_lookback_days` | Window each run reads — **default 15** (the latest cycle). Enforced by `--window-days`. |
 | `privacy_k_threshold` | Minimum contributors sharing an attribute before it breaks out (default 3). |
-| `email_on_run` | When true (default), email the channel members the dashboard (guide built in) after building. |
+| `email_on_run` | Legacy setting, now false by default. True may offer to share, but never authorizes sending; exports always require review and explicit approval. |
 | `team_size` | Optional; v1 shows a contributor count, not adoption %. |
 
 ## Privacy model
@@ -150,7 +165,7 @@ in process detail follow the same cohort rule.
 
 ## Requirements
 
-- Python 3. The whole default pipeline (`resolve_channel.py`, `parse_posts.py`, `build_dashboard.py`,
+- Python 3.9+. The whole default pipeline (`resolve_channel.py`, `parse_posts.py`, `build_dashboard.py`,
   `verify_dashboard.py`, `build_outputs.py`) is **standard library only** — the how-to-read guide is rendered inside the
   dashboard, so no extra dependency is needed. The **legacy** `build_guide_pdf.py` uses **reportlab**
   (pre-installed in the Copilot Cowork container) and only runs if you pass `--with-pdf`.

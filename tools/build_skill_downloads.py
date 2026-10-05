@@ -7,6 +7,10 @@ For each skill it writes TWO identical zips (same bytes/layout):
   * docs/downloads/<slug>.zip          — served by the Installer Studio web app
   * <root skill folder>/<slug>.zip     — the convenience copy that sits next to the source
 
+It also synchronizes the browser installer's skill-template files and manifest from the same
+source. Use --skill <slug> to rebuild just one skill. Runtime caches and working/output data
+are never packaged.
+
 The zip root is the skill folder itself (e.g. `cowork-dashboard-member/...`) so Cowork imports
 it as a skill. Entry names always use forward slashes so the archive works on macOS/OneDrive too.
 
@@ -22,6 +26,8 @@ import json
 import os
 import sys
 import zipfile
+import argparse
+import shutil
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -58,12 +64,35 @@ def assert_blank_config(skill_dir, cfg_rel, fields):
 
 def collect_files(skill_dir):
     out = []
-    for base, _dirs, files in os.walk(skill_dir):
+    for base, dirs, files in os.walk(skill_dir):
+        dirs[:] = [name for name in dirs if name not in {"__pycache__", "working", "output", ".git"}]
         for fn in files:
+            if fn == ".DS_Store" or fn.endswith((".pyc", ".pyo")):
+                continue
             full = os.path.join(base, fn)
             rel = os.path.relpath(full, skill_dir).replace(os.sep, "/")
             out.append((full, rel))
     return sorted(out, key=lambda x: x[1])
+
+
+def sync_template(slug, files):
+    root = os.path.join(REPO, "docs", "skill-template")
+    destination = os.path.join(root, slug)
+    expected = {relative for _full, relative in files}
+    for base, _dirs, names in os.walk(destination):
+        for name in names:
+            full = os.path.join(base, name)
+            relative = os.path.relpath(full, destination).replace(os.sep, "/")
+            if relative not in expected:
+                os.remove(full)
+    for full, relative in files:
+        target = os.path.join(destination, *relative.split("/"))
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.copyfile(full, target)
+    manifest = "manifest-dashboard.json" if slug.endswith("team-dashboard") else "manifest.json"
+    with open(os.path.join(root, manifest), "w", encoding="utf-8") as handle:
+        json.dump([slug + "/" + relative for _full, relative in files], handle, indent=2)
+        handle.write("\n")
 
 
 def build_zip(dest, slug, files):
@@ -76,6 +105,9 @@ def build_zip(dest, slug, files):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--skill", choices=SKILLS)
+    args = parser.parse_args()
     downloads = os.path.join(REPO, "docs", "downloads")
 
     # Remove any stale, differently-named download zips so only the canonical set remains.
@@ -86,11 +118,14 @@ def main():
                 print("removed stale download: " + fn)
 
     for slug, meta in SKILLS.items():
+        if args.skill and slug != args.skill:
+            continue
         skill_dir = os.path.join(REPO, meta["root"], slug)
         if not os.path.isdir(skill_dir):
             fail("missing skill source folder: " + skill_dir)
         assert_blank_config(skill_dir, meta["config"], meta["channel_fields"])
         files = collect_files(skill_dir)
+        sync_template(slug, files)
 
         served = os.path.join(downloads, slug + ".zip")
         convenience = os.path.join(REPO, meta["root"], slug + ".zip")

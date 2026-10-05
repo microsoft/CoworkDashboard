@@ -412,14 +412,14 @@
     </div>
     <p class="lead"><strong>Cowork Team Report</strong> is a two-part Microsoft Copilot <strong>Cowork</strong>
        solution that shows your team the <strong>ROI</strong> they're getting from Copilot Cowork — the hours
-       saved and the dollar value of that time — and turns it into a tidy report that lands in everyone's inbox.</p>
+       saved and the dollar value of that time — in a local dashboard with reviewed exports for sharing.</p>
     <ul class="benefits">
       <li><strong>Each teammate runs the “member” skill.</strong> It looks at their own Copilot Cowork work
           and emails a private, plain-language summary — hours saved, the dollar value of that time, the kinds
           of work, and what they produced — to the Teams channel's email address.</li>
       <li><strong>You run the “manager” skill.</strong> It reads that channel, combines everyone's summaries
-          into a single anonymized dashboard, and <strong>emails your team a tidy newsletter</strong> (an HTML
-          dashboard with the how-to-read guide built in) on the schedule you choose.</li>
+          into an anonymized <strong>local dashboard site</strong> with the how-to-read guide built in.
+          Review a Markdown or PDF export and explicitly approve it before sharing; scheduled builds do not send email.</li>
       <li><strong>Private by design.</strong> People's names and prompts are never shared, and raw file
           names are replaced with de-identified descriptions — only totals, categories, and de-identified
           descriptions, and nothing is ever shown at an individual level.</li>
@@ -616,11 +616,12 @@
     <ol class="steps">
       <li>Each teammate runs the member skill once to start it, reviews their sessions, and emails their
           private summary to your dedicated channel.</li>
-      <li>Your manager skill reads those channel messages, builds one anonymized dashboard, and emails your team a
-          newsletter with the dashboard attached — the how-to-read guide is built right into it.</li>
+      <li>Your manager skill reads those channel messages and builds an anonymized local site. Start
+          <code>python scripts/serve_dashboard.py --dir output/team-dashboard</code> from the skill folder
+          and open <code>http://127.0.0.1:7333/</code>. Share only a reviewed Markdown/PDF export after explicit approval.</li>
       <li>Keep it automated: your manager skill runs on its schedule (about every two weeks), and each
           teammate's member skill prompts for review on its own 15-day schedule — together they keep the picture current
-          with nothing to re-run by hand.</li>
+          without automatic sharing. Existing manager schedules must be updated to build only.</li>
     </ol>
     <p class="muted small">The manager skill only ever reads what teammates choose to email into the channel — it never touches
        anyone's files, and no individual is named in the dashboard or the email.</p>

@@ -4,6 +4,8 @@ import pathlib
 import sys
 import tempfile
 import unittest
+import http.client
+import threading
 from types import SimpleNamespace
 
 
@@ -15,6 +17,8 @@ sys.path.insert(0, str(SCRIPTS))
 import build_dashboard  # noqa: E402
 import parse_posts  # noqa: E402
 import verify_dashboard  # noqa: E402
+import serve_dashboard  # noqa: E402
+import build_outputs  # noqa: E402
 
 
 def report(category, process, role="Software Engineer", skill="Python", fit="H"):
@@ -127,11 +131,14 @@ class TeamDashboardSecurityTests(unittest.TestCase):
                 parsed["members"][0]["reports"]["2026-07-01"]["categories"][0]["name"],
             )
             build_dashboard.main(SimpleNamespace(inp=str(parsed_path), out=str(html_path)))
+            self.assertTrue(html_path.is_file())
             html = html_path.read_text(encoding="utf-8")
+            public_json = (temp / "dashboard-data.json").read_text(encoding="utf-8")
 
             self.assertNotIn("</script><script>alert(1)", html.lower())
             self.assertNotIn('<img src=x onerror=alert(1)>', html.lower())
-            self.assertIn(r"\u003c/script\u003e", html.lower())
+            self.assertIn(r"\u003c/script\u003e", public_json.lower())
+            self.assertNotIn("<script>", html.lower())
             self.assertEqual(verify_dashboard.verify(str(html_path)), [])
 
     def test_verifier_rejects_a_public_breakdown_below_threshold(self):
@@ -151,6 +158,90 @@ class TeamDashboardSecurityTests(unittest.TestCase):
             build_dashboard.escape_html(attack),
             "&lt;/script&gt;&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;&amp;",
         )
+
+    def test_local_site_has_separate_assets_and_only_public_data(self):
+        with tempfile.TemporaryDirectory(prefix="dashboard-site-test-") as temp:
+            root = pathlib.Path(temp)
+            raw = root / "private/team_data.json"
+            raw.parent.mkdir()
+            raw.write_text(json.dumps(private_data()), encoding="utf-8")
+            page = root / "site/index.html"
+            build_dashboard.main(SimpleNamespace(inp=str(raw), out=str(page)))
+            self.assertTrue(page.is_file())
+            self.assertEqual(verify_dashboard.verify(str(page)), [])
+            html = page.read_text(encoding="utf-8")
+            self.assertIn('src="assets/dashboard.js"', html)
+            self.assertNotIn("<style>", html)
+            self.assertNotIn('type="application/json"', html)
+            public = json.loads((page.parent / "dashboard-data.json").read_text())
+            self.assertEqual(verify_dashboard.verify_public_contract(public), [])
+            export = (page.parent / "team-summary.md").read_text()
+            self.assertIn("Modeled time saved: 25.0 hours", export)
+            self.assertNotIn("Secret contributor", export)
+            self.assertNotIn("private channel", export)
+            (page.parent / "assets/dashboard.js").unlink()
+            self.assertTrue(verify_dashboard.verify(str(page)))
+
+    def test_loopback_server_blocks_commands_rebinding_traversal_and_private_files(self):
+        with tempfile.TemporaryDirectory(prefix="dashboard-server-test-") as temp:
+            root = pathlib.Path(temp)
+            raw = root / "team_data.json"
+            raw.write_text(json.dumps(private_data()), encoding="utf-8")
+            site = root / "site"
+            build_dashboard.main(SimpleNamespace(inp=str(raw), out=str(site / "index.html")))
+            (site / "private.json").write_text('{"secret":"never serve"}')
+            server = serve_dashboard.make_server(site, port=0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                def request(path, method="GET", headers=None):
+                    connection = http.client.HTTPConnection("127.0.0.1", server.server_port)
+                    try:
+                        connection.request(method, path, headers=headers or {})
+                        response = connection.getresponse()
+                        return response.status, dict(response.getheaders()), response.read()
+                    finally:
+                        connection.close()
+
+                status, headers, body = request("/")
+                self.assertEqual(status, 200)
+                self.assertIn(b"Cowork Team Dashboard", body)
+                self.assertIn("script-src 'self'", headers["Content-Security-Policy"])
+                self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
+                self.assertEqual(request("/health")[0], 200)
+                self.assertEqual(request("/assets/dashboard.js")[0], 200)
+                self.assertEqual(request("/dashboard-data.json")[0], 200)
+                self.assertEqual(request("/run/impact")[0], 405)
+                self.assertEqual(request("/run/impact", "POST")[0], 405)
+                self.assertEqual(request("/", headers={"Host": "evil.test"})[0], 421)
+                self.assertEqual(request("/", headers={"Origin": "https://evil.test"})[0], 403)
+                self.assertEqual(request("/..%2fteam_data.json")[0], 400)
+                self.assertEqual(request("/assets%5c..%5cteam_data.json")[0], 400)
+                self.assertEqual(request("/private.json")[0], 404)
+                self.assertEqual(request("/team_data.json")[0], 404)
+                (site / "dashboard-data.json").unlink()
+                (site / "dashboard-data.json").symlink_to(raw)
+                self.assertEqual(request("/dashboard-data.json")[0], 400)
+                self.assertEqual(request("/health", "HEAD")[2], b"")
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join()
+
+    def test_build_rejects_overlapping_runs_and_releases_lock_on_failure(self):
+        with tempfile.TemporaryDirectory(prefix="dashboard-lock-test-") as temp:
+            root = pathlib.Path(temp)
+            page = root / "index.html"
+            lock = root / ".dashboard-build.lock"
+            lock.mkdir()
+            args = SimpleNamespace(inp=str(root / "missing.json"), out_html=str(page))
+            with self.assertRaisesRegex(SystemExit, "another build is active"):
+                build_outputs.main(args)
+            self.assertTrue(lock.is_dir())
+            lock.rmdir()
+            with self.assertRaises(FileNotFoundError):
+                build_outputs.main(args)
+            self.assertFalse(lock.exists())
 
 
 if __name__ == "__main__":

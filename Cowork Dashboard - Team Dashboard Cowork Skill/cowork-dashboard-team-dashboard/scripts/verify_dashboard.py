@@ -5,6 +5,8 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
+from html.parser import HTMLParser
 
 
 EXPECTED_TABS = ["overview", "impact", "work", "method"]
@@ -42,17 +44,29 @@ AGGREGATE_KEYS = {
 }
 
 
-def embedded_data(html, element_id):
-    match = re.search(
-        rf'<script type="application/json" id="{re.escape(element_id)}">(.*?)</script>',
-        html,
-        re.S,
-    )
-    if not match:
-        raise ValueError(f"embedded JSON block #{element_id} is missing")
-    if re.search(r"</script", match.group(1), re.I):
-        raise ValueError(f"unsafe script terminator in embedded JSON block #{element_id}")
-    return json.loads(match.group(1))
+SITE_FILES = {
+    "assets/dashboard.css", "assets/dashboard.js",
+    "dashboard-data.json", "dashboard-glossary.json", "team-summary.md",
+}
+
+
+class SiteMarkup(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.scripts = []
+        self.stylesheets = []
+        self.errors = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if any(key.lower().startswith("on") for key in attributes):
+            self.errors.append("inline event handler in local site")
+        if tag == "script":
+            self.scripts.append(attributes.get("src"))
+        if tag == "style":
+            self.errors.append("inline stylesheet in local site")
+        if tag == "link" and attributes.get("rel") == "stylesheet":
+            self.stylesheets.append(attributes.get("href"))
 
 
 def find_forbidden_keys(value, path="$"):
@@ -137,8 +151,23 @@ def verify(path):
     for element_id, label in REQUIRED_IDS.items():
         if not re.search(rf'\bid="{re.escape(element_id)}"', html):
             errors.append(f"missing required {label} (#{element_id})")
+    markup = SiteMarkup()
+    markup.feed(html)
+    errors.extend(markup.errors)
+    if markup.scripts != ["assets/dashboard.js"]:
+        errors.append("site must load exactly one local runtime, with no inline scripts")
+    if markup.stylesheets != ["assets/dashboard.css"]:
+        errors.append("site must load the local stylesheet")
+    root = Path(path).resolve().parent
+    for relative in SITE_FILES:
+        asset = root / relative
+        if not asset.is_file() or not asset.resolve().is_relative_to(root):
+            errors.append(f"missing or unconfined local-site asset: {relative}")
+    if errors:
+        return errors
+    runtime = (root / "assets/dashboard.js").read_text(encoding="utf-8")
     for signature, label in REQUIRED_RENDER_SIGNATURES.items():
-        if signature not in html:
+        if signature not in html and signature not in runtime:
             errors.append(f"missing required {label}")
 
     placeholders = sorted(set(re.findall(r"__[A-Z][A-Z0-9_]*__", html)))
@@ -146,14 +175,16 @@ def verify(path):
         errors.append("unresolved template placeholders: " + ", ".join(placeholders))
 
     try:
-        data = embedded_data(html, "cw-data")
-        embedded_data(html, "cw-glossary")
+        data = json.loads((root / "dashboard-data.json").read_text(encoding="utf-8"))
+        glossary = json.loads((root / "dashboard-glossary.json").read_text(encoding="utf-8"))
+        if not isinstance(glossary, dict):
+            raise ValueError("local glossary has the wrong shape")
     except (ValueError, json.JSONDecodeError) as exc:
         errors.append(str(exc))
     else:
         forbidden = find_forbidden_keys(data)
         if forbidden:
-            errors.append("contributor-level or identifying fields remain in embedded data: "
+            errors.append("contributor-level or identifying fields remain in public data: "
                           + ", ".join(forbidden))
         errors.extend(verify_public_contract(data))
 
@@ -168,12 +199,12 @@ def main(args):
             print(f"  - {error}", file=sys.stderr)
         raise SystemExit(1)
     print(
-        "[verify_dashboard] passed: dashboard tabs, charts, controls, safe JSON, "
+        "[verify_dashboard] passed: local assets, dashboard tabs, charts, controls, "
         "and cohort-filtered public data"
     )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--in", dest="inp", default="output/cowork-team-roi-dashboard.html")
+    parser.add_argument("--in", dest="inp", default="output/team-dashboard/index.html")
     main(parser.parse_args())

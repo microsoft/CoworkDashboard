@@ -1,4 +1,13 @@
-const RAW=JSON.parse(document.getElementById('cw-data').textContent);
+async function loadJSON(path){
+  const response=await fetch(path,{cache:'no-store'});
+  if(!response.ok)throw new Error(`Could not load ${path}: HTTP ${response.status}`);
+  return response.json();
+}
+async function initialize(){
+const [RAW,GLOSSARY]=await Promise.all([
+  loadJSON('dashboard-data.json'),loadJSON('dashboard-glossary.json')
+]);
+if(!RAW.snapshots.length)throw new Error('No reporting periods are available.');
 const RATE0=RAW.meta.defaultRate, KMIN=RAW.meta.kThreshold;
 const RECAP0=RAW.meta.defaultRecapture;
 const CAT_COLOR={'Analysis & Research':'var(--c0)','Write or debug code':'var(--c1)','Document & content creation':'var(--c2)','Meeting workflows':'var(--c3)','Specialized workflows':'var(--c4)','General assistance / Other':'var(--c6)','Email workflows':'var(--c5)','Communication workflows':'var(--c7)'};
@@ -18,8 +27,7 @@ const active=()=>RAW.aggregates[state.snapshot]||RAW.aggregates[RAW.snapshots[RA
 const sortH=a=>a.slice().sort((x,y)=>y.hours-x.hours);
 
 function glossLabel(text){
-  const definitions=JSON.parse(document.getElementById('cw-glossary').textContent);
-  const definition=definitions[String(text).toLowerCase()];
+  const definition=GLOSSARY[String(text).toLowerCase()];
   return definition?`<span class="gloss" tabindex="0">${esc(text)}<span class="gtip">${esc(definition)}</span></span>`:esc(text);
 }
 function barRow(label,percent,color,value){
@@ -174,3 +182,12 @@ function build(){
   document.addEventListener('click',()=>document.querySelectorAll('.helppop.on').forEach(item=>item.classList.remove('on')));
 }
 build();render();
+document.getElementById('load-status').hidden=true;
+}
+initialize().catch(error=>{
+  const status=document.getElementById('load-status');
+  status.hidden=false;
+  status.setAttribute('role','alert');
+  status.textContent=`Dashboard failed to load: ${error.message}. Start scripts/serve_dashboard.py and open the localhost URL, not the HTML file directly.`;
+  console.error(error);
+});
