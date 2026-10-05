@@ -23,6 +23,9 @@ All notable changes to this skill are documented here. Versions follow the famil
 ## [1.12.0] — 2026-10-02
 
 Hardens dashboard rendering against untrusted channel content and makes the shared HTML aggregate-only.
+The parallel main-branch update also separated HTML/CSS/JavaScript into static renderer assets.
+Version 1.13.0 retains that separation using `assets/` and replaces the single-file output with
+the local-site workflow; Defender clearance is still unconfirmed.
 
 ### Changed
 - The dashboard builder now converts private contributor-level working data into a separate public
