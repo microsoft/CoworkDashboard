@@ -117,7 +117,7 @@ class TeamDashboardSecurityTests(unittest.TestCase):
             config["team_name"] = '"><img src=x onerror=alert(1)></script><script>alert(1)</script>'
             config_path = temp / "team_config.json"
             config_path.write_text(json.dumps(config), encoding="utf-8")
-            parsed_path = temp / "team_data.json"
+            parsed_path = temp / "working/team_data.json"
             html_path = temp / "dashboard.html"
 
             parse_posts.main(SimpleNamespace(
@@ -171,6 +171,11 @@ class TeamDashboardSecurityTests(unittest.TestCase):
             self.assertEqual(verify_dashboard.verify(str(page)), [])
             html = page.read_text(encoding="utf-8")
             self.assertIn('src="assets/dashboard.js"', html)
+            self.assertIn('<a class="btn" href="team-summary.md">Open Markdown summary</a>', html)
+            self.assertEqual(
+                (page.parent / "assets/dashboard.js").read_bytes(),
+                (SKILL / "assets/dashboard.js.template").read_bytes(),
+            )
             self.assertNotIn("<style>", html)
             self.assertNotIn('type="application/json"', html)
             public = json.loads((page.parent / "dashboard-data.json").read_text())
@@ -181,6 +186,22 @@ class TeamDashboardSecurityTests(unittest.TestCase):
             self.assertNotIn("private channel", export)
             (page.parent / "assets/dashboard.js").unlink()
             self.assertTrue(verify_dashboard.verify(str(page)))
+
+    def test_installer_manifest_uses_synchronized_source_templates(self):
+        template = ROOT / "docs/skill-template" / SKILL.name
+        manifest = json.loads((template.parent / "manifest-dashboard.json").read_text())
+        source_files = {
+            path.relative_to(SKILL).as_posix()
+            for path in SKILL.rglob("*")
+            if path.is_file() and "__pycache__" not in path.parts
+        }
+        self.assertEqual(set(manifest), {SKILL.name + "/" + name for name in source_files})
+        self.assertFalse((SKILL / "assets/dashboard.html").exists())
+        self.assertFalse((SKILL / "assets/dashboard.js").exists())
+        for name in source_files:
+            self.assertEqual((SKILL / name).read_bytes(), (template / name).read_bytes(), name)
+        self.assertFalse((template / "assets/dashboard.html").exists())
+        self.assertFalse((template / "assets/dashboard.js").exists())
 
     def test_loopback_server_blocks_commands_rebinding_traversal_and_private_files(self):
         with tempfile.TemporaryDirectory(prefix="dashboard-server-test-") as temp:

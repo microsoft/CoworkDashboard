@@ -86,8 +86,8 @@ teammates ──(cowork-dashboard-member email)──▶  Teams channel  ──(
    tabs, exercise the controls, expand a process drill-down, and verify the waterfall, category bars,
    stacked mix, and time/value toggle. Use screenshot verification when available; disclose when it
    is unavailable. A failed check blocks delivery.
-5. **Review and share an export.** Download `team-summary.md` using the export link (default
-   pricing), or use Save / Print PDF (current controls). Read the export, confirm recipients,
+5. **Review and share an export.** Use Open Markdown summary to view `team-summary.md` (default
+   pricing), then save it using the browser, or use Save / Print PDF (current controls). Read the export, confirm recipients,
    then explicitly approve sharing. Builds and scheduled runs no longer email automatically.
 
 The server serves only known public site files, rejects invalid Host/origin/path requests, and
@@ -95,6 +95,10 @@ has no command endpoints. Raw messages, working JSON and configuration are never
 "Local" describes the site: Teams tools and the model still process input, and exports/backups
 can leave the device. Use an approved agent and storage. This architecture change is not a
 Microsoft Defender clearance; do not disable antivirus or add exclusions.
+
+The bundled HTML and JavaScript sources use `.template` suffixes. Building the report produces
+ordinary `index.html` and `assets/dashboard.js` files; the runtime JavaScript is unchanged.
+This packaging change has not been confirmed to resolve Defender warnings.
 
 ## Mandatory dashboard contract
 

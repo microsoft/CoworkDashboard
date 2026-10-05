@@ -389,6 +389,9 @@ def main(a):
         },
         "snapshots": [snapshot], "members": members,
     }
+    out_dir = os.path.dirname(a.out)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
