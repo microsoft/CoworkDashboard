@@ -3,6 +3,19 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.13.1] - 2026-10-05
+
+### Changed
+- Adopted the supplied template-package variant: bundled HTML/JavaScript sources now use
+  `.template` suffixes; builds still emit `index.html` and `assets/dashboard.js`.
+  Runtime JavaScript, injection protections and cohort filtering are unchanged.
+- Changed the Markdown link to Open Markdown summary without a forced download; users can
+  review and save it through the browser.
+- The parser creates the output directory before writing its private intermediate, supporting
+  a clean-unzip offline build.
+- Synchronized installer templates and manifest. Defender clearance remains unconfirmed;
+  source-file naming does not establish that antivirus warnings are resolved.
+
 ## [1.13.0] - 2026-10-05
 
 ### Changed

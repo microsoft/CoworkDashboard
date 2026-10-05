@@ -27,7 +27,7 @@
     <div class="spacer"></div>
     <button class="btn" id="resetBtn" type="button">Reset</button>
     <button class="btn primary" id="printBtn" type="button">Save / Print PDF</button>
-    <a class="btn" href="team-summary.md" download>Export Markdown summary</a>
+    <a class="btn" href="team-summary.md">Open Markdown summary</a>
   </div>
   <div class="tabs">
     <button class="tab-btn on" type="button" data-tab="overview">Overview</button>
