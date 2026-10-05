@@ -17,9 +17,10 @@ __pycache__/
 output/
 outputs/
 *.html
+!Cowork Dashboard - Team Dashboard Cowork Skill/cowork-dashboard-team-dashboard/assets/dashboard.html
+!docs/skill-template/cowork-dashboard-team-dashboard/assets/dashboard.html
 !docs/index.html
 !docs/demo-report.html
-!Cowork Dashboard - Team Dashboard Cowork Skill/cowork-dashboard-team-dashboard/scripts/dashboard_assets/dashboard.html
 
 # Per-run and per-user artifacts that must never be committed
 working/

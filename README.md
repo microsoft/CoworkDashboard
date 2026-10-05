@@ -2,7 +2,7 @@
 
 **Cowork Team Report** is a two-part Microsoft Copilot **Cowork** solution that shows a team the **ROI**
 they're getting from Copilot — the hours saved and the dollar value of that time — and turns it into a tidy
-report that lands in everyone's inbox. It's made of two skills that work together through **one shared
+report the manager can review locally and share as an approved export. It's made of two skills that work together through **one shared
 Teams channel**:
 
 - **Cowork Team Report — Team Member skill**. Every teammate runs it on their own work. It turns
@@ -13,8 +13,9 @@ Teams channel**:
   or sent. The email does not reveal the person's name or raw filenames, but retained work artifacts may
   be shown under de-identified descriptive names so the team can understand what was produced.
 - **Cowork Team Report — Team Dashboard skill** (the manager skill). The manager/lead runs it. It reads the shared
-  channel, combines everyone's summaries into one anonymized HTML dashboard, and **emails the team a
-  newsletter** (the dashboard, with the how-to-read guide built in) on a schedule the manager chooses. It only ever reads
+  channel and combines everyone's summaries into an anonymized **local dashboard site**, with the
+  how-to-read guide built in. Scheduled builds keep it current; sharing a Markdown/PDF export requires
+  review and explicit approval. It only ever reads
   what teammates email into the channel — never anyone's files.
 
 <p align="center">
@@ -99,6 +100,13 @@ they are not comfortable sharing with the channel.
 > your own Copilot — that's optional, and only needed if you want your own stats in the team totals.
 
 ## What the downloads contain
+
+The manager skill now builds a **local site**, not a single HTML email attachment. From the skill
+folder, run `python scripts/serve_dashboard.py --dir output/team-dashboard` after building and open
+`http://127.0.0.1:7333/`. Review and explicitly approve a Markdown/PDF export before sharing.
+Scheduled builds no longer send automatically. Existing schedules must be updated accordingly.
+The prior injection and aggregate-data privacy protections remain in place. This change does not
+establish Microsoft Defender clearance.
 
 Each Installer Studio download is an ordinary copy of the matching skill with **the channel detail it needs
 already filled in**, so it works the moment it's installed. The member config receives the Teams channel
