@@ -460,7 +460,37 @@ def main(a):
     atomic_write(output.parent / "dashboard-glossary.json", json_for_html(glossary))
     atomic_write(output.parent / "team-summary.md", summary_markdown(public))
     atomic_write(output, html)
+    attachment = output.parent / "team-dashboard-report.html"
+    css = (assets / "dashboard.css").read_text(encoding="utf-8")
+    runtime = dashboard_runtime()
+    loader = """async function loadJSON(path){
+  const ids={'dashboard-data.json':'report-data','dashboard-glossary.json':'report-glossary'};
+  const node=document.getElementById(ids[path]);
+  if(!node)throw new Error(`Missing embedded report data: ${path}`);
+  return JSON.parse(node.textContent);
+}
+"""
+    runtime, count = re.subn(
+        r"async function loadJSON\(path\)\{.*?\n\}", lambda _match: loader.rstrip(),
+        runtime, count=1, flags=re.S,
+    )
+    if count != 1:
+        raise ValueError("Cannot construct standalone report: runtime loader not found.")
+    embedded = (
+        '<script type="application/json" id="report-data">' + json_for_html(public) + '</script>\n'
+        '<script type="application/json" id="report-glossary">' + json_for_html(glossary) + '</script>\n'
+        '<script>' + re.sub(r"</script", r"<\\/script", runtime, flags=re.I) + '</script>'
+    )
+    standalone = html.replace(
+        '<link rel="stylesheet" href="assets/dashboard.css">',
+        '<style>' + re.sub(r"</style", r"<\\/style", css, flags=re.I) + '</style>',
+    ).replace('<script src="assets/dashboard.js" defer></script>', '')
+    standalone = standalone.replace(
+        '<a class="btn" href="team-summary.md" download>Export Markdown summary</a>', ''
+    ).replace('</body>', embedded + '\n</body>')
+    atomic_write(attachment, standalone)
     print(f"[build_dashboard] wrote local site at {output.parent}")
+    print(f"[build_dashboard] wrote self-contained attachment at {attachment}")
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

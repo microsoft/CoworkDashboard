@@ -1,7 +1,7 @@
 ---
 name: cowork-dashboard-team-dashboard
 description: |
-  Manager-side team rollup for Copilot Cowork ROI. Aggregates the de-identified stats teammates email to a shared Teams channel into a private, locally served dashboard with four tabs and a built-in guide. Share only a reviewed Markdown or PDF export after explicit confirmation, never the local URL or standalone HTML. First run remembers the Teams channel link; each run reads the latest 15 days and keeps the latest report per person. The public site contains no member records and shows a
+  Manager-side team rollup for Copilot Cowork ROI. Builds a self-contained interactive HTML report for email to the requesting manager, with recipient confirmation and send approval. Download the attachment and open it in a browser; no server or companion files required. First run remembers the Teams channel link; each run reads the latest 15 days and keeps the latest report per person. The public report contains no member records and shows a
   breakdown only when at least 3 contributors support it. Small homogeneous teams; not org-wide.
   Use when the user asks to "build the team Cowork Team Report", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Team Report", "email the team dashboard", to "walk me through setup" / "set up the skill" right after installing it, or to "send / share the member skill with my team" / "invite my team" / set up / refresh the rollup.
   Do NOT use for: the personal report (cowork-roi-report), a member's own post (cowork-dashboard-member), the member-side aggregated post (cowork-roi-report-aggregated), org-wide/large-team aggregation, GitHub Copilot reports, or single-meeting summaries.
@@ -14,10 +14,11 @@ cowork:
 
 Aggregates the **de-identified Cowork Team Report messages** teammates email (via the **Copilot ROI
 Member** skill, `cowork-dashboard-member`) to a shared Teams channel and renders an aggregate-only
-**local website**, served on `http://127.0.0.1:7333/`. HTML, CSS, JavaScript and public JSON are
-separate local files, with no CDN or external assets. The guide remains inside the dashboard.
-The site is not published, and its localhost URL is not a share link. Share a reviewed Markdown
-summary or a PDF saved with the dashboard's print control only after explicit confirmation.
+**self-contained interactive HTML attachment** at
+`output/team-dashboard/team-dashboard-report.html`. Styling, runtime and cohort-filtered public
+data are embedded. Download and open this attachment in a browser; Cowork/email previews may block
+scripts and are not a successful delivery check. No local server is required for this report.
+The optional multi-file local site remains available; never email its `index.html` or localhost URL.
 
 Local describes the site, not the agent's data path: host tools still access Teams and the model
 may process those results. Keep raw messages and private working JSON outside the served folder.
@@ -209,6 +210,8 @@ dashboard layout.** `build_outputs.py` invokes `build_dashboard.py` and then the
 `verify_dashboard.py` structural gate. A failed build or verification is not a usable deliverable.
 
 Renders `output/team-dashboard/`:
+- **`team-dashboard-report.html`** — the default email attachment: self-contained, interactive,
+  aggregate-only, with all styling, runtime, data and guide embedded. It needs no sibling files.
 - **`index.html`**, **`assets/dashboard.css`**, **`assets/dashboard.js`**,
   **`dashboard-data.json`**, **`dashboard-glossary.json`**, and **`team-summary.md`**.
   No inline scripts or embedded data; all assets are local. Four small
@@ -230,6 +233,7 @@ printable copy.
 First run the bundled structural verifier explicitly (the build already runs it once):
 ```
 python scripts/verify_dashboard.py --in output/team-dashboard/index.html
+python scripts/verify_dashboard.py --in output/team-dashboard/team-dashboard-report.html
 ```
 It must confirm all **four tabs**, separate local assets, cohort-filtered public JSON, controls, and every required
 aggregate visual:
@@ -240,11 +244,9 @@ aggregate visual:
 - Working **time/value toggle** plus period, hourly-rate, recapture-rate, reset, and print controls.
 
 Then perform a rendered browser check when browser/page tools are available:
-1. Start `python scripts/serve_dashboard.py --dir output/team-dashboard` in a managed background
-   terminal, then verify `/health` responds and open `http://127.0.0.1:7333/`. Use `--no-open` for
-   headless verification. Do not open the HTML with `file://`: JSON fetches require the local server.
-   If the host cannot run a persistent server, disclose it and provide the folder and launch command;
-   never silently substitute the old single-file dashboard.
+1. Open `output/team-dashboard/team-dashboard-report.html` directly in a full browser using its
+   absolute `file://` URL. Test the actual attachment, not the multi-file site or Cowork preview.
+   If the host cannot open a full browser, disclose the limitation; do not claim preview success.
 2. Visit all four tabs and confirm each required chart is visible.
 3. Expand at least one business-process row.
 4. Exercise the period/rate/recapture controls, the time/value toggle, Reset, and tab navigation.
@@ -257,34 +259,34 @@ structural verifier ran. Never imply that rendered screenshots were checked when
 incorrectly removed, or broken.** Fix the data/rendering issue, rebuild with the bundled renderer,
 and repeat verification. Do not email the dashboard or call the run complete until this gate passes.
 
-### 6. Share a reviewed export — only on explicit request after verification
-Building is not permission to send. Read `output/team-dashboard/team-summary.md` with the manager,
-or use **Save / Print PDF** for the current dashboard view and inspect that PDF first.
-Never attach the HTML alone (it requires sibling assets), the private working JSON, or the local URL.
-Never send automatically, including when an older config has `email_on_run:true`. That legacy flag
-may prompt an offer to share; it is not consent. Existing scheduled prompts must be updated to
-build only rather than sending automatically.
-- **Recipients = the channel members.** `ListChannelMembers(team_id, channel_id)` → resolve each to an
-  email/UPN; de-duplicate; include the runner. (A standard channel returns the team members — that's
-  the intended audience.) Never add anyone outside the channel.
+### 6. Email the self-contained report to the requesting manager
+After verification, offer email delivery to the manager as the default completion path.
+Resolve the authenticated user's email through the host's profile tool, or ask for the recipient
+if unavailable. Show and confirm the address; never infer it from channel contributors.
+Building is not send consent. Honor "don't email"; a config flag never authorizes sending.
+Do not distribute to all channel members unless explicitly requested with recipient approval.
+Never attach `index.html`, private working JSON, local URLs, or the complete working folder.
 - **Body = a high-level HTML summary** (aggregate only, same privacy rules as the dashboard). Use
   only the reviewed export's totals; never derive or disclose per-contributor figures or name a process that failed
   the cohort threshold. Do **not** attach or quote `working/team_data.json`.
 - Show the exact recipients, subject, body and export attachment, then ask **Send / Edit / Cancel**.
-  Only on Send, use the host's email tool with the reviewed export:
+  Only on Send, use the host's email tool with the verified standalone attachment:
   ```
   SendEmailWithAttachments(
-    to=<resolved channel-member emails>,
+    to=<confirmed requesting-manager email>,
     subject="Team Cowork Team Report — latest rollup (<period>)",
     content_type="HTML", body=<summary html>,
-    direct_attachment_file_paths=["output/team-dashboard/team-summary.md"])
+    direct_attachment_file_paths=["output/team-dashboard/team-dashboard-report.html"])
   ```
+  Tell the recipient to download the attachment and open it in a browser, not the email preview.
+  If the host lacks an attachment-capable email tool, explicitly report that limitation and provide
+  the verified HTML as a download; never claim a send succeeded or silently substitute a preview.
   A Markdown export uses the build's default pricing; a printed PDF reflects the current controls.
   The "Powered by Copilot Cowork" footer is appended by the host — don't add your own.
 
 ### 7. Report delivery
-After verification, report the local URL, folder, reviewed export and how to stop the server
-(Ctrl+C in its terminal). Report email delivery only if an explicitly approved send succeeds.
+Report the recipient and attachment after an approved send succeeds. Otherwise state that email
+was not sent and provide the verified HTML download. No server launch command is required.
 Optionally show a **3-line** highlight (time saved, value, top process) — aggregate only.
 
 **Keep the delivery message short. Do NOT prepend, attach, or post a separate "Coverage and
@@ -360,7 +362,8 @@ aggregation breaks — **change them in both bundles together**:
   an empty 15-day window yields no dashboard, not a made-up one.
 - **No hand math.** `parse_posts.py` totals; `build_dashboard.py` prices at the live rate; the email
   figures are read from `team_data.json`.
-- **Local-site output.** Keep HTML, CSS, JavaScript and public JSON separate, without CDN dependencies.
+- **Two verified outputs.** Embed styling, runtime and aggregate data in the standalone email report.
+  Keep the optional local site's HTML, CSS, JavaScript and public JSON separate, without CDN dependencies.
   The server binds only to loopback and serves an explicit public-file allow-list. It is read-only:
   no refresh/job/command routes, so no command token is needed. If acting routes are ever added,
   require POST, a per-process token, exact Origin/Host checks and fixed argv-only job definitions.
@@ -368,8 +371,8 @@ aggregation breaks — **change them in both bundles together**:
   recent report per sender; re-running a member report replaces the earlier contribution.
 - **Channel is user-owned.** Read the channel resolved from the user's link; re-ask only if they name
   a different one. Never guess or construct a `channel_id`.
-- **Email stays inside the channel.** Recipients are the channel members only; the body is
-  aggregate-only. Interactive sends go through the approval dialog; honor "don't email" / `email_on_run:false`.
+- **Email is manager-first.** Confirm the requesting manager's address and explicit send approval.
+  Additional recipients require explicit approval; the body and attachment are aggregate-only.
 
 ## Bundled files
 - `SKILL.md`, `README.md`, `CHANGELOG.md`
@@ -381,7 +384,8 @@ aggregation breaks — **change them in both bundles together**:
 - `scripts/build_dashboard.py`, `scripts/dashboard_assets.py`,
   and `assets/dashboard.css` — private intermediate → cohort-filtered aggregate-only local site.
   The build emits `index.html` and `assets/dashboard.js`; the download package does not ship
-  standalone HTML or JavaScript assets. The builder decodes the full HTML and runtime assets;
+  standalone HTML or JavaScript source assets. The builder decodes the full HTML and runtime assets
+  and also emits the self-contained `team-dashboard-report.html` email attachment;
   the JavaScript runtime is unchanged;
   this packaging change does not guarantee Microsoft Defender clearance.
 - `scripts/serve_dashboard.py` — confined, read-only loopback server; opens the default browser
