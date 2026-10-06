@@ -3,7 +3,8 @@
 build_dashboard.py — render private team_data.json into a local, aggregate-only site.
 
 The input JSON is a private working intermediate. Before rendering, the builder drops
-contributor records and emits only aggregate breakdowns supported by >= kThreshold people.
+contributor records. Category, process, service-role, skill and output-format totals retain sparse rows
+with exact reach redacted; other breakdowns require >= kThreshold people.
 It never embeds task-level entries, deliverable names, or role assignments.
 
 Tabs (each small, one clear purpose):
@@ -39,6 +40,7 @@ FORMATS = {
     "text": "Text / MD", "markdown": "Text / MD", "image": "Image",
     "pdf": "PDF", "file": "File (other)",
 }
+FORMATS.update({value.casefold(): value for value in tuple(FORMATS.values())})
 GRADES = {"H", "M", "L"}
 
 def number(value):
@@ -248,25 +250,24 @@ def public_data(data):
         head["timeLow"] = head["timeLow"] if low_count else head["timeTyp"]
         head["timeHigh"] = head["timeHigh"] if high_count else head["timeTyp"]
 
-        def exposed(metric, names):
+        def exposed(metric, names, include_small=False):
             result = []
             for key, item in metric.items():
-                if len(item["contributors"]) < threshold:
+                reach = len(item["contributors"])
+                if reach < threshold and not include_small:
                     continue
                 row = {name: key if name == "name" else item.get(name, 0) for name in names}
-                row["contributors"] = len(item["contributors"])
+                row["contributors"] = reach if reach >= threshold else None
                 result.append(row)
             return result
 
-        categories = exposed(rows["categories"], ("name", "tasks", "hours"))
-        processes_out = exposed(rows["processes"], ("name", "sessions", "hours"))
-        roles_out = exposed(rows["roles"], ("name", "hours"))
-        skills_out = exposed(rows["skills"], ("name", "deliverables", "sessions", "hours"))
-        deliverables_out = exposed(rows["deliverables"], ("name", "count", "hours"))
+        categories = exposed(rows["categories"], ("name", "tasks", "hours"), include_small=True)
+        processes_out = exposed(rows["processes"], ("name", "sessions", "hours"), include_small=True)
+        roles_out = exposed(rows["roles"], ("name", "hours"), include_small=True)
+        skills_out = exposed(rows["skills"], ("name", "deliverables", "sessions", "hours"), include_small=True)
+        deliverables_out = exposed(rows["deliverables"], ("name", "count", "hours"), include_small=True)
         details_out = []
         for (process, fmt), item in rows["processDetails"].items():
-            if len(item["contributors"]) < threshold:
-                continue
             visible_skills = [
                 {"name": name, "count": value["count"],
                  "contributors": len(value["contributors"])}
@@ -275,20 +276,20 @@ def public_data(data):
             ]
             details_out.append({
                 "process": process, "type": fmt, "count": item["count"],
-                "hours": item["hours"], "contributors": len(item["contributors"]),
+                "hours": item["hours"],
+                "contributors": len(item["contributors"]) if len(item["contributors"]) >= threshold else None,
                 "skills": visible_skills,
             })
 
-        fit_out = exposed(rows["fit"], ("name", "count", "hours"))
+        fit_out = exposed(rows["fit"], ("name", "count", "hours"), include_small=True)
         fit_out = [{"grade": item["name"], "count": item["count"],
                     "hours": item["hours"], "contributors": item["contributors"]}
                    for item in fit_out]
         fit_details_out = [
             {"grade": key[0], "process": key[1], "category": key[2],
              "count": item["count"], "hours": item["hours"],
-             "contributors": len(item["contributors"])}
+             "contributors": len(item["contributors"]) if len(item["contributors"]) >= threshold else None}
             for key, item in rows["fitDetails"].items()
-            if len(item["contributors"]) >= threshold
         ]
 
         role_groups = []
@@ -422,6 +423,36 @@ def extract_glossary(template):
     return glossary
 
 
+def summary_email(public):
+    latest = public["snapshots"][-1]
+    aggregate = public["aggregates"][latest["id"]]
+    head, meta = aggregate["head"], public["meta"]
+    recapture, rate = meta["defaultRecapture"], meta["defaultRate"]
+    effective = head["expertH"] * recapture
+    processes = sorted(aggregate["processes"], key=lambda item: item["hours"], reverse=True)[:2]
+    process_line = (
+        "<li>Top business processes by modeled hours: <b>"
+        + " and ".join(escape_html(item["name"]) for item in processes) + ".</b></li>"
+        if processes else
+        "<li>No business process met the minimum contributor threshold.</li>"
+    )
+    return (
+        "<h2>Team Cowork rollup</h2>\n"
+        "<p>The verified, anonymized team dashboard is attached, with its interpretation guide built in.</p>\n"
+        "<ul>"
+        f"<li><b>{aggregate['contributors']:g} contributors</b> &middot; {head['sessions']:g} sessions"
+        f" &middot; {head['runTasks']:g} run tasks &middot; {head['deliverables']:g} reported deliverables.</li>"
+        f"<li><b>{head['expertH']:.1f} modeled expert-equivalent hours</b>"
+        f" and {head['assistedH']:.1f} modeled assisted hours.</li>"
+        f"<li><b>{effective:.1f} modeled recaptured hours</b>"
+        f" and <b>${effective * rate:,.0f} modeled recapture value</b>"
+        f" at {recapture:.0%} recapture and ${rate:g}/hour.</li>"
+        + process_line + "</ul>\n"
+        "<p>Download and open the attached HTML in a full browser to explore the four tabs, "
+        "adjust the assumptions, and read the methodology.</p>\n"
+    )
+
+
 def main(a):
     with open(a.inp, encoding="utf-8") as handle:
         data = json.load(handle)
@@ -459,6 +490,7 @@ def main(a):
     atomic_write(output.parent / "dashboard-data.json", json_for_html(public))
     atomic_write(output.parent / "dashboard-glossary.json", json_for_html(glossary))
     atomic_write(output.parent / "team-summary.md", summary_markdown(public))
+    atomic_write(output.parent / "team-summary-email.html", summary_email(public))
     atomic_write(output, html)
     attachment = output.parent / "team-dashboard-report.html"
     css = (assets / "dashboard.css").read_text(encoding="utf-8")

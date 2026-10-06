@@ -3,6 +3,45 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.15.0] - 2026-10-06
+
+### Changed
+- Show all output-type aggregates within each process, including sparse types, with exact small
+  reach redacted. Render one row per type with a deliverable-count badge and summed hours/value.
+  Process skills remain threshold-qualified and individual names remain excluded.
+- Preserve canonical format labels such as PPTX, Excel / CSV and File (other) during grouping
+  instead of incorrectly folding them into Other format.
+- Restore decorative process-specific icons beside Overview ranking labels, retaining numbered
+  circles and accessible process names. Icons are bundled text, not external assets.
+- Match the requested Overview process ranking copy: percentages of total, dynamic "Top N of M"
+  footer, and a clickable full-breakdown link. Keep rankings and values data-driven.
+- Show all reported Cowork-fit grade and expanded process/category totals, with exact reach
+  redacted below the threshold. Retain threshold checks for process format/skill details and
+  directory-role category mix.
+- Use the requested screenshot wording for the process empty state. This is a text-only change:
+  named deliverables remain excluded and expanded details remain cohort-suppressed, despite the
+  message referring to a de-identified deliverable list.
+- Show all business-process totals with small exact reach redacted, consistent across the full
+  process table, Overview ranking and email. Expanded formats and skills remain cohort-suppressed.
+- With explicit approval, show every service role, team-wide skill and output format in Impact &
+  Value, redacting exact reach below the threshold. Remove the ten-role cutoff and label format
+  sum "Total". Process drill-down details and directory-role category mix remain cohort-suppressed.
+- With explicit approval, show all category hours/tasks while hiding exact reach below the
+  threshold. Category Total uses headline hours/tasks to match Overview. These approved exceptions
+  relax the prior privacy rules by revealing low-support totals.
+- Generate the requested "Team Cowork rollup" email body from the same public headline totals
+  and public process names as the attached report; do not hand-copy example figures.
+- Recognize the Member skill's "Moderate fit" label as medium fit rather than dropping those
+  task rows. Added a regression reconciling headline, category and fit totals for qualifying cohorts.
+- Role-chart tracks fill the available space between labels and numeric values instead of
+  reserving the wide category-chart value column; proportional fills are unchanged.
+- Automatically recover incomplete channel report previews from their exact linked original emails
+  using authenticated host tools, preserving channel identity/time and replacing rather than
+  concatenating report bodies.
+- Add linked-email inspection and a parse-time guard against known unresolved previews. Recovery
+  is limited to referenced de-identified reports; access/validation failures block completion.
+- Keep original and hydrated inputs private; no mailbox backfill or additional publication.
+
 ## [1.14.0] - 2026-10-06
 
 ### Changed

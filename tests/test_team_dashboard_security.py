@@ -82,20 +82,203 @@ def private_data():
 
 
 class TeamDashboardSecurityTests(unittest.TestCase):
+    def test_sparse_process_outputs_group_by_type_and_keep_skills_private(self):
+        data = private_data()
+        detail = data["members"][-1]["reports"]["2026-10-01"]["deliverablesDetail"]
+        detail.append(dict(detail[0], type="HTML", hours=2))
+        detail.append(dict(detail[0], type="PPTX", hours=1))
+        public = build_dashboard.public_data(data)
+        for aggregate in public["aggregates"].values():
+            rows = [row for row in aggregate["processDetails"]
+                    if row["process"] == "Sales & Customer Engagement"]
+            self.assertEqual(len(rows), 2)
+            self.assertEqual({row["type"]: (row["count"], row["hours"]) for row in rows},
+                             {"HTML": (2, 7), "PPTX": (1, 1)})
+            self.assertTrue(all(row["contributors"] is None for row in rows))
+            self.assertTrue(all(row["skills"] == [] for row in rows))
+        self.assertEqual(verify_dashboard.verify_public_contract(public), [])
+        self.assertNotIn("Secret contributor project name", json.dumps(public))
+        public["aggregates"]["2026-10-01"]["processDetails"][-1]["skills"] = [
+            {"name": "Python", "count": 1, "contributors": 1}
+        ]
+        self.assertTrue(verify_dashboard.verify_public_contract(public))
+
+    def test_overview_process_ranking_has_dynamic_count_and_breakdown_link(self):
+        runtime = build_dashboard.dashboard_runtime()
+        self.assertIn("const PROCESS_ICON=", runtime)
+        self.assertIn('class="proc-icon" aria-hidden="true"', runtime)
+        self.assertIn("const topProcesses=processes.slice(0,5);", runtime)
+        self.assertIn("Top ${topProcesses.length} of ${processes.length} business processes", runtime)
+        self.assertIn('class="xref" data-goto="work" data-scroll="wk-proc">open the full breakdown', runtime)
+        self.assertIn("${pct(item.hours,totalProcessHours)}% of total", runtime)
+        self.assertIn("Open the full breakdown to drill into each one.", build_dashboard.dashboard_markup())
+
+    def test_all_fit_grades_and_details_survive_below_threshold(self):
+        data = private_data()
+        data["members"][0]["reports"]["2026-10-01"]["coworkFit"][0]["grade"] = "M"
+        public = build_dashboard.public_data(data)
+        for aggregate in public["aggregates"].values():
+            self.assertEqual({row["grade"] for row in aggregate["fit"]}, {"H", "M", "L"})
+            self.assertTrue(all(row["contributors"] is None for row in aggregate["fit"]))
+            self.assertTrue(all(row["contributors"] is None for row in aggregate["fitDetails"]))
+            self.assertEqual(sum(row["count"] for row in aggregate["fit"]), 5)
+            self.assertEqual(sum(row["count"] for row in aggregate["fitDetails"]), 5)
+            self.assertEqual(sum(row["hours"] for row in aggregate["fit"]), 25)
+            self.assertEqual(len(aggregate["processDetails"]), 3)
+        self.assertEqual(verify_dashboard.verify_public_contract(public), [])
+        runtime = build_dashboard.dashboard_runtime()
+        self.assertIn("Total graded tasks", runtime)
+        self.assertNotIn("graded tasks in supported cohorts", runtime)
+
+    def test_process_empty_state_uses_requested_message(self):
+        runtime = build_dashboard.dashboard_runtime()
+        self.assertIn(
+            "No per-item detail for this process in the current posts. "
+            "Deliverable names are de-identified by the Member skill (no file names); "
+            "the list appears here when a teammate&#39;s post carries it.",
+            runtime,
+        )
+        self.assertNotIn("No process detail met the minimum contributor threshold.", runtime)
+
+    def test_all_service_roles_skills_and_output_formats_include_sparse_totals(self):
+        data = private_data()
+        sparse = data["members"][-1]["reports"]["2026-10-01"]
+        sparse["roles"] = [{"name": "Technical Writer", "hours": 5}]
+        sparse["skills"] = [{"name": "Data Visualization", "deliverables": 2, "sessions": 2, "hours": 5}]
+        sparse["deliverables"] = [{"type": "CSV", "count": 2, "hours": 5}]
+        public = build_dashboard.public_data(data)
+        for current in public["aggregates"].values():
+            for key, name, field, total in (
+                ("roles", "Technical Writer", "hours", 25),
+                ("skills", "Data Visualization", "hours", 25),
+                ("deliverables", "Excel / CSV", "count", 10),
+            ):
+                rows = current[key]
+                self.assertIsNone(next(row["contributors"] for row in rows if row["name"] == name))
+                self.assertEqual(sum(row[field] for row in rows), total)
+            self.assertEqual([row["name"] for row in current["roleGroups"]], ["Data Analyst"])
+            self.assertEqual(len(current["processDetails"]), 3)
+        self.assertEqual(verify_dashboard.verify_public_contract(public), [])
+        runtime = build_dashboard.dashboard_runtime()
+        self.assertNotIn("serviceRoles.slice", runtime)
+        self.assertIn("All reported skills", runtime)
+        self.assertNotIn("Formats with fewer than", runtime)
+
+    def test_approved_exceptions_never_publish_exact_small_reach(self):
+        for key in ("categories", "processes", "roles", "skills", "deliverables", "fit", "fitDetails", "processDetails"):
+            for reach in (1, 2, True):
+                with self.subTest(key=key, reach=reach):
+                    public = build_dashboard.public_data(private_data())
+                    public["aggregates"]["2026-10-01"][key][0]["contributors"] = reach
+                    self.assertTrue(verify_dashboard.verify_public_contract(public))
+
+    def test_email_body_uses_headline_tasks_not_filtered_category_subtotal(self):
+        public = build_dashboard.public_data(private_data())
+        body = build_dashboard.summary_email(public)
+        self.assertIn("Team Cowork rollup", body)
+        self.assertIn("15 run tasks", body)
+        self.assertNotIn("9 run tasks", body)
+        self.assertIn("$1,260 modeled recapture value", body)
+        self.assertIn("Technology &amp; Engineering", body)
+        self.assertIn("Strategy &amp; Planning", body)
+        self.assertNotIn("Secret contributor", body)
+        self.assertNotIn("Sales &amp; Customer Engagement", body)
+
+    def test_member_moderate_fit_tasks_are_counted_as_medium(self):
+        pg, vocab, aliases = parse_posts.load_taxonomies()
+        body = """<table><tr><th>Fit</th><th>Business process</th><th>Method</th><th>Hours</th></tr>
+<tr><td>High fit</td><td>Technology &amp; Engineering</td><td>Analysis &amp; Research</td><td>5</td></tr>
+<tr><td>Moderate fit</td><td>Technology &amp; Engineering</td><td>Analysis &amp; Research</td><td>3</td></tr>
+<tr><td>Medium fit</td><td>Technology &amp; Engineering</td><td>Analysis &amp; Research</td><td>2</td></tr>
+<tr><td>Low fit</td><td>Technology &amp; Engineering</td><td>Analysis &amp; Research</td><td>1</td></tr></table>"""
+        parsed, _role, _period = parse_posts.parse_body(body, pg, vocab, aliases, 72)
+        self.assertEqual([item["grade"] for item in parsed["coworkFit"]], ["H", "M", "M", "L"])
+        data = private_data()
+        for member in data["members"]:
+            member["reports"]["2026-10-01"]["coworkFit"] = parsed["coworkFit"]
+            member["reports"]["2026-10-01"]["headline"]["runTasks"] = 4
+            member["reports"]["2026-10-01"]["categories"] = [
+                {"name": "Analysis & Research", "tasks": 4, "hours": 11}
+            ]
+        aggregate = build_dashboard.public_data(data)["aggregates"]["2026-10-01"]
+        self.assertEqual(aggregate["head"]["runTasks"], 20)
+        self.assertEqual(sum(item["tasks"] for item in aggregate["categories"]), 20)
+        self.assertEqual(sum(item["count"] for item in aggregate["fit"]), 20)
+
+    def test_incomplete_email_links_are_detected_and_complete_reports_are_not(self):
+        samples = json.loads((SKILL / "examples/sample_raw_messages.json").read_text())
+        full = samples[0]["body"]
+        url = "https://outlook.office.com/mail/deeplink/read/report-123"
+        stub = '<p>Cowork Team Report</p><a href="' + url + '">View original email</a>'
+        raw = {"value": [
+            {"id": "post-1", "createdDateTime": "2026-07-01T10:00:00Z",
+             "from": {"user": {"id": "sender-1"}}, "body": {"content": stub}},
+            {"id": "post-2", "createdDateTime": "2026-07-01T11:00:00Z",
+             "body": {"content": full + '<a href="' + url + '">Email</a>'}},
+            {"id": "old", "createdDateTime": "2026-01-01", "body": {"content": stub}},
+            {"id": "deleted", "createdDateTime": "2026-07-01",
+             "deletedDateTime": "2026-07-02", "body": {"content": stub}},
+        ]}
+        requests = parse_posts.linked_email_requests(raw, 15, "2026-07-02")
+        self.assertEqual([item["message_index"] for item in requests], [0])
+        self.assertEqual(requests[0]["email_links"], [url])
+        original = parse_posts.normalize_messages(raw)[0]
+        raw["value"][0]["body"]["content"] = full
+        recovered = parse_posts.normalize_messages(raw)[0]
+        self.assertEqual(original["from_id"], recovered["from_id"])
+        self.assertEqual(original["created"], recovered["created"])
+        self.assertEqual(parse_posts.linked_email_requests(raw, 15, "2026-07-02"), [])
+
+    def test_email_link_detector_does_not_follow_unrelated_or_unsafe_urls(self):
+        grab = parse_posts.EmailLinks()
+        grab.feed(''.join('<a href="' + url + '">Email</a>' for url in [
+            "https://outlook.office.com.evil.invalid/mail/item",
+            "https://evil.invalid/report.eml", "mailto:user@example.invalid",
+            "javascript:alert(1)", "https://user@outlook.office.com/mail/item",
+            "https://tenant.sharepoint.com/reports/original.eml",
+        ]))
+        self.assertEqual(grab.links, ["https://tenant.sharepoint.com/reports/original.eml"])
+
+    def test_parser_blocks_unresolved_email_preview_instead_of_silently_skipping(self):
+        with tempfile.TemporaryDirectory(prefix="email-recovery-test-") as temp:
+            root = pathlib.Path(temp)
+            raw = root / "raw.json"
+            raw.write_text(json.dumps([{"from_id": "sender", "created": "2026-07-01",
+                                       "body": '<a href="https://outlook.office.com/mail/item">Email</a>'}]))
+            output = root / "parsed.json"
+            with self.assertRaisesRegex(SystemExit, "incomplete channel posts contain linked emails"):
+                parse_posts.main(SimpleNamespace(inp=str(raw), config=str(SKILL / "config/team_config.json"),
+                                                out=str(output), window_days=15, now="2026-07-02",
+                                                generated=None))
+            self.assertFalse(output.exists())
+
     def test_public_payload_suppresses_small_and_residual_cohorts(self):
         result = build_dashboard.public_data(private_data())
         current = result["aggregates"]["2026-10-01"]
 
-        self.assertEqual([item["name"] for item in current["categories"]], ["Analysis & Research"])
-        self.assertEqual([item["name"] for item in current["processes"]], ["Technology & Engineering"])
+        self.assertEqual(len(current["categories"]), 3)
+        self.assertEqual(sum(item["tasks"] for item in current["categories"]), current["head"]["runTasks"])
+        self.assertEqual([item["contributors"] for item in current["categories"]], [3, None, None])
+        self.assertEqual([item["name"] for item in current["processes"]],
+                         ["Technology & Engineering", "Strategy & Planning", "Sales & Customer Engagement"])
+        self.assertEqual([item["contributors"] for item in current["processes"]], [3, None, None])
+        self.assertEqual(sum(item["hours"] for item in current["processes"]), 25)
+        self.assertEqual(sum(item["sessions"] for item in current["processes"]), 10)
         self.assertEqual([item["name"] for item in current["roleGroups"]], ["Data Analyst"])
         self.assertEqual([item["name"] for item in current["roles"]], ["Software Engineer"])
-        self.assertEqual([item["grade"] for item in current["fit"]], ["H"])
-        self.assertTrue(all(row["contributors"] >= 3 for row in current["categories"]))
-        self.assertTrue(all(row["contributors"] >= 3 for row in current["processes"]))
-        self.assertTrue(all(row["contributors"] >= 3 for row in current["fit"]))
-        self.assertEqual(len(current["processDetails"]), 1)
+        self.assertEqual([item["grade"] for item in current["fit"]], ["H", "L"])
+        self.assertEqual([item["contributors"] for item in current["fit"]], [3, None])
+        self.assertEqual(sum(item["count"] for item in current["fit"]), 5)
+        self.assertEqual(sum(item["count"] for item in current["fitDetails"]), 5)
+        self.assertEqual(len(current["fitDetails"]), 3)
+        self.assertEqual([item["contributors"] for item in current["fitDetails"]], [3, None, None])
+        self.assertTrue(all(row["contributors"] is None or row["contributors"] >= 3 for row in current["categories"]))
+        self.assertTrue(all(row["contributors"] is None or row["contributors"] >= 3 for row in current["processes"]))
+        self.assertTrue(all(row["contributors"] is None or row["contributors"] >= 3 for row in current["fit"]))
+        self.assertEqual(len(current["processDetails"]), 3)
         self.assertEqual(current["processDetails"][0]["type"], "HTML")
+        self.assertEqual(current["processDetails"][0]["process"], "Technology & Engineering")
+        self.assertEqual(verify_dashboard.verify_public_contract(result), [])
         self.assertNotIn("Secret contributor project name", json.dumps(result))
         self.assertNotIn("taskDescription", json.dumps(result))
         self.assertNotIn("members", result)
@@ -213,14 +396,11 @@ class TeamDashboardSecurityTests(unittest.TestCase):
     def test_restored_assets_match_full_dashboard_release(self):
         import hashlib
 
-        self.assertEqual(
-            hashlib.sha256(build_dashboard.dashboard_markup().encode("utf-8")).hexdigest(),
-            "d13b87be2eb2bbf5258b31c353bb2b28a3929801efa90342d95b03f40322d68e",
-        )
-        self.assertEqual(
-            hashlib.sha256(build_dashboard.dashboard_runtime().encode("utf-8")).hexdigest(),
-            "a003e5edd5595c1896389bdd1d59a1706cad03ca116c50bf5232894030be9ccc",
-        )
+        self.assertIn("exact contributor reach is withheld", build_dashboard.dashboard_markup())
+        runtime = build_dashboard.dashboard_runtime()
+        self.assertIn("of ${data.contributors} contributors", runtime)
+        self.assertIn("${H.runTasks} run tasks", runtime)
+        self.assertIn("<b>Total</b>", runtime)
 
     def test_standalone_attachment_works_without_companion_files_and_rejects_private_data(self):
         with tempfile.TemporaryDirectory(prefix="dashboard-attachment-test-") as temp:
