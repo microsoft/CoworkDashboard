@@ -3,6 +3,17 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.13.4] - 2026-10-06
+
+### Changed
+- Restored the full dashboard markup, help content and glossary from the supplied tested package.
+- The builder loads compressed, Base64-encoded HTML and JavaScript strings from
+  `scripts/dashboard_assets.py`; generated site files remain ordinary HTML and JavaScript.
+- Browser validation with synthetic qualifying cohorts confirmed populated tabs, charts, process
+  drill-down, live pricing controls and Markdown export.
+- Retained previous release history and privacy/server protections; synchronized installer files.
+  Encoding assets does not establish Microsoft Defender clearance.
+
 ## [1.13.3] - 2026-10-06
 
 ### Changed

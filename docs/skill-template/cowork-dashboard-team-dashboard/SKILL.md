@@ -378,10 +378,10 @@ aggregation breaks — **change them in both bundles together**:
 - `scripts/resolve_channel.py` — parse a pasted Teams channel/message link → `team_id` + `channel_id`; persist to config (stdlib only).
 - `scripts/make_invite.py` — render the inviting member "get started" message (channel post + email + plaintext + a personalized 1:1 DM via `--recipient-name`) with the download link baked in, so members are onboarded in-channel or direct-messaged 1:1 instead of hand-delivered a bare zip (stdlib only).
 - `scripts/parse_posts.py` — channel posts → private `working/team_data.json` intermediate (stdlib only; 15-day window, latest-per-sender, groups processes, canonicalizes skills).
-- `scripts/build_dashboard.py`, `scripts/dashboard_runtime.py`,
+- `scripts/build_dashboard.py`, `scripts/dashboard_assets.py`,
   and `assets/dashboard.css` — private intermediate → cohort-filtered aggregate-only local site.
   The build emits `index.html` and `assets/dashboard.js`; the download package does not ship
-  standalone HTML or JavaScript assets. The builder generates HTML and glossary content;
+  standalone HTML or JavaScript assets. The builder decodes the full HTML and runtime assets;
   the JavaScript runtime is unchanged;
   this packaging change does not guarantee Microsoft Defender clearance.
 - `scripts/serve_dashboard.py` — confined, read-only loopback server; opens the default browser
