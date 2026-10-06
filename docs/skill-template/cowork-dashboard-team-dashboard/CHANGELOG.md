@@ -3,6 +3,19 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.14.0] - 2026-10-06
+
+### Changed
+- Build a self-contained interactive `team-dashboard-report.html` with embedded styling,
+  runtime, cohort-filtered public data and glossary; no server or companion files required.
+- Make verified HTML email to the requesting manager the default delivery offer, with exact
+  recipient confirmation and explicit send approval. Do not use Cowork/email previews as
+  evidence of rendering; recipients download and open the attachment in a full browser.
+- Retain the optional local site and enforce both local-site and attachment verification.
+  Missing email tooling is disclosed rather than claiming successful delivery.
+- Embedded JSON retains contextual escaping and aggregate privacy checks. Antivirus clearance
+  remains unconfirmed; email/security policies may block interactive HTML attachments.
+
 ## [1.13.4] - 2026-10-06
 
 ### Changed

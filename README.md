@@ -13,8 +13,8 @@ Teams channel**:
   or sent. The email does not reveal the person's name or raw filenames, but retained work artifacts may
   be shown under de-identified descriptive names so the team can understand what was produced.
 - **Cowork Team Report — Team Dashboard skill** (the manager skill). The manager/lead runs it. It reads the shared
-  channel and combines everyone's summaries into an anonymized **local dashboard site**, with the
-  how-to-read guide built in. Scheduled builds keep it current; sharing a Markdown/PDF export requires
+  channel and combines everyone's summaries into an anonymized **self-contained HTML dashboard**, with the
+  how-to-read guide built in. Email to the requesting manager requires recipient confirmation and
   review and explicit approval. It only ever reads
   what teammates email into the channel — never anyone's files.
 
@@ -101,9 +101,10 @@ they are not comfortable sharing with the channel.
 
 ## What the downloads contain
 
-The manager skill now builds a **local site**, not a single HTML email attachment. From the skill
-folder, run `python scripts/serve_dashboard.py --dir output/team-dashboard` after building and open
-`http://127.0.0.1:7333/`. Review and explicitly approve a Markdown/PDF export before sharing.
+The manager skill builds **`output/team-dashboard/team-dashboard-report.html`**, a self-contained
+interactive email attachment. Confirm your address and approve the send, then download and open it
+in a full browser, not Cowork/email preview. No server or companion files are required.
+The optional multi-file local site is retained for local use; do not email its `index.html`.
 Scheduled builds no longer send automatically. Existing schedules must be updated accordingly.
 The prior injection and aggregate-data privacy protections remain in place. This change does not
 establish Microsoft Defender clearance.

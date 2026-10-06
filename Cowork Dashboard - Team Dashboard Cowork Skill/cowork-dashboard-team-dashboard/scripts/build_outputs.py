@@ -11,9 +11,9 @@ files; keeping the guide inside the dashboard removes that friction.
 The legacy one-page PDF guide (build_guide_pdf.py) is still available for anyone who wants a
 printable copy: pass --with-pdf to regenerate it. It is NOT part of the default flow.
 
-Sharing a reviewed Markdown/PDF export requires separate explicit approval. The localhost
+Emailing the verified self-contained HTML report requires separate explicit approval. The localhost
 URL is never emailed to teammates. Before returning success, this build runs
-verify_dashboard.py and fails if the four-tab layout, required aggregate visuals, controls, or
+verify_dashboard.py on both the local site and attachment, failing if required visuals, controls, or
 de-identified data contract are missing.
 
 Usage:
@@ -53,6 +53,8 @@ def build(a):
     # HTML dashboard — the interpretation guide is built into it (the "How to read" tab).
     build_dashboard.main(SimpleNamespace(inp=a.inp, out=a.out_html))
     verify_dashboard.main(SimpleNamespace(inp=a.out_html))
+    attachment = os.path.join(os.path.dirname(a.out_html), "team-dashboard-report.html")
+    verify_dashboard.main(SimpleNamespace(inp=attachment))
     if getattr(a, "with_pdf", False):
         import build_guide_pdf   # optional (reportlab) — only imported when explicitly requested
         dp = os.path.dirname(a.out_pdf)
@@ -61,7 +63,7 @@ def build(a):
         build_guide_pdf.main(SimpleNamespace(out=a.out_pdf, data=a.inp, config=a.config))
         print(f"[build_outputs] built dashboard + optional legacy PDF guide → {a.out_html} + {a.out_pdf}")
     else:
-        print(f"[build_outputs] built verified local site → {a.out_html}; review exports before sharing")
+        print(f"[build_outputs] built verified report attachment → {attachment}; confirm recipient before email")
 
 
 if __name__ == "__main__":

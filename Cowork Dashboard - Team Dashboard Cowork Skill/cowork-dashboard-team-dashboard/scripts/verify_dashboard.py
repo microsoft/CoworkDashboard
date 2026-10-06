@@ -133,14 +133,8 @@ def verify_public_contract(data):
     return errors
 
 
-def verify(path):
+def verify_layout(html):
     errors = []
-    if not os.path.isfile(path):
-        return [f"dashboard file does not exist: {path}"]
-
-    with open(path, encoding="utf-8") as handle:
-        html = handle.read()
-
     tabs = re.findall(r'class="tab-btn(?: on)?"[^>]*data-tab="([^"]+)"', html)
     if tabs != EXPECTED_TABS:
         errors.append(f"expected four tabs {EXPECTED_TABS}, found {tabs or 'none'}")
@@ -151,6 +145,82 @@ def verify(path):
     for element_id, label in REQUIRED_IDS.items():
         if not re.search(rf'\bid="{re.escape(element_id)}"', html):
             errors.append(f"missing required {label} (#{element_id})")
+    return errors
+
+
+class AttachmentMarkup(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.scripts = {}
+        self.current = None
+        self.errors = []
+        self.styles = 0
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if any(key.lower().startswith("on") for key in attributes):
+            self.errors.append("inline event handler in report attachment")
+        if tag == "script":
+            if "src" in attributes:
+                self.errors.append("external script in report attachment")
+            key = attributes.get("id", "runtime")
+            if key in self.scripts:
+                self.errors.append("duplicate embedded script: " + key)
+            self.current = key
+            self.scripts[key] = ""
+        if tag == "style":
+            self.styles += 1
+        if tag == "link" and attributes.get("rel") == "stylesheet":
+            self.errors.append("external stylesheet in report attachment")
+
+    def handle_data(self, data):
+        if self.current is not None:
+            self.scripts[self.current] += data
+
+    def handle_endtag(self, tag):
+        if tag == "script":
+            self.current = None
+
+
+def verify_attachment(path):
+    if not os.path.isfile(path):
+        return [f"report attachment does not exist: {path}"]
+    html = Path(path).read_text(encoding="utf-8")
+    errors = verify_layout(html)
+    markup = AttachmentMarkup()
+    markup.feed(html)
+    errors.extend(markup.errors)
+    if markup.styles != 1 or set(markup.scripts) != {"runtime", "report-data", "report-glossary"}:
+        errors.append("report must contain embedded styling, runtime, aggregate data and glossary")
+        return errors
+    runtime = markup.scripts["runtime"]
+    if "fetch(" in runtime or 'href="team-summary.md"' in html:
+        errors.append("report attachment requires a companion file or network fetch")
+    for signature, label in REQUIRED_RENDER_SIGNATURES.items():
+        if signature not in html and signature not in runtime:
+            errors.append(f"missing required {label}")
+    if re.search(r"__[A-Z][A-Z0-9_]*__", html):
+        errors.append("unresolved report placeholders")
+    try:
+        data = json.loads(markup.scripts["report-data"])
+        glossary = json.loads(markup.scripts["report-glossary"])
+        if not isinstance(glossary, dict):
+            errors.append("embedded glossary has the wrong shape")
+        errors.extend(verify_public_contract(data))
+        if find_forbidden_keys(data):
+            errors.append("identifying fields remain in embedded public data")
+    except (ValueError, TypeError) as exc:
+        errors.append(f"invalid embedded report data: {exc}")
+    return errors
+
+
+def verify(path):
+    if not os.path.isfile(path):
+        return [f"dashboard file does not exist: {path}"]
+    html = Path(path).read_text(encoding="utf-8")
+    if 'id="report-data"' in html:
+        return verify_attachment(path)
+    errors = verify_layout(html)
     markup = SiteMarkup()
     markup.feed(html)
     errors.extend(markup.errors)
@@ -199,7 +269,7 @@ def main(args):
             print(f"  - {error}", file=sys.stderr)
         raise SystemExit(1)
     print(
-        "[verify_dashboard] passed: local assets, dashboard tabs, charts, controls, "
+        "[verify_dashboard] passed: dashboard assets, tabs, charts, controls, "
         "and cohort-filtered public data"
     )
 

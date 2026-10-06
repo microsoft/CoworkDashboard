@@ -1,10 +1,16 @@
 # Cowork Team Report — Team Dashboard
 
-A Microsoft Copilot **Cowork skill** that rolls up a small team's Copilot Cowork ROI. It reads the
+A Microsoft Copilot **Cowork skill** that rolls up a small team's Copilot Cowork ROI. It generates
+**`output/team-dashboard/team-dashboard-report.html`**, a self-contained interactive attachment
+for email to the requesting manager after recipient confirmation and approval. Download it and
+open it in a full browser, not Cowork's or email's preview. No server or companion files are needed.
+The optional multi-file site described below is retained for local use.
+
+It reads the
 de-identified stats each teammate emails to a shared Teams channel and renders **a private local site**
 the manager can open, re-price with live controls, and print. HTML, CSS, JavaScript and public JSON
-are separate files with no CDN dependencies. Share only a reviewed Markdown or PDF export after
-explicit approval; do not send the localhost URL or standalone HTML. The guide for
+are separate files with no CDN dependencies. Share the verified standalone HTML, Markdown or PDF after
+explicit approval; do not send the localhost URL or the multi-file site's `index.html`. The guide for
 reading it is **built into the dashboard** — a **How to read** tab plus a clickable **"?"** on every
 section — so there's no separate file to open. The bundled renderer produces four tabs:
 **Overview**, **Impact & Value**, **How Cowork is used**, and **How to read + Glossary**. On first run
@@ -23,7 +29,7 @@ remembers it; every run reads the **latest 15 days** of messages, keeping the la
 |---|---|---|
 | `cowork-roi-report` | A person's **full** personal impact report | Rich HTML web app (their own view) |
 | `cowork-dashboard-member` | A person emails their **de-identified** stats to the team channel | HTML tables in Teams |
-| **`cowork-dashboard-team-dashboard`** (this) | The **manager** aggregates everyone's reports | Local aggregate-only site, plus reviewed Markdown/PDF exports |
+| **`cowork-dashboard-team-dashboard`** (this) | The **manager** aggregates everyone's reports | Self-contained HTML email report, plus optional local site and Markdown/PDF exports |
 
 This skill **only consumes** what `cowork-dashboard-member` emails into the channel. It does not
 harvest OneDrive. Sender IDs are used transiently to deduplicate posts and are not written to the
@@ -75,18 +81,25 @@ teammates ──(cowork-dashboard-member email)──▶  Teams channel  ──(
    ```
    This command uses the bundled renderer and runs `verify_dashboard.py`. It fails if any required
    aggregate visual, control, tab, or privacy check is missing.
-3. **Start the local server.** Requires Python 3.9+ (no new runtime or package install):
+3. **Open the self-contained report.** Download `output/team-dashboard/team-dashboard-report.html`
+   and open it in a full browser. The skill verifies and offers to email this file to your confirmed
+   address; a separate send approval is required. If email tools are unavailable it provides a download
+   and explicitly states that email was not sent.
+
+   **Optional local site:** Requires Python 3.9+ (no new runtime or package install):
    ```bash
    python scripts/serve_dashboard.py --dir output/team-dashboard
    ```
    It binds only to `127.0.0.1:7333` and opens the browser. Use `--no-open` for headless runs,
    or `--port 7334` if the default port is occupied. Stop with Ctrl+C. Do not open the HTML file
-   directly: the separate JSON files require HTTP. No desktop icon or start-at-login is installed.
-4. **Verify before sharing.** When browser tools are available, open `http://127.0.0.1:7333/`, visit all four
+   directly for the multi-file site: its separate JSON files require HTTP. The self-contained report
+   does not have this restriction. No desktop icon or start-at-login is installed.
+4. **Verify before sharing.** When browser tools are available, open the standalone attachment, visit all four
    tabs, exercise the controls, expand a process drill-down, and verify the waterfall, category bars,
    stacked mix, and time/value toggle. Use screenshot verification when available; disclose when it
    is unavailable. A failed check blocks delivery.
-5. **Review and share an export.** Use Export Markdown summary to download `team-summary.md` (default
+5. **Review and email the HTML report.** Confirm your email address and approve the verified attachment.
+   The optional local site also offers Export Markdown summary to download `team-summary.md` (default
    pricing), or use Save / Print PDF (current controls). Read the export, confirm recipients,
    then explicitly approve sharing. Builds and scheduled runs no longer email automatically.
 

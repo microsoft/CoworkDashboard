@@ -140,6 +140,9 @@ class TeamDashboardSecurityTests(unittest.TestCase):
             self.assertIn(r"\u003c/script\u003e", public_json.lower())
             self.assertNotIn("<script>", html.lower())
             self.assertEqual(verify_dashboard.verify(str(html_path)), [])
+            attachment = temp / "team-dashboard-report.html"
+            self.assertEqual(verify_dashboard.verify(str(attachment)), [])
+            self.assertNotIn("</script><script>alert(1)", attachment.read_text().lower())
 
     def test_verifier_rejects_a_public_breakdown_below_threshold(self):
         data = build_dashboard.public_data(private_data())
@@ -218,6 +221,31 @@ class TeamDashboardSecurityTests(unittest.TestCase):
             hashlib.sha256(build_dashboard.dashboard_runtime().encode("utf-8")).hexdigest(),
             "a003e5edd5595c1896389bdd1d59a1706cad03ca116c50bf5232894030be9ccc",
         )
+
+    def test_standalone_attachment_works_without_companion_files_and_rejects_private_data(self):
+        with tempfile.TemporaryDirectory(prefix="dashboard-attachment-test-") as temp:
+            root = pathlib.Path(temp)
+            data = root / "private.json"
+            data.write_text(json.dumps(private_data()), encoding="utf-8")
+            build_outputs.main(SimpleNamespace(inp=str(data), out_html=str(root / "site/index.html")))
+            report = root / "attachment-only/report.html"
+            report.parent.mkdir()
+            report.write_bytes((root / "site/team-dashboard-report.html").read_bytes())
+            self.assertEqual(verify_dashboard.verify(str(report)), [])
+            html = report.read_text()
+            self.assertNotIn("fetch(", html)
+            self.assertNotIn('src="assets/', html)
+            self.assertNotIn('href="assets/', html)
+            self.assertNotIn("Secret contributor", html)
+            self.assertNotIn('href="team-summary.md"', html)
+            self.assertIn('id="report-glossary"', html)
+            markup = verify_dashboard.AttachmentMarkup()
+            markup.feed(html)
+            public = json.loads(markup.scripts["report-data"])
+            public["members"] = [{"email": "private@example.invalid"}]
+            report.write_text(html.replace(markup.scripts["report-data"],
+                                           build_dashboard.json_for_html(public)))
+            self.assertTrue(verify_dashboard.verify(str(report)))
 
     def test_loopback_server_blocks_commands_rebinding_traversal_and_private_files(self):
         with tempfile.TemporaryDirectory(prefix="dashboard-server-test-") as temp:

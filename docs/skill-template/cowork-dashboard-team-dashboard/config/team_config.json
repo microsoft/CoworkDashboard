@@ -17,7 +17,7 @@
   "privacy_k_threshold": 3,
   "_privacy_note": "Never show anything at an individual level. A per-attribute (Role) breakdown renders ONLY when at least privacy_k_threshold members share that attribute; otherwise those members collapse into a single combined bar. Small, homogeneous teams (v1 scope) usually render one combined bar.",
   "email_on_run": false,
-  "_email_note": "Legacy preference: true may offer to share a reviewed Markdown/PDF export, but never authorizes sending. Local and scheduled builds do not email automatically. Always preview the export and recipients and get explicit approval.",
+  "_email_note": "Offer the verified self-contained HTML report to the requesting manager by email. Resolve and confirm their address and get explicit send approval; this flag never authorizes sending. Honor don't-email requests. Scheduled builds do not email automatically.",
   "team_size": null,
   "_team_size_note": "Optional. Total expected contributors on the team. Left null in v1 (we do not compute adoption %). If set, or resolved via ListChannelMembers COUNT (never names), the dashboard can show 'N of team_size reported'. v1 shows only the count of contributors."
 }
