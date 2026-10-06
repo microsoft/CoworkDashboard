@@ -23,6 +23,9 @@ import json, argparse, os, re
 from pathlib import Path
 import tempfile
 
+from dashboard_template import TEMPLATE as DASHBOARD_TEMPLATE
+from dashboard_runtime import RUNTIME as DASHBOARD_RUNTIME
+
 
 CATEGORIES = {
     "Analysis & Research", "Write or debug code", "Document & content creation",
@@ -427,7 +430,7 @@ def main(a):
     if not public["snapshots"]:
         raise ValueError("No reporting periods are available; cannot build the local dashboard.")
     assets = Path(__file__).resolve().parent.parent / "assets"
-    template = (assets / "dashboard.html.template").read_text(encoding="utf-8")
+    template = DASHBOARD_TEMPLATE
     glossary = extract_glossary(template)
     glossary_replacements = {
         "__RECAP__": str(int(round(public["meta"]["defaultRecapture"] * 100))),
@@ -454,7 +457,7 @@ def main(a):
     atomic_write(output.parent / "assets/dashboard.css",
                  (assets / "dashboard.css").read_text(encoding="utf-8"))
     atomic_write(output.parent / "assets/dashboard.js",
-                 (assets / "dashboard.js.template").read_text(encoding="utf-8"))
+                 DASHBOARD_RUNTIME)
     atomic_write(output.parent / "dashboard-data.json", json_for_html(public))
     atomic_write(output.parent / "dashboard-glossary.json", json_for_html(glossary))
     atomic_write(output.parent / "team-summary.md", summary_markdown(public))

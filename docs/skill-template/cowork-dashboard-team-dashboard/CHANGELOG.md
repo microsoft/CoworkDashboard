@@ -3,6 +3,17 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.13.2] - 2026-10-06
+
+### Changed
+- Adopted the supplied no-web-assets package: HTML and JavaScript source strings now live in
+  `scripts/dashboard_template.py` and `scripts/dashboard_runtime.py`; removed the standalone
+  `.template` assets and updated the builder imports.
+- Generated HTML/JavaScript content, Markdown review behavior, injection protections and cohort
+  filtering are unchanged. Builds still emit ordinary local-site HTML and JavaScript.
+- Synchronized installer templates and manifest; retained prior release history for rollback.
+  Defender clearance remains unconfirmed.
+
 ## [1.13.1] - 2026-10-05
 
 ### Changed

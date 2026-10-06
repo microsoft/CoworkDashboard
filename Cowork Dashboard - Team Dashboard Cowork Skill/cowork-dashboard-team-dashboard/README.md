@@ -96,7 +96,8 @@ has no command endpoints. Raw messages, working JSON and configuration are never
 can leave the device. Use an approved agent and storage. This architecture change is not a
 Microsoft Defender clearance; do not disable antivirus or add exclusions.
 
-The bundled HTML and JavaScript sources use `.template` suffixes. Building the report produces
+The bundled HTML and JavaScript sources are string constants in `scripts/dashboard_template.py`
+and `scripts/dashboard_runtime.py`, not standalone web assets. Building the report produces
 ordinary `index.html` and `assets/dashboard.js` files; the runtime JavaScript is unchanged.
 This packaging change has not been confirmed to resolve Defender warnings.
 
