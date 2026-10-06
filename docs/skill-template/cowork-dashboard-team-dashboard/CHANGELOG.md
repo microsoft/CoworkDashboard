@@ -3,6 +3,17 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.13.3] - 2026-10-06
+
+### Changed
+- Adopted the reviewed builder-generated HTML package: HTML markup and glossary now live in
+  `scripts/build_dashboard.py`; removed the separate `scripts/dashboard_template.py` module.
+- Updated dashboard help and glossary copy to the supplied version. Runtime JavaScript,
+  aggregate privacy filtering, contextual escaping and read-only server boundaries are retained.
+- Retained previous release history and corrected Markdown review/save instructions.
+- Synchronized installer templates and manifest. This package has not been confirmed to resolve
+  Microsoft Defender warnings; generated HTML and JavaScript remain ordinary web content.
+
 ## [1.13.2] - 2026-10-06
 
 ### Changed

@@ -199,20 +199,25 @@ class TeamDashboardSecurityTests(unittest.TestCase):
         self.assertFalse((SKILL / "assets/dashboard.html").exists())
         self.assertFalse((SKILL / "assets/dashboard.js").exists())
         self.assertFalse(any(name.endswith((".html", ".js", ".template")) for name in source_files))
-        self.assertIn("scripts/dashboard_template.py", source_files)
+        self.assertNotIn("scripts/dashboard_template.py", source_files)
         self.assertIn("scripts/dashboard_runtime.py", source_files)
         for name in source_files:
             self.assertEqual((SKILL / name).read_bytes(), (template / name).read_bytes(), name)
         self.assertFalse((template / "assets/dashboard.html").exists())
         self.assertFalse((template / "assets/dashboard.js").exists())
 
-    def test_generated_web_assets_match_previous_release(self):
+    def test_generated_html_escapes_metadata_and_runtime_matches_previous_release(self):
         import hashlib
 
-        self.assertEqual(
-            hashlib.sha256(build_dashboard.DASHBOARD_TEMPLATE.encode("utf-8")).hexdigest(),
-            "b36f9a750c519ef127d415a80c9eb97290e8b928c989d41be14303654306c3f9",
-        )
+        meta = build_dashboard.public_data(private_data())["meta"]
+        meta["team"] = '<img src=x onerror="alert(1)">'
+        meta["generated"] = "</script><script>alert(1)</script>"
+        html = build_dashboard.dashboard_html(meta)
+        self.assertNotIn(meta["team"], html)
+        self.assertNotIn(meta["generated"], html)
+        self.assertIn(build_dashboard.escape_html(meta["team"]), html)
+        self.assertIn(build_dashboard.escape_html(meta["generated"]), html)
+        self.assertIn('id="gloss-body"', html)
         self.assertEqual(
             hashlib.sha256(build_dashboard.DASHBOARD_RUNTIME.encode("utf-8")).hexdigest(),
             "a003e5edd5595c1896389bdd1d59a1706cad03ca116c50bf5232894030be9ccc",
