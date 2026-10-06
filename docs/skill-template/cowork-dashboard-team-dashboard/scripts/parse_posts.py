@@ -28,6 +28,7 @@ Usage:
 import json, argparse, re, html, os, hashlib, collections
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
+from urllib.parse import urlsplit
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -140,6 +141,59 @@ def rng(s):
 STATS_HEADER_KEYS = {"metric", "category", "pillar", "process", "role", "skill", "measure",
                      "input type", "output type", "deliverable type", "deliverable", "type", "date",
                      "fit"}
+
+class EmailLinks(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.links = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag != "a":
+            return
+        url = dict(attrs).get("href", "")
+        try:
+            parsed = urlsplit(url)
+            host = (parsed.hostname or "").lower()
+            if parsed.scheme != "https" or parsed.username or parsed.password:
+                return
+            outlook = host in {"outlook.office.com", "outlook.office365.com", "outlook.live.com"}
+            email_file = host.endswith(".sharepoint.com") and parsed.path.lower().endswith(".eml")
+            if (outlook or email_file) and url not in self.links:
+                self.links.append(url)
+        except ValueError:
+            return
+
+
+def missing_report_sections(body):
+    grab = TableGrab()
+    grab.feed(body or "")
+    keys = {table[0][0].strip().lower() for table in grab.tables if table and table[0]}
+    required = {"metric", "category", "process", "role", "skill", "measure",
+                "input type", "output type", "fit"}
+    missing = required - keys
+    if not keys & {"deliverable type", "deliverable", "type"}:
+        missing.add("deliverables")
+    if grab._rows is not None:
+        missing.add("unfinished table")
+    return sorted(missing)
+
+
+def linked_email_requests(raw, window_days, now=None):
+    anchor = datetime.strptime(now, "%Y-%m-%d").date() if now else datetime.now(timezone.utc).date()
+    cutoff = (anchor - timedelta(days=int(window_days))).isoformat() if window_days else None
+    requests = []
+    for index, message in enumerate(normalize_messages(raw)):
+        if message["deleted"] or (cutoff and message["created"][:10] < cutoff):
+            continue
+        body = message["body"] or ""
+        missing = missing_report_sections(body)
+        links = EmailLinks()
+        links.feed(body)
+        if missing and links.links:
+            requests.append({"message_index": index, "email_links": links.links,
+                             "missing_sections": missing})
+    return requests
+
 
 def has_stats_tables(body):
     """True only when the message carries the de-identified stats tables (≥2 recognized ones).
@@ -275,7 +329,7 @@ def parse_body(body, pg, vocab, aliases, rate):
             for r in rows:
                 if len(r) < 2: continue
                 gl = r[0].strip()
-                grade = {"high": "H", "medium": "M", "low": "L"}.get(gl.lower().split(" ")[0], "")
+                grade = {"high": "H", "medium": "M", "moderate": "M", "low": "L"}.get(gl.lower().split(" ")[0], "")
                 if not grade: continue
                 proc = group_process(r[1], pg) if len(r) > 1 and r[1] not in ("", "—") else ""
                 rec["coworkFit"].append({"grade": grade, "gradeLabel": gl, "process": proc,
@@ -328,6 +382,19 @@ def main(a):
     pg, vocab, aliases = load_taxonomies()
     with open(a.inp, encoding="utf-8") as handle:
         raw = json.load(handle)
+    win = a.window_days if a.window_days is not None else cfg.get("message_lookback_days")
+    requests = linked_email_requests(raw, win, a.now)
+    if getattr(a, "inspect_email_links", False):
+        print(json.dumps(requests, ensure_ascii=False, indent=2))
+        return
+    if requests:
+        indices = ", ".join(str(item["message_index"]) for item in requests)
+        raise SystemExit(
+            "[parse_posts] incomplete channel posts contain linked emails "
+            f"(message indices: {indices}). Read those exact emails with authorized host tools, "
+            "validate the full de-identified reports and re-run with hydrated message bodies. "
+            "Use --inspect-email-links to list recovery requests."
+        )
     all_msgs = [m for m in normalize_messages(raw) if not m["deleted"] and "Cowork Team Report" in (m["body"] or "")]
     # Only parse messages that actually carry the de-identified stats tables. This skips
     # attachment/zip shares (e.g. a member-skill .zip posted to the channel) that mention
@@ -341,7 +408,6 @@ def main(a):
     # window: keep only posts from the last N days (the latest cycle). --window-days overrides the
     # config's message_lookback_days; anchor is --now or today (UTC). Applied BEFORE the per-sender
     # dedupe so "latest post per person" is chosen from within the window.
-    win = a.window_days if a.window_days is not None else cfg.get("message_lookback_days")
     if win:
         anchor = datetime.strptime(a.now, "%Y-%m-%d").date() if a.now else datetime.now(timezone.utc).date()
         cutoff = (anchor - timedelta(days=int(win))).isoformat()
@@ -405,6 +471,8 @@ if __name__ == "__main__":
     ap.add_argument("--in", dest="inp", required=True)
     ap.add_argument("--config", default="config/team_config.json")
     ap.add_argument("--out", default="working/team_data.json")
+    ap.add_argument("--inspect-email-links", action="store_true",
+                    help="List incomplete posts' email links for authorized host-tool recovery; do not parse")
     ap.add_argument("--generated", default=None, help="YYYY-MM-DD stamp (defaults to newest post date)")
     ap.add_argument("--window-days", dest="window_days", type=int, default=None,
                     help="Keep only posts from the last N days (defaults to config message_lookback_days)")

@@ -19,9 +19,15 @@ remembers it; every run reads the **latest 15 days** of messages, keeping the la
 
 > **Team-safe by design.** The private working file contains per-contributor metrics for aggregation;
 > it is not the report and must never be shared. The builder exports only team totals and breakdowns
-> supported by at least the configured k-threshold. It excludes member records, task-level entries,
+> with the approved exceptions below; other breakdowns require the configured k-threshold. It excludes member records, task-level entries,
 > deliverable names, raw filenames, prompts, and country. Small residual cohorts are suppressed unless
 > the combined pool also meets the threshold.
+>
+> Approved exceptions: all category, business-process, service-role, team-wide skill and output-format totals are shown,
+> while exact contributor reach below the threshold is omitted from the public data. These totals can
+> reveal sparse work and are not fully k-anonymous. All Cowork-fit grade and expanded
+> process/category totals follow the same exception. Other breakdowns remain suppressed.
+> The category Total uses the same headline hours/run tasks as Overview.
 
 ## The three-skill family
 
@@ -63,6 +69,13 @@ teammates ──(cowork-dashboard-member email)──▶  Teams channel  ──(
 ```
 
 ## Quick start
+
+Channel email previews may omit report tables. The skill automatically reads the exact linked
+original email through authorized host tools, validates the de-identified report and replaces the
+partial body in a private hydrated input while preserving channel sender/time metadata. It never
+crawls mailbox history or double-counts preview and email. Unreadable or ambiguous links block
+completion with an explicit error. `parse_posts.py --inspect-email-links` lists body-link recovery
+requests; the host also checks attachment/card references.
 
 1. **Point it at the channel** (first run only). The skill asks for the **link of the Teams channel**
    where the team emails its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to channel*), then
@@ -112,7 +125,7 @@ Microsoft Defender clearance; do not disable antivirus or add exclusions.
 The full HTML markup and JavaScript are compressed, Base64-encoded strings in
 `scripts/dashboard_assets.py`, decoded by `scripts/build_dashboard.py` at build time.
 Building the report produces
-ordinary `index.html` and `assets/dashboard.js` files; the runtime JavaScript is unchanged.
+ordinary `index.html` and `assets/dashboard.js` files.
 This packaging change has not been confirmed to resolve Defender warnings.
 
 ## Mandatory dashboard contract
@@ -121,7 +134,15 @@ This packaging change has not been confirmed to resolve Defender warnings.
 - The parser's `working/team_data.json` is an internal intermediate containing contributor-level
   metrics. Do not email, publish, or attach it. The renderer constructs a separate public aggregate
   contract before writing public JSON.
-- Each category, process, role, skill, deliverable format, fit grade, and secondary detail is included
+- All category, business-process, service-role, team-wide skill and output-format totals are included, with exact
+  reach redacted below the threshold. No top-N limit hides service roles. The expandable skills
+  table contains team-wide skills, not an inferred per-role attribution.
+- All reported Cowork-fit grades and expanded process/category totals are included with exact
+  small contributor reach redacted. Totals sum reported graded tasks, not ungraded headline tasks.
+- All process output-type totals are shown, grouped by process/type with counts and summed
+  hours/value; exact small reach is redacted. No global format totals are attributed to a process
+  without supporting process-level source data.
+- Each input/output mix, process skill detail, and role-category mix is included
   only when at least `privacy_k_threshold` contributors support it. Small residual role groups are
   combined only when the pooled group also meets that threshold; otherwise they are omitted.
 - The local site never includes member records, individual roles, task descriptions, deliverable names,
@@ -166,9 +187,10 @@ python scripts/serve_dashboard.py --dir output/team-dashboard
    artifacts are removed with it before metrics are computed; the original Cowork session is not deleted.
 - The private working JSON contains the directory **Role** and per-contributor statistics for
    aggregation; neither the Role assignments nor individual records are published.
-- **Cohort threshold:** every published breakdown requires ≥ `privacy_k_threshold` distinct
-   contributors. Category reach is shown only above that threshold; lower-support categories and
-   secondary details are omitted rather than exposed as small residual groups.
+- **Approved exceptions:** category, business-process, service-role, team-wide skill and output-format totals include
+   low-support rows, as do Cowork-fit grade/process/category totals, but exact reach is redacted below `privacy_k_threshold`.
+- **Cohort threshold:** other breakdowns require ≥ `privacy_k_threshold` distinct contributors.
+   Secondary details and small residual directory-role groups remain suppressed.
 
 ## Shared taxonomy contract (keep in sync)
 
@@ -178,9 +200,10 @@ in turn mirrors `cowork-roi-report`). If those change, update this copy too or t
 drifts. `skill_aliases.json` is reader-only and not part of the contract.
 
 **Deliverable detail:** contributor-level names, dates, and rows are never published. The dashboard
-shows only aggregate counts and hours grouped by a standard file format, and only when at least
-`privacy_k_threshold` distinct contributors support that format (including within a process). Skills
-in process detail follow the same cohort rule.
+shows all aggregate counts and hours grouped by a standard file format in Impact & Value. Within
+a process, all reported format totals are shown; skills still require `privacy_k_threshold`
+distinct contributors.
+The output-format Total sums the reported format rows; it does not substitute the headline count.
 
 ## Requirements
 

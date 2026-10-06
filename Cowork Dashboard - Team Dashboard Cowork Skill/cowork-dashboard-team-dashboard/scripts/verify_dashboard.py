@@ -111,15 +111,23 @@ def verify_public_contract(data):
                     "processDetails", "fit", "fitDetails", "roleGroups", "inputs", "outputs"):
             if not isinstance(aggregate.get(key), list):
                 errors.append(f"aggregate {aggregate_id!r} has invalid {key} data")
-        for key in ("categories", "processes", "roles", "skills", "deliverables",
-                    "fit", "inputs", "outputs"):
+        for key in ("categories", "processes", "roles", "skills", "deliverables", "fit", "fitDetails", "processDetails"):
+            items = aggregate.get(key)
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                if not isinstance(item, dict) or "contributors" not in item:
+                    errors.append(f"aggregate {aggregate_id!r} has invalid {key} reach data")
+                    continue
+                reach = item["contributors"]
+                if reach is not None and (type(reach) is not int or reach < threshold):
+                    errors.append(f"aggregate {aggregate_id!r} exposes {key} reach below the cohort threshold")
+        for key in ("inputs", "outputs"):
             for item in aggregate.get(key, []):
                 if not isinstance(item.get("contributors"), int) or item["contributors"] < threshold:
                     errors.append(f"aggregate {aggregate_id!r} exposes {key} below the cohort threshold")
-        for key in ("processDetails", "fitDetails"):
+        for key in ("processDetails",):
             for item in aggregate.get(key, []):
-                if not isinstance(item.get("contributors"), int) or item["contributors"] < threshold:
-                    errors.append(f"aggregate {aggregate_id!r} exposes {key} below the cohort threshold")
                 for skill in item.get("skills", []):
                     if not isinstance(skill.get("contributors"), int) or skill["contributors"] < threshold:
                         errors.append(f"aggregate {aggregate_id!r} exposes a detail skill below the cohort threshold")
