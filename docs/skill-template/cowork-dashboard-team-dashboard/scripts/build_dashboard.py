@@ -23,7 +23,7 @@ import json, argparse, os, re
 from pathlib import Path
 import tempfile
 
-from dashboard_runtime import RUNTIME as DASHBOARD_RUNTIME
+from dashboard_assets import dashboard_markup, dashboard_runtime
 
 
 CATEGORIES = {
@@ -40,29 +40,6 @@ FORMATS = {
     "pdf": "PDF", "file": "File (other)",
 }
 GRADES = {"H", "M", "L"}
-
-GLOSSARY = {
-    "active days": "Person-days with at least one Cowork task in the window.",
-    "anonymity": "The public dashboard contains only team totals and cohort-qualified breakdowns.",
-    "business process": "The business need served by the work, such as Business Value & ROI Analytics.",
-    "contributors": "The number of teammates who posted de-identified stats this period. Never named.",
-    "cowork fit": "How well a task suited Cowork's agentic, cross-app strengths.",
-    "deliverables": "The count of distinct pieces of work produced.",
-    "hands-on time": "The actual time the team spent working with Cowork.",
-    "outputs": "The number of output files in a supported file-format cohort.",
-    "reach": "The number of contributors using a task category.",
-    "research time band": "The low, typical, and high minutes of manual time saved per run.",
-    "run tasks": "A single unit of work run with Cowork.",
-    "sessions": "Distinct Cowork chats run across the team.",
-    "skills": "The specific capabilities behind roles, such as Data Visualization or Python.",
-    "task category": "How the work was done, such as analysis, code, documents, email, or meetings.",
-    "team speed multiplier": "Estimated hours without Cowork divided by actual hands-on hours.",
-    "time saved": "Manual hours Cowork saved this period.",
-    "recapture rate": "The share of time saved the team can realistically harvest into productive output.",
-    "effective time recaptured": "Time saved multiplied by the recapture rate.",
-    "value / cost reduction": "Effective recaptured hours priced by the hourly rate in the control bar.",
-}
-
 
 def number(value):
     try:
@@ -432,78 +409,18 @@ def summary_markdown(public):
     )
 
 
-def dashboard_html(meta):
-    team = escape_html(meta["team"])
-    generated = escape_html(meta["generated"])
-    rate = escape_html(meta["defaultRate"])
-    recapture = escape_html(int(round(meta["defaultRecapture"] * 100)))
-    threshold = escape_html(meta["kThreshold"])
-    glossary = "\n".join(
-        f"      <p><b>{escape_html(term.title())}</b> - {escape_html(definition)}</p>"
-        for term, definition in GLOSSARY.items()
-    )
-    return f"""<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark">
-<title>Cowork Team Dashboard</title>
-<link rel="stylesheet" href="assets/dashboard.css">
-<script src="assets/dashboard.js" defer></script>
-</head>
-<body>
-<header class="top"><div class="wrap">
-  <div class="brand"><span class="nm">Microsoft Copilot Cowork</span></div>
-  <h1>Cowork Team Dashboard</h1>
-  <p class="sub">{team} Impact &amp; how Cowork is used</p>
-  <p class="gen">Generated {generated} - <span id="ctxline"></span></p>
-  <p class="disc">Use this report to gauge Cowork's impact on your team, not as individual or team performance scores. Anonymized and team-level only: nothing is shown per person.</p>
-  <p class="disc" style="margin-top:7px">Use the Period selector, Hourly rate box, and Recapture rate box below to pick the reporting window, the hourly rate (default ${rate}/hr), and the productivity recapture rate (default {recapture}%).</p>
-</div></header>
-<div class="wrap">
-  <p id="load-status" role="status">Loading local aggregate data...</p>
-  <noscript>This dashboard needs JavaScript. The reviewed totals are available in the Markdown export.</noscript>
-  <div class="controls">
-    <div class="ctl"><label for="snapSel">Period</label><select id="snapSel"></select></div>
-    <div class="ctl"><label for="rateInput">Hourly rate</label><div class="rate-in"><span>$</span><input id="rateInput" type="number" min="1" step="1" inputmode="numeric"><span>/hr</span></div></div>
-    <div class="ctl"><label for="recapInput">Recapture rate</label><div class="rate-in"><input id="recapInput" type="number" min="0" max="100" step="5" inputmode="numeric"><span>%</span></div></div>
-    <div class="ctl"><label>Show impact as</label><div class="seg" id="ovSeg" role="group" aria-label="Show impact as Assisted Time or Assisted Value"><button type="button" class="seg-btn on" data-metric="time">Assisted Time</button><button type="button" class="seg-btn" data-metric="value">Assisted Value</button></div></div>
-    <div class="spacer"></div>
-    <button class="btn" id="resetBtn" type="button">Reset</button>
-    <button class="btn primary" id="printBtn" type="button">Save / Print PDF</button>
-    <a class="btn" href="team-summary.md">Open Markdown summary</a>
-  </div>
-  <div class="tabs">
-    <button class="tab-btn on" type="button" data-tab="overview">Overview</button>
-    <button class="tab-btn" type="button" data-tab="impact">Impact &amp; Value</button>
-    <button class="tab-btn" type="button" data-tab="work">How Cowork is used</button>
-    <button class="tab-btn" type="button" data-tab="method" style="font-style:italic">How to read + Glossary</button>
-  </div>
-  <div class="tab-panel on" id="tab-overview">
-    <section class="block"><h2 class="sec"><span class="dot"></span>What the data says<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">A plain-language reading of the team's posts.</span></h2><div class="insights" id="ov-insights"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Team impact at a glance<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Headline totals for the selected period.</span></h2><div class="kpis" id="ov-kpis"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Where Cowork is applied - top business processes<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Business processes ranked by the selected measure.</span></h2><div class="card" id="ov-proc"></div></section>
-  </div>
-  <div class="tab-panel" id="tab-impact">
-    <section class="block"><h2 class="sec"><span class="dot"></span>Where the time went - by task category<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Categories appear only when at least {threshold} contributors support them.</span></h2><div class="card" id="im-categories"></div></section>
-    <section class="block"><div class="grid2"><div class="card"><h3>Roles Cowork stood in for</h3><div id="im-roles"></div></div><div class="card"><h3>Outputs produced - by format</h3><div id="im-deliv"></div></div></div></section>
-  </div>
-  <div class="tab-panel" id="tab-work">
-    <section class="block"><h2 class="sec"><span class="dot"></span>Work by business process<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Click a supported process to expand aggregate format and skill summaries.</span></h2><div class="card" id="wk-proc"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Cowork fit - how well the work suited Cowork<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">High, Medium, and Low fit task composition.</span></h2><div class="card" id="wk-fit"></div></section>
-    <section class="block"><h2 class="sec"><span class="dot"></span>Category mix<button type="button" class="help" aria-label="About this section">?</button><span class="helppop">Supported role cohorts split by task category.</span></h2><div class="card" id="wk-stack"></div></section>
-  </div>
-  <div class="tab-panel" id="tab-method">
-    <details class="meth" open><summary>Glossary of terms</summary><div class="mbody" id="gloss-body">
-{glossary}
-    </div></details>
-    <details class="meth" id="sec-bands"><summary>Research bands &amp; sources</summary><div class="mbody"><p>Time saved uses configured low, typical, and high research bands by task category.</p></div></details>
-    <details class="meth"><summary>Privacy &amp; anonymity</summary><div class="mbody"><p>No contributor-level records or links are published. Breakdowns require at least {threshold} contributors.</p></div></details>
-  </div>
-  <footer class="foot">Generated by Microsoft Copilot Cowork - anonymized and team-safe. Modeled estimates, not audited financials or performance metrics.</footer>
-</div>
-</body>
-</html>
-"""
+def extract_glossary(template):
+    match = re.search(r'id="gloss-body">(.*?)</div></details>', template, re.S)
+    if not match:
+        return {}
+    glossary = {}
+    for item in re.finditer(r"<p><b>(.*?)</b>\s*\u2014\s*(.*?)</p>", match.group(1), re.S):
+        term = re.sub(r"<[^>]+>", "", item.group(1)).strip()
+        definition = re.sub(r"</?i>", "", item.group(2)).strip()
+        if term:
+            glossary[term.lower()] = definition
+    return glossary
+
 
 def main(a):
     with open(a.inp, encoding="utf-8") as handle:
@@ -512,13 +429,33 @@ def main(a):
     if not public["snapshots"]:
         raise ValueError("No reporting periods are available; cannot build the local dashboard.")
     assets = Path(__file__).resolve().parent.parent / "assets"
-    glossary = GLOSSARY
-    html = dashboard_html(public["meta"])
+    template = dashboard_markup()
+    glossary_replacements = {
+        "__RECAP__": str(int(round(public["meta"]["defaultRecapture"] * 100))),
+        "__RATE__": str(public["meta"]["defaultRate"]),
+        "__KTHRESH__": str(public["meta"]["kThreshold"]),
+    }
+    glossary = {
+        term: re.sub(
+            r"__[A-Z][A-Z0-9_]*__",
+            lambda match: glossary_replacements.get(match.group(), match.group()),
+            definition,
+        )
+        for term, definition in extract_glossary(template).items()
+    }
+    replacements = {
+        "__TEAM__": escape_html(public["meta"]["team"]),
+        "__GENERATED__": escape_html(public["meta"]["generated"]),
+        "__RATE__": escape_html(public["meta"]["defaultRate"]),
+        "__RECAP__": escape_html(int(round(public["meta"]["defaultRecapture"] * 100))),
+        "__KTHRESH__": escape_html(public["meta"]["kThreshold"]),
+    }
+    html = re.sub(r"__[A-Z][A-Z0-9_]*__", lambda match: replacements[match.group()], template)
     output = Path(a.out)
     atomic_write(output.parent / "assets/dashboard.css",
                  (assets / "dashboard.css").read_text(encoding="utf-8"))
     atomic_write(output.parent / "assets/dashboard.js",
-                 DASHBOARD_RUNTIME)
+                 dashboard_runtime())
     atomic_write(output.parent / "dashboard-data.json", json_for_html(public))
     atomic_write(output.parent / "dashboard-glossary.json", json_for_html(glossary))
     atomic_write(output.parent / "team-summary.md", summary_markdown(public))
