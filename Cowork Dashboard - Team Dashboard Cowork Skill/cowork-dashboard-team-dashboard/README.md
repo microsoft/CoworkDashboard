@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **Disclaimer:** This is not an official Microsoft Cowork skill. It is an approach to understanding your work and how Cowork enriches it. You can customize the skill to meet your requirements.
+
 # Cowork Team Report — Team Dashboard
 
 A Microsoft Copilot **Cowork skill** that rolls up a small team's Copilot Cowork ROI. It generates

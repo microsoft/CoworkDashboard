@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **Disclaimer:** This is not an official Microsoft Cowork skill. It is an approach to understanding your work and how Cowork enriches it. You can customize the skill to meet your requirements.
+
 # Cowork Team Report — Team Member Cowork Skill
 
 **Cowork Team Report** is a two-part Microsoft Copilot **Cowork** solution that shows a team the **ROI**
