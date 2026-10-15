@@ -273,6 +273,12 @@
     background: color-mix(in srgb, var(--accent-3) 8%, var(--surface));
   }
 
+  .note.disclaimer {
+    max-width: 760px; margin: 18px auto 0;
+    border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+    background: color-mix(in srgb, var(--warn) 8%, var(--surface));
+  }
+
   .resolved { display: none; margin-top: 22px; }
   .resolved.show { display: block; animation: rise .35s ease; }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -389,6 +395,9 @@
        money your team saves with Copilot Cowork — your team's real ROI — and turn it into a private,
        easy-to-read team report emailed to you. Download each skill below and upload it to Copilot Cowork —
        the installer securely bakes the channel details each skill needs into its download.</p>
+    <p class="note disclaimer"><strong>Disclaimer:</strong> This is not an official Microsoft Cowork skill.
+       It is an approach to understanding your work and how Cowork enriches it. You can customize the
+       skill to meet your requirements.</p>
     <div class="trust-row">
       <span class="trust-pill"><span class="trust-dot b"></span> Quantifies your team's Copilot Cowork ROI</span>
       <span class="trust-pill"><span class="trust-dot p"></span> Private &amp; de-identified</span>
