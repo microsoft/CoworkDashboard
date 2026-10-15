@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **Disclaimer:** This is not an official Microsoft Cowork skill. It is an approach to understanding your work and how Cowork enriches it. You can customize the skill to meet your requirements.
+
 # Cowork Team Report — Member skill (self-contained)
 
 Emails a **de-identified, table-formatted** Cowork Team Report summary to your team's Teams channel
