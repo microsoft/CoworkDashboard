@@ -1,9 +1,10 @@
 ---
 name: cowork-dashboard-team-dashboard
 description: |
-  Manager-side team rollup for Copilot Cowork ROI. Builds a self-contained interactive HTML report for email to the requesting manager, with recipient confirmation and send approval. Download the attachment and open it in a browser; no server or companion files required. First run remembers the Teams channel link; each run reads the latest 15 days and keeps the latest report per person. The public report contains no member records and shows a
-  category, process, service-role, skill, output-format and fit totals with exact reach hidden below 3. Process output types are aggregated without suppression; process skills, input/output mix and role-category mix require 3 contributors. Small homogeneous teams; not org-wide.
+  Interactive HTML team rollup report for Cowork ROI. Download the attachment and open it in a browser; no server/companion files required. Each run reads the latest 15 days and keeps the latest report per person. The public report contains no member records. Use for small teams; not org-wide.
+
   Use when the user asks to "build the team Cowork Team Report", "aggregate my team's Cowork stats", "roll up the channel posts", "manager Cowork Team Report", "email the team dashboard", to "walk me through setup" / "set up the skill" right after installing it, or to "send / share the member skill with my team" / "invite my team" / set up / refresh the rollup.
+
   Do NOT use for: the personal report (cowork-roi-report), a member's own post (cowork-dashboard-member), the member-side aggregated post (cowork-roi-report-aggregated), org-wide/large-team aggregation, GitHub Copilot reports, or single-meeting summaries.
 cowork:
   category: analysis

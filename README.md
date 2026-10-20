@@ -62,7 +62,7 @@ You only do this **once** for your team.
 2. **Copy your team's Teams channel link and email address.** In Microsoft Teams, find the channel in the left-hand list,
    hover over its name, and click the **⋯ More options** button that appears (or right-click the channel).
    Choose **Copy link** (some Teams versions label it **Get link to channel**) and then
-   **Get email address**. Configure the email security settings to allow the members who will send reports.
+   **Get email address**. Configure the email security settings to allow anyone to send emails to this channel.
 
 3. **Paste both values** into the page and click **Build my install links.** The page validates the link
    and email address and shows the **channel name** it found — check it's the right channel.
