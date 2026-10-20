@@ -7,7 +7,7 @@ description: |
 metadata:
   category: productivity
   icon: PeopleTeam
-  version: "27"
+  version: "28"
 ---
 
 # Cowork Team Report — Member step (de-identified table email to the team channel)
@@ -113,7 +113,9 @@ ALL session folders in the window:
   the Cowork app id `6ab48b67-cd74-4ad4-81af-5932984589be` (Cowork's fixed **product** app ID — the same for every user and tenant; leave it as-is, it is NOT a value to fill in). **Never** enumerate `Documents/Apps/…`
   (a different product).
 - Keep session folders whose created/modified date is in the window. For each, list its `output/`
-  (and `input/`) for artifact names + extensions. **Fold supporting files** (QA screenshots,
+  (and `input/`) for artifact names + extensions, and record each output's `createdDateTime` as
+  `created` (the classifier uses the latest-created primary output as the session's final
+  deliverable). **Fold supporting files** (QA screenshots,
   `-v2`/`-sample` variants, prompts, READMEs, lock files, zips) into the session's primary
   deliverable. Keep output-less (chat-only) sessions.
 - **Deliverable `name` = a clean, de-identified DESCRIPTIVE label — NOT the raw file name.** For each
@@ -136,7 +138,7 @@ ALL session folders in the window:
              "window":{"from":"...","to":"...","label":"Last N days","months":0.5},"hourly_rate":72},
     "sessions": [ {"id":"<slug>","date":"YYYY-MM-DD","hour":12,"goal":"<short verb-first phrase>",
                    "inputs":[{"name":"report.pdf","ext":"pdf"}],
-                   "outputs":[{"name":"AI-in-One insights deck","ext":"pptx","skills":["Presentation Design"]}],
+                   "outputs":[{"name":"AI-in-One insights deck","ext":"pptx","created":"YYYY-MM-DDThh:mm:ssZ","skills":["Presentation Design"]}],
                    "skills":["Data Analysis"], "professional_roles":["Data Analyst"],
                    "has_folder":true, "exec_min":null},
                   {"id":"<telemetry-8char>","date":"YYYY-MM-DD","hour":9,"goal":"triage and prioritize inbox",
@@ -272,6 +274,12 @@ it falls back to the bundled generic APQC taxonomy. `references/map-my-work-play
 ### 6. Classify + compute (on the pruned set)
 - `python /mnt/user-config/.claude/skills/cowork-dashboard-member/scripts/classify.py --in working/cowork_raw.json --out working/cowork_sessions.json --overrides working/process_overrides.json`
 - `python /mnt/user-config/.claude/skills/cowork-dashboard-member/scripts/compute.py --in working/cowork_sessions.json --out working/cowork_roi_data.json`
+- `classify.py` assigns exactly **one category per session** (time saved is credited to it alone),
+  using ordered rules: email final output / inbox triage → **Email**; Teams post / mainly Teams
+  synthesis → **Communication**; skill build/attach/install/review → **Write or debug code**;
+  research intent + ≥3 gathered sources → **Analysis & Research**; otherwise the candidates
+  (including outside-M365 systems → **Specialized**) are tie-broken by the **final output's format**.
+  Full rules: [references/classification-methodology.md](references/classification-methodology.md).
 - (If a credits ledger exists it is used automatically for the real-cost line; otherwise that line is omitted.)
 
 ### 7. Format the de-identified table message
@@ -362,10 +370,11 @@ does the final opt-out + channel-email send interactively in the task chat. Conf
 - `scripts/mine_session.py` — live-session telemetry hook: mines the current transcript for real `exec_min`, tool intensity, artifacts, and per-category `runs` (Outlook-mail→email, Teams→comms, transcript/calendar→meeting, code→code, research→analysis); upserts a durable log so folder-less email/Teams/meeting triage sessions are still harvested.
 - `scripts/format_member_message.py` — renders `cowork_roi_data.json` into the de-identified HTML table email.
 - `scripts/reconcile_taxonomy.py` — aligns each kept session to the invoking user's **owner-scoped** registry (align-first, create-if-novel; ignores any file that isn't theirs); writes `working/process_overrides.json` + persists the owner-stamped registry. Takes `--owner`. Reuses `classify.py`'s matcher.
-- `scripts/classify.py` — ext→category classifier; applies per-run overrides via `--overrides working/process_overrides.json`, then groups the process label via `process_groups.json`. Reads `apqc_taxonomy.json`, `roles_taxonomy.json`, `process_groups.json`.
+- `scripts/classify.py` — one-category-per-session classifier (ordered rules: email → Teams → skill work → evidenced research → outside-M365 / final-output format); applies per-run overrides via `--overrides working/process_overrides.json`, then groups the process label via `process_groups.json`. Reads `apqc_taxonomy.json`, `roles_taxonomy.json`, `process_groups.json`.
 - `scripts/compute.py` — research-anchored two-clock model → `cowork_roi_data.json` (incl. `pct_time`).
 - `scripts/apqc_taxonomy.json`, `scripts/roles_taxonomy.json`, `scripts/skills_vocabulary.json` — taxonomy/vocabulary data (`skills_vocabulary.json` is the curated ~30-skill canonical set).
 - `scripts/process_groups.json` — canonical business-process **grouping** map (APQC labels + registry/override names → one short set); applied by `classify.py`. Shared with `cowork-roi-report`.
 - `scripts/process_overrides.json` (ships empty `{}`, vestigial) + `scripts/process_overrides.example.json` (format example). The real per-run overrides live at `working/process_overrides.json` — never in the bundle.
 - **No seed ships.** The per-user registry lives at `/mnt/user-config/.claude/cowork-process-registry.<userkey>.json` (owner-stamped) and is created on first run from the user's own sessions.
 - `references/map-my-work-playbook.md`, `references/value-pillars.md` — how to curate the registry / value pillars.
+- `references/classification-methodology.md` — the ordered task-category rules `classify.py` applies (shared with `cowork-roi-report` v48).

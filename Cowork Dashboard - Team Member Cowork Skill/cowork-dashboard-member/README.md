@@ -117,11 +117,12 @@ coverage gap rather than guessing. Hook execution itself depends on runtime supp
 ## Version history
 
 Each release ships a `CHANGELOG-v<N>.md` document with the full notes. Newest first — the detailed
-notes for the current release are below under **Updates in v27**.
+notes for the current release are below under **Updates in v28**.
 
 | Version | Highlights | Details |
 |---|---|---|
-| **v27** _(current)_ | Email delivery to the configured Teams channel email address · no Teams API posting or first-run link prompt | [CHANGELOG-v27.md](CHANGELOG-v27.md) |
+| **v28** _(current)_ | Classifier aligned with `cowork-roi-report` v48: one category per session · email / Teams final-output rules · skill work → code · research needs ≥3 gathered sources · outside-M365 systems → Specialized · final output format breaks ties | [CHANGELOG-v28.md](CHANGELOG-v28.md) |
+| **v27** | Email delivery to the configured Teams channel email address · no Teams API posting or first-run link prompt | [CHANGELOG-v27.md](CHANGELOG-v27.md) |
 | **v26** | Restored current-runtime chat-only capture · legacy parser retained · consent-based historical title/date backfill before the privacy picker · first-run hook check | [CHANGELOG-v26.md](CHANGELOG-v26.md) |
 | **v25** | Grouped business processes into a short canonical set · curated ~30-skill vocabulary · runner's **Role** shown in the header (no country/name) · every deliverable made visible and labelled by business process · verified that excluding a session removes its deliverables · privacy nudge at the exclude step · metric/section titles aligned to the **Copilot ROI Report** skill | [CHANGELOG-v25.md](CHANGELOG-v25.md) |
 | **v24** | Per-user, owner-scoped taxonomy memory — fixes cross-user leakage; no seed ships; per-run overrides moved out of the bundle (`process_overrides.json` ships empty `{}`) | [CHANGELOG-v24.md](CHANGELOG-v24.md) |
@@ -142,7 +143,7 @@ cowork-dashboard-member/
 │   ├── prune_sessions.py          # privacy opt-out (list + drop sessions)
 │   ├── mine_session.py            # live-session telemetry hook (exec_min, tool intensity, per-category runs)
 │   ├── format_member_message.py   # renders the HTML table email
-│   ├── classify.py                # ext→category classifier + process overrides + grouping
+│   ├── classify.py                # one-category-per-session classifier + process overrides + grouping
 │   ├── compute.py                 # research-anchored two-clock model (+ pct_time, role, deliverable→process)
 │   ├── apqc_taxonomy.json         # fallback business-process taxonomy
 │   ├── process_groups.json        # canonical business-process grouping (shared w/ cowork-roi-report)
@@ -151,9 +152,21 @@ cowork-dashboard-member/
 │   ├── process_overrides.json     # ships empty {} (vestigial; real overrides go to working/)
 │   └── process_overrides.example.json
 └── references/
+    ├── classification-methodology.md  # ordered task-category rules (shared w/ cowork-roi-report v48)
     ├── map-my-work-playbook.md    # derive process / pillar / JTBD per session
     └── value-pillars.md
 ```
+
+## Updates in v28
+
+_Full notes: [CHANGELOG-v28.md](CHANGELOG-v28.md). Shared classifier: `cowork-roi-report` v44–v48._
+
+- Each session now gets exactly **one** task category, and its time saved is credited to that category only.
+- Work that ends in an email (or inbox triage) → **Email workflows**; posting to Teams or mainly Teams synthesis → **Communication workflows**.
+- Skill build / attach / install / review → **Write or debug code**.
+- Research intent plus ≥3 gathered sources → **Analysis & Research**, even when it ends in a deck or doc.
+- Work in systems outside Microsoft 365 (CRM, ServiceNow, Jira, etc.) → **Specialized workflows** candidate; when several categories fit, the **final output's format** decides.
+- The harvest records each output's `created` time so the final deliverable can be identified.
 
 ## Updates in v27
 
