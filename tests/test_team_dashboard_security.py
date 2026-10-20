@@ -82,6 +82,16 @@ def private_data():
 
 
 class TeamDashboardSecurityTests(unittest.TestCase):
+    def test_guide_explains_cowork_fit_test_evidence_and_grades(self):
+        markup = build_dashboard.dashboard_markup()
+        self.assertIn("How Cowork fit is determined", markup)
+        self.assertIn("<h3>The single-surface test</h3>", markup)
+        self.assertIn("<h3>Evidence first</h3>", markup)
+        self.assertIn("? &mdash; Insufficient evidence", markup)
+        self.assertNotIn("Layer 1 &mdash; rule-based baseline", markup)
+        self.assertNotIn("AI-review-rejected", markup)
+        self.assertIn("cowork fit", build_dashboard.extract_glossary(markup))
+
     def test_sparse_process_outputs_group_by_type_and_keep_skills_private(self):
         data = private_data()
         detail = data["members"][-1]["reports"]["2026-10-01"]["deliverablesDetail"]

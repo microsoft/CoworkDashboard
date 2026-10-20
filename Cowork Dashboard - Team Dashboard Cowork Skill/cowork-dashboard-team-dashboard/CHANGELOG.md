@@ -3,6 +3,13 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.15.1] - 2026-10-20
+
+### Changed
+- Shorten the skill description to fit the 1,024-character limit.
+- Add "How Cowork fit is determined" to the built-in guide, summarizing the single-surface
+  test, workflow evidence, and High/Moderate/Low/Insufficient evidence grades.
+
 ## [1.15.0] - 2026-10-06
 
 ### Changed
