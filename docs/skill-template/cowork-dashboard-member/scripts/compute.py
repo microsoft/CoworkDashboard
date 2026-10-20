@@ -441,6 +441,11 @@ def main(inp,out):
         runs = s.get("runs") or {c:1 for c in cats}
         runs = {(c if c in CATS else "general"):int(n) for c,n in runs.items() if int(n)>0}
         if not runs: runs={"general":1}
+        # v44: single-category attribution. Keep only the session's primary category
+        # (from classify.py); telemetry runs logged under other categories are dropped,
+        # never re-assigned, so the expert clock is not double-counted across categories.
+        primary = cats[0] if cats[0] in CATS else "general"
+        runs = {primary: runs.get(primary, 1)}
         e_t=session_expert(runs,1)
         e_l=session_expert(runs,0)
         e_h=session_expert(runs,2)
