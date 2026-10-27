@@ -43,6 +43,9 @@ Plays here in the page — no download. A step-by-step setup walkthrough: how th
 
 https://github.com/user-attachments/assets/f020831d-cb38-423f-b647-ce4415ae7f44
 
+**YouTube walkthrough** *(4m 53s)*  
+https://youtu.be/u0VznEwIrd4
+
 ▶️ **[Watch the setup walkthrough](media/Team-Cowork-Skill-Overview.mp4)** &nbsp;·&nbsp; captions: [`.srt`](media/Team-Cowork-Skill-Overview.srt)
 
 ## What you'll need first
