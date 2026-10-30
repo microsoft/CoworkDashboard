@@ -3,6 +3,13 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [1.15.2] - 2026-10-30
+
+### Fixed
+- Trim the SKILL.md `description` (781 characters) so Cowork no longer drops the skill for exceeding the
+  1,024-character limit, keeping the "Do NOT use for" line. Move `category`/`icon` from the custom `cowork:`
+  block into `metadata:` so the frontmatter passes the standard skill-format check.
+
 ## [1.15.1] - 2026-10-20
 
 ### Changed
