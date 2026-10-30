@@ -141,6 +141,11 @@ sent to a server, and the page makes no outside network calls — it only builds
 Both paths install the exact same skill code — path A only pre-fills the channel config so there's no first-run
 question.
 
+> **Zip rejected or the skill never triggers?** Cowork silently drops a skill whose `SKILL.md` frontmatter
+> `description` is over 1,024 characters. Re-download the latest zip (current descriptions are under 800
+> characters), or use the manual install below. Contributors: keep every `description` under 1,024 characters
+> and put `category` / `icon` under a `metadata:` block rather than a custom `cowork:` block.
+
 ## Prefer to install by hand?
 
 You don't have to let Copilot unpack the zip for you — you can drop the skill into place yourself:
