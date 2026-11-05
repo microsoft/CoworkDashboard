@@ -9,6 +9,19 @@ for email to the requesting manager after recipient confirmation and approval. D
 open it in a full browser, not Cowork's or email's preview. No server or companion files are needed.
 The optional multi-file site described below is retained for local use.
 
+## No automatic tests
+Installation, attachment and sync are passive: they do not run scripts, tests, reports or servers,
+send test emails, or create schedules. Setup/invitations do not include a trial report.
+A report runs only when requested or through an existing user-approved report schedule, and stops
+when finished. Necessary input, privacy and approval checks remain in place. The normal builder
+checks each generated output once; do not run the verifier again separately after a successful build.
+Additional regression/smoke tests, sample-data trials, browser/control sweeps and screenshot checks
+require an explicit testing request, not merely available tools or a report schedule. No test
+schedules, background test jobs or test hooks are created. Failures are reported rather than
+triggering open-ended test/repair loops. The optional local server starts only on a local-site request.
+
+## Report overview
+
 It reads the
 de-identified stats each teammate emails to a shared Teams channel and renders **a private local site**
 the manager can open, re-price with live controls, and print. HTML, CSS, JavaScript and public JSON
@@ -110,10 +123,10 @@ requests; the host also checks attachment/card references.
    or `--port 7334` if the default port is occupied. Stop with Ctrl+C. Do not open the HTML file
    directly for the multi-file site: its separate JSON files require HTTP. The self-contained report
    does not have this restriction. No desktop icon or start-at-login is installed.
-4. **Verify before sharing.** When browser tools are available, open the standalone attachment, visit all four
-   tabs, exercise the controls, expand a process drill-down, and verify the waterfall, category bars,
-   stacked mix, and time/value toggle. Use screenshot verification when available; disclose when it
-   is unavailable. A failed check blocks delivery.
+4. **Use the build's integrity result.** The builder has already checked each output once.
+   Do not rerun the verifier, open a browser, exercise controls or capture screenshots as a routine
+   test step. Browser testing is opt-in when explicitly requested; do not claim it ran otherwise.
+   A failed build/integrity check or a known broken required visual blocks delivery.
 5. **Review and email the HTML report.** Confirm your email address and approve the verified attachment.
    The optional local site also offers Export Markdown summary to download `team-summary.md` (default
    pricing), or use Save / Print PDF (current controls). Read the export, confirm recipients,
@@ -153,13 +166,16 @@ This packaging change has not been confirmed to resolve Defender warnings.
   format and skill totals only.
 - Required visuals: Cowork-fit waterfall, category bars, stacked category mix, expandable
   business-process drill-downs, and the time/value toggle.
-- `scripts/verify_dashboard.py` must pass before email delivery.
-- If any required visual or control is missing or broken, fix and rebuild instead of sending an
-  incomplete dashboard or calling the run complete.
+- The inline `scripts/verify_dashboard.py` checks in `build_outputs.py` must pass before email
+  delivery; no separate rerun is needed.
+- If any required visual or control is known to be missing or broken, stop and report the blocker
+  instead of sending an incomplete dashboard or starting an unsolicited repair/test loop.
 
-### Try it offline (no Teams needed)
+### Optional offline test (only on an explicit testing request)
 
-Two real, de-identified channel messages are bundled:
+Never run this example during installation, setup or routine/scheduled reporting.
+Two real, de-identified channel messages are bundled for a user-requested offline test.
+The server command is only for a request that also includes viewing the local site:
 
 ```bash
 python scripts/parse_posts.py --in examples/sample_raw_messages.json \

@@ -25,11 +25,29 @@ This skill bundles its **own** analysis pipeline (`classify.py`, `compute.py`, t
 `reconcile_taxonomy.py` memory step, taxonomy data, and the harvest references).
 It does **not** depend on `cowork-roi-report` or any other skill being installed. A new user just
 drops the single `cowork-dashboard-member/` folder into their Cowork skills directory
-(`Documentos/Cowork/skills/`) and runs it — nothing else to install. It keeps a **per-user, durable
+(`Documents/Cowork/skills/`) and runs it — nothing else to install. It keeps a **per-user, durable
 taxonomy memory** at `/mnt/user-config/.claude/cowork-process-registry.<userkey>.json` — scoped to
 the invoking user (owner-stamped) and stored on their own mount (syncs to their OneDrive Cowork
 folder). **There is NO bundled seed and nothing user-specific ships in the folder:** a first run
 starts with no memory and mints the user's processes from their OWN sessions.
+
+## Execution scope - no automatic tests
+- **Installation is passive.** Installing, attaching, syncing or discovering this skill does not
+  authorize running scripts, tests, sample data, diagnostics, reports, hooks or schedules. A setup-only
+  request permits only the requested setup; do not generate a trial report or send a test email.
+- **Run only the requested workflow.** Start a report only on an explicit report request or an
+  execution of an existing user-approved report schedule. Stop after that workflow completes.
+  Report permission is not permission to run regression, smoke, benchmark or end-to-end tests,
+  synthetic/sample-data trials, browser test sweeps or checks on unrelated skills/repositories.
+- **Keep necessary inline safeguards.** Config/input checks, owner checks, privacy opt-out,
+  exclusion-integrity assertions and send approval remain required parts of the actual report.
+  They are not separate test runs; do not bypass them or repeat successful steps just to test them.
+- **Extra testing is opt-in.** Run additional tests only when the user explicitly requests them,
+  within the requested scope. Do not create test schedules, background test jobs or test hooks.
+  A recurring report schedule authorizes reports, not recurring tests.
+- **On failure, stop and explain the blocker.** Correct an identified input/config issue only
+  within the user's authorized scope, then retry only the affected step if needed. Do not start
+  an open-ended test/repair loop, rewrite bundled scripts or install test tooling on your own.
 
 ## When to use
 - "Email my Cowork Team Report stats to the team channel" / "run the Cowork Team Report member step"
@@ -100,11 +118,11 @@ Stop hook pointing to an existing `mine_session.py`, tell the user **the forward
 active**. Installed scripts alone do not enable capture; do not silently repair or activate hooks.
 
 Cowork persists each session's workspace to OneDrive under a `Cowork` store (commonly
-`Documents/Cowork/`, but often localized/suffixed — `Documentos/Cowork`, `Cowork 1`, …). Harvest
+`Documents/Cowork/`, sometimes suffixed — for example, `Documents/Cowork 1/`). Harvest
 ALL session folders in the window:
 - `GetDefaultDrive()` → personal OneDrive `drive_id`.
 - **Locate the Cowork folder** — try `GetDriveChildren(drive_id, item_path="/Documents/Cowork")`; on
-  404, list `/Documents` (then the drive root, then `/Documentos/Cowork`) and pick the child whose
+  404, list `/Documents` (then the drive root) and pick the child whose
   name starts with `Cowork` (case-insensitive). Carry the resolved name forward.
 - **Enumerate all three layouts** under it, following pagination (`@odata.nextLink`) to exhaustion:
   Task folders `<Cowork>/Tasks/<goal-slug>-<YYYY-MM-DD>/` (→ `input/`+`output/`), root goal folders

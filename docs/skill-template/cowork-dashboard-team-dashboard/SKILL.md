@@ -31,6 +31,27 @@ never sees names, files, or prompts. If a label (business process, skill, Role) 
 Member bundle's copy, aggregation drifts — the taxonomy files here are **byte-for-byte mirrors** of
 the Member skill's (see *Cross-skill contract*).
 
+## Execution scope - no automatic tests
+- **Installation is passive.** Installing, attaching, syncing or discovering this skill does not
+  authorize running scripts, tests, sample data, diagnostics, reports, servers or schedules.
+  Setup/invitation requests permit only that setup/invitation flow with its existing approvals;
+  do not continue into a trial report, test email or report workflow without a report request.
+- **Run only the requested workflow.** Start a report only on an explicit report request or an
+  execution of an existing user-approved report schedule. Stop after that workflow completes.
+  Do not run regression, smoke, benchmark or end-to-end tests, synthetic/sample-data trials,
+  browser test sweeps or checks on unrelated skills/repositories as part of a normal report.
+- **Keep necessary inline safeguards.** Input/recovered-email checks, privacy checks and send
+  approval remain required. `build_outputs.py` checks each actual output once with
+  `verify_dashboard.py`; use that result instead of running the verifier again separately.
+- **Extra testing is opt-in.** Run additional tests, browser/control sweeps or screenshot checks
+  only when the user explicitly requests testing, within that scope. Tool availability alone is
+  not permission. Do not create test schedules, background test jobs or test hooks; a recurring
+  report schedule authorizes reports, not recurring tests. Start the optional local server only
+  when the user requests the local site.
+- **On failure, stop and explain the blocker.** Correct an identified input/config issue only
+  within the user's authorized scope, then retry only the affected step if needed. Do not start
+  an open-ended test/repair loop, rewrite bundled scripts or install test tooling on your own.
+
 ## Scope (v1)
 - **Small, homogeneous teams** (people doing similar work), **team level**. A handful of
   contributors sharing one channel.
@@ -60,7 +81,8 @@ The rollup reads ONE shared Teams channel that teammates email reports to. The c
 1. **Load `config/team_config.json`.** If `team_id` **and** `channel_id` are already filled in — the
    normal case for a zip downloaded from the **Installer page**, which bakes your channel into the
    config — **the channel is already set up. Do NOT ask for a channel link: skip steps 2–3 entirely**
-   and go straight to the invite / 1:1 share and the workflow. Only treat this as a blank first run (and
+   and go straight to the invite / 1:1 share. Continue into the report workflow only if a report
+   was requested. Only treat this as a blank first run (and
    do steps 2–3) when **both** fields are empty, which happens only for a hand-built zip.
 2. **Only if the channel is blank — ask for the link.** Use `AskUserQuestion` to ask the user to paste
    the **link of the Teams channel** where the team emails its Cowork Team Report stats (in Teams: channel ⋯ → *Get link to
@@ -76,8 +98,9 @@ The rollup reads ONE shared Teams channel that teammates email reports to. The c
    (`ChannelMessage.Read.All`). This skill does not create Teams or channels. If a read fails with an
    authorization error, the runner isn't a member — add them in Teams; the skill can't grant access.
 
-On later runs `team_id` + `channel_id` are already set, so skip straight to the workflow. Re-ask for a
-link only if the user wants to point at a **different** channel.
+On later report runs `team_id` + `channel_id` are already set, so skip straight to the workflow.
+For setup-only requests, stop after setup. Re-ask for a link only if the user wants to point at a
+**different** channel.
 
 ### First run also — invite the team (so no one gets a bare .zip)
 Right after the channel is resolved on a **first run** (and any time the manager asks to "invite the
@@ -287,35 +310,35 @@ The **How to read** tab remains inside the local dashboard. `build_outputs.py` j
 but **off by default**; pass `--with-pdf` to `build_outputs.py` only if someone explicitly wants a
 printable copy.
 
-### 5. Verify the rendered dashboard — mandatory delivery gate
-First run the bundled structural verifier explicitly (the build already runs it once):
-```
-python scripts/verify_dashboard.py --in output/team-dashboard/index.html
-python scripts/verify_dashboard.py --in output/team-dashboard/team-dashboard-report.html
-```
-It must confirm all **four tabs**, separate local assets, cohort-filtered public JSON, controls, and every required
-aggregate visual:
+### 5. Use the build's integrity result - no duplicate test run
+`build_outputs.py` already runs `verify_dashboard.py` once on each generated output.
+Require that build to succeed; **do not rerun the verifier separately** after a successful build.
+This inline structural/privacy gate checks all **four tabs**, separate local assets,
+cohort-filtered public JSON, control markup and required aggregate visual markup:
 - Cowork-fit **waterfall**.
 - **Category bars**.
 - **Stacked category mix**.
 - Expandable **business-process drill-downs**.
-- Working **time/value toggle** plus period, hourly-rate, recapture-rate, reset, and print controls.
+- **Time/value toggle** plus period, hourly-rate, recapture-rate, reset, and print controls.
 
-Then perform a rendered browser check when browser/page tools are available:
+**Only if the user explicitly requests rendered/browser testing**, check the actual attachment
+within that requested scope. The following is a reference checklist, not a normal-run instruction:
 1. Open `output/team-dashboard/team-dashboard-report.html` directly in a full browser using its
    absolute `file://` URL. Test the actual attachment, not the multi-file site or Cowork preview.
    If the host cannot open a full browser, disclose the limitation; do not claim preview success.
 2. Visit all four tabs and confirm each required chart is visible.
 3. Expand at least one business-process row.
 4. Exercise the period/rate/recapture controls, the time/value toggle, Reset, and tab navigation.
-5. Use screenshot verification when available.
+5. Use screenshot verification only if included in the requested testing scope and tools are available.
 
-If browser or screenshot tooling is unavailable, **say so clearly** and report that only the bundled
-structural verifier ran. Never imply that rendered screenshots were checked when they were not.
+Do not launch a browser or capture screenshots merely because tools are available. Structural
+checks do not prove rendered interaction behavior; never claim browser/screenshot testing unless
+it actually ran. If requested testing cannot run, disclose the limitation.
 
 **Block delivery if any required visual or control is missing, empty because aggregate inputs were
-incorrectly removed, or broken.** Fix the data/rendering issue, rebuild with the bundled renderer,
-and repeat verification. Do not email the dashboard or call the run complete until this gate passes.
+incorrectly removed, or known to be broken, or if the build's structural/privacy gate fails.**
+Report the blocker and stop; do not start an unsolicited repair/test loop. After an authorized
+correction, rebuild affected outputs with the bundled renderer, which checks them inline again.
 
 ### 6. Email the self-contained report to the requesting manager
 After verification, offer email delivery to the manager as the default completion path.
@@ -368,15 +391,18 @@ coverage write-up.
 If the user asks, `SetupScheduledPrompt` with a self-contained description: *"Read the last 15 days of
 Cowork Team Report posts in the team channel, aggregate them into the anonymized team dashboard (the how-to-read
 guide is built into it), save the local site and Markdown summary to my files. Do not send or publish
-anything; exports require a separate interactive review and approval."*
+anything; exports require a separate interactive review and approval. Use the build's inline
+structural/privacy checks only; do not run separate tests, sample-data trials, browser sweeps or
+screenshot checks."*
 
 **Timing:** the Member skill prompts members to review and email reports on a **biweekly Monday**
 cycle, so schedule the manager rollup to run **1–2 days later — on Wednesday** — which gives
 teammates Monday and Tuesday to send before the
 rollup reads the channel. Use frequency **Week**, `interval = cadence_days / 7` (= **2** → every other
 Wednesday), `weekDays=["Wednesday"]`, `hours=["9"]`, name "Cowork Team Report team dashboard". Scheduled runs
-must use the bundled renderer and pass `verify_dashboard.py`. Scheduled builds do not send exports
-or add start-at-login integration. A verification failure blocks completion.
+must use the bundled renderer, including its inline `verify_dashboard.py` checks once per output;
+do not rerun them separately or add tests. Scheduled builds do not send exports
+or add start-at-login integration. A verification failure blocks completion and is reported.
 
 ## Privacy (hard rules)
 - **Never publish contributor-level records or links between contributors and metrics.** The parser's
@@ -429,9 +455,10 @@ aggregation breaks — **change them in both bundles together**:
   builds a separate aggregate-only payload and suppresses any breakdown below the configured cohort
   threshold while preserving the dashboard controls and aggregate visual surfaces.
 - **Required visuals are a delivery contract.** Waterfall, category bars, stacked mix,
-  process drill-downs, and the time/value toggle must all pass verification before email.
-- **No verification, no delivery.** Missing or broken required visuals block email and completion;
-  fix, rebuild, and re-test instead.
+  process drill-downs, and the time/value toggle must pass the build's inline structural gate before
+  email. Browser interaction testing is opt-in, not a routine delivery requirement.
+- **No integrity gate, no delivery.** A failed build or known missing/broken required visual blocks
+  email and completion. Report the failure; do not launch unsolicited tests or code repairs.
 - **No fabricated data.** Every number traces to a post via the pipeline. Empty sections are omitted;
   an empty 15-day window yields no dashboard, not a made-up one.
 - **No hand math.** `parse_posts.py` totals; `build_dashboard.py` prices at the live rate; the email
@@ -471,4 +498,5 @@ aggregation breaks — **change them in both bundles together**:
 - `scripts/process_groups.json`, `scripts/skills_vocabulary.json`, `scripts/roles_taxonomy.json` — **mirrors** of the Member bundle (shared contract).
 - `scripts/skill_aliases.json` — reader-only skill-label compatibility shim.
 - `references/value-pillars.md` — **mirror** of the four-pillar crosswalk.
-- `examples/sample_raw_messages.json` — two real, de-identified posts for an offline end-to-end test.
+- `examples/sample_raw_messages.json` — two real, de-identified posts for an explicitly requested
+  offline test only; never run during installation, setup or routine/scheduled reporting.

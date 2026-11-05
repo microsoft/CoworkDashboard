@@ -3,6 +3,17 @@
 All notable changes to this skill are documented here. Versions follow the family's convention
 (the ROI skills version independently). Dates are ISO-8601.
 
+## [Unreleased]
+
+### Changed
+- Make installation passive and restrict setup, reports and schedules to their authorized scope.
+- Prohibit unsolicited test suites, sample-data trials, test schedules, background test jobs and
+  test hooks in both skill bundles; retain necessary inline privacy/input checks.
+- Remove the dashboard workflow's duplicate verifier commands. The builder still checks each
+  actual output once; browser/control/screenshot testing now requires an explicit testing request.
+- Scope the offline example to requested testing and report failures instead of launching
+  open-ended repair/test loops.
+
 ## [1.15.2] - 2026-10-30
 
 ### Fixed

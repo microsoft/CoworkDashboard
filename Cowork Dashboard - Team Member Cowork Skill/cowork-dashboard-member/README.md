@@ -32,10 +32,19 @@ This skill is **self-contained**: it bundles its own analysis pipeline (`classif
 taxonomy data, harvest references). You do **not** need `cowork-roi-report` or any other skill.
 
 1. Copy the whole **`cowork-dashboard-member/`** folder into your Cowork skills directory:
-   `Documentos/Cowork/skills/cowork-dashboard-member/`
+   `Documents/Cowork/skills/cowork-dashboard-member/`
 2. Changes appear after OneDrive sync (~35 seconds).
 
 That's it — nothing else to install, and no nested folders to flatten.
+
+### No automatic tests
+Installation, attachment and sync are passive: they do not run scripts, tests, reports or hooks,
+send test emails, or create schedules. Setup does not include a trial report. A report runs only
+when requested or through an existing user-approved report schedule, and stops when finished.
+Necessary inline config, privacy, exclusion-integrity and approval checks remain in place.
+Additional regression/smoke tests, sample-data trials and browser test sweeps require an explicit
+testing request; report schedules do not authorize them. No test schedules, background test jobs
+or test hooks are created. Failures are reported rather than triggering open-ended test/repair loops.
 
 ## First-time setup — for the admin / manager / lead (one time)
 
